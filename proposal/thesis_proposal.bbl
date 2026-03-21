@@ -1,0 +1,71 @@
+\begin{thebibliography}{}
+
+\bibitem[Bai et~al., 2024]{bai_one_2024}
+Bai, Z., He, T., Mei, H., Wang, P., Gao, Z., Chen, J., Liu, L., Zhang, Z., and
+  Shou, M.~Z. (2024).
+\newblock One {Token} to {Seg} {Them} {All}: {Language} {Instructed}
+  {Reasoning} {Segmentation} in {Videos}.
+\newblock arXiv:2409.19603 [cs].
+
+\bibitem[Hochreiter and Schmidhuber, 1997]{hochreiter_long_1997}
+Hochreiter, S. and Schmidhuber, J. (1997).
+\newblock Long {Short}-{Term} {Memory}.
+\newblock {\em Neural Computation}, 9(8):1735--1780.
+
+\bibitem[Krizhevsky et~al., 2017]{krizhevsky_imagenet_2017}
+Krizhevsky, A., Sutskever, I., and Hinton, G.~E. (2017).
+\newblock {ImageNet} classification with deep convolutional neural networks.
+\newblock {\em Communications of the ACM}, 60(6):84--90.
+
+\bibitem[Lai et~al., 2024]{lai_lisa_2024}
+Lai, X., Tian, Z., Chen, Y., Li, Y., Yuan, Y., Liu, S., and Jia, J. (2024).
+\newblock {LISA}: {Reasoning} {Segmentation} via {Large} {Language} {Model}.
+\newblock arXiv:2308.00692 [cs].
+
+\bibitem[Li et~al., 2024]{li_llava-onevision_2024}
+Li, B., Zhang, Y., Guo, D., Zhang, R., Li, F., Zhang, H., Zhang, K., Zhang, P.,
+  Li, Y., Liu, Z., and Li, C. (2024).
+\newblock {LLaVA}-{OneVision}: {Easy} {Visual} {Task} {Transfer}.
+\newblock arXiv:2408.03326 [cs].
+
+\bibitem[Oreshkin et~al., 2020]{oreshkin_n-beats_2020}
+Oreshkin, B.~N., Carpov, D., Chapados, N., and Bengio, Y. (2020).
+\newblock N-{BEATS}: {Neural} basis expansion analysis for interpretable time
+  series forecasting.
+\newblock arXiv:1905.10437 [cs].
+
+\bibitem[Radford et~al., 2021]{radford_learning_2021}
+Radford, A., Kim, J.~W., Hallacy, C., Ramesh, A., Goh, G., Agarwal, S., Sastry,
+  G., Askell, A., Mishkin, P., Clark, J., Krueger, G., and Sutskever, I.
+  (2021).
+\newblock Learning {Transferable} {Visual} {Models} {From} {Natural} {Language}
+  {Supervision}.
+\newblock arXiv:2103.00020 [cs].
+
+\bibitem[Ravi et~al., 2024]{ravi_sam_2024}
+Ravi, N., Gabeur, V., Hu, Y.-T., Hu, R., Ryali, C., Ma, T., Khedr, H., Rädle,
+  R., Rolland, C., Gustafson, L., Mintun, E., Pan, J., Alwala, K.~V., Carion,
+  N., Wu, C.-Y., Girshick, R., Dollár, P., and Feichtenhofer, C. (2024).
+\newblock {SAM} 2: {Segment} {Anything} in {Images} and {Videos}.
+\newblock arXiv:2408.00714 [cs].
+
+\bibitem[Vaswani et~al., 2023]{vaswani_attention_2023}
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A.~N.,
+  Kaiser, L., and Polosukhin, I. (2023).
+\newblock Attention {Is} {All} {You} {Need}.
+\newblock arXiv:1706.03762 [cs].
+
+\bibitem[Zheng et~al., 2023]{zheng_judging_2023}
+Zheng, L., Chiang, W.-L., Sheng, Y., Zhuang, S., Wu, Z., Zhuang, Y., Lin, Z.,
+  Li, Z., Li, D., Xing, E.~P., Zhang, H., Gonzalez, J.~E., and Stoica, I.
+  (2023).
+\newblock Judging {LLM}-as-a-{Judge} with {MT}-{Bench} and {Chatbot} {Arena}.
+\newblock arXiv:2306.05685 [cs].
+
+\bibitem[Zheng et~al., 2025]{zheng_villa_2025}
+Zheng, R., Qi, L., Chen, X., Wang, Y., Wang, K., Qiao, Y., and Zhao, H. (2025).
+\newblock {ViLLa}: {Video} {Reasoning} {Segmentation} with {Large} {Language}
+  {Model}.
+\newblock arXiv:2407.14500 [cs].
+
+\end{thebibliography}

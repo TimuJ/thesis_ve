@@ -1,0 +1,182 @@
+\chapter{Introduction and Background}
+
+\section{Introduction}
+
+In recent years, the field of computer vision has witnessed significant advancements in
+segmentation tasks, particularly with the advent of convolutional neural networks (CNNs) and
+transformer-based architectures. These developments have propelled instance segmentation to new
+heights, enabling models to delineate object boundaries with remarkable accuracy. However,
+traditional segmentation methods often fall short when confronted with complex, implicit queries
+that necessitate higher-order reasoning.
+
+Addressing this gap, the task of reasoning segmentation has emerged, aiming to generate
+segmentation masks in response to intricate textual instructions. While initial research
+has primarily focused on image-based reasoning segmentation, the dynamic nature of video
+introduces additional challenges and opportunities. Videos encapsulate temporal information,
+object motion, and evolving contexts, making them inherently more complex than static images.
+Consequently, extending reasoning segmentation to the video domain requires novel methodologies
+that can effectively harness both spatial and temporal dimensions.
+
+Recent endeavors have introduced multimodal large language models (MLLMs) to tackle reasoning segmentation
+in videos. Models such as VISA \cite{yan_visa_2024}, VideoLISA \cite{bai_one_2024}, and ViLLa \cite{zheng_villa_2025}
+have demonstrated the potential of integrating world knowledge and temporal understanding to produce temporally
+consistent segmentation masks based on language instructions. These models leverage advanced techniques such as
+temporal context aggregation, sparse dense sampling, and token-driven keyframe selection to address the unique
+challenges posed by video data. Despite their promising results, several limitations persist, including issues
+with model generalization, handling of occlusions, and the need for extensive computational resources.
+
+\section{Related Work}
+
+\subsection{Multi-Modal Large Language Models}
+
+Multi-Modal Large Language Models (MLLMs) have become a major research focus due to their ability to
+integrate and reason across multiple modalities, such as text, image, and video data. These models
+combine the power of Large Language Models (LLMs) with sophisticated vision encoders to enable complex
+multimodal tasks such as image captioning, video question answering, and video segmentation. The recent
+advancements in this field are largely driven by innovative architectures that combine cross-attention mechanisms,
+vision encoders, and large-scale datasets to improve model performance across various tasks.
+
+In many MLLMs, the integration of vision and language is achieved by using cross-attention mechanisms to
+dynamically fuse visual features with textual information. For instance, Flamingo \cite{alayrac_flamingo_2022}
+uses cross-attention to enable the model to focus on relevant visual contexts when generating text. Other models,
+such as BLIP-2 \cite{li_blip-2_2023} and mPLUG-OWL \cite{ye_mplug-owl_2024}, encode visual inputs through pre-trained
+vision encoders (such as CLIP \cite{radford_learning_2021}) and integrate these with text embeddings from LLMs,
+resulting in rich multimodal representations. OTTER \cite{huang_otter_2025}, LLaVA \cite{li_llava-onevision_2024},
+and MiniGPT-4 \cite{zhu_minigpt-4_2023} further enhance these capabilities by leveraging instruction-following and
+few-shot learning approaches, where they fine-tune the models on specialized datasets for improved performance.
+
+The InternVideo2 \cite{wang_internvideo2_2024} model contributes significantly to video processing within the
+MLLM landscape by utilizing VideoMAEv2 \cite{wang_videomae_2023} as a video encoder. This model incorporates
+depth-wise 3D convolutions for fusing spatial and temporal information across frames, which is crucial for
+tasks such as segmentation. Additionally, InternVideo2 introduces more efficient methods of handling video frames
+by focusing on selective attention, reducing the computational burden while maintaining high-quality outputs.
+
+LLaVA \cite{li_llava-onevision_2024}, a notable model in the multimodal landscape, leverages both a powerful
+LLM (Qwen-2) \cite{yang_qwen2_2024} and a robust vision encoder (SigLIP) \cite{zhai_sigmoid_2023}. LLaVA's architecture
+is designed to scale effectively, supporting large datasets and powerful model sizes while maintaining strong
+language capabilities. The model uses a 2-layer MLP projector to transform visual features into a space compatible with
+the LLM, enabling effective cross-modal interaction. LLaVA's Higher AnyRes strategy addresses resolution and token number
+challenges by adjusting image resolution and token configurations depending on the task, such as single-image, multi-image,
+or video understanding. This strategy allows the model to handle varying visual complexities while maintaining computational
+efficiency. The approach ensures the model can generalize across different scenarios, making it versatile for both images and videos.
+
+The development of these models illustrates the potential of MLLMs to tackle complex multimodal tasks, with a specific
+focus on improving video understanding. Techniques such as advanced tokenization strategies, efficient visual representations,
+and the integration of deep temporal understanding are critical steps forward in the evolution of multimodal reasoning
+systems. As these models continue to scale, their ability to perform tasks such as video segmentation, especially in
+long-duration and high-complexity scenarios, will become increasingly robust, pushing the boundaries of what is possible
+in multimodal AI.
+
+\subsection{Video Object Segmentation}
+
+Video Object Segmentation (VOS) is a crucial task in computer vision that focuses on the identification and
+tracking of objects across video frames. It involves both segmenting objects in individual frames and ensuring
+the continuity of the segmentation over time, making it particularly challenging due to the need to handle
+temporal dependencies, varying object appearances, and motion dynamics. Video segmentation tasks can be broadly
+categorized into Video Instance Segmentation (category-based VOS) and Referring Video Object Segmentation (text-based VOS),
+each presenting unique challenges and requiring different strategies for effective solutions.
+
+Video Instance Segmentation (VIS) aims to detect, segment, and track object instances across video frames,
+typically based on predefined object categories. It has gained significant attention due to its complexity,
+which involves modeling both spatial and temporal relationships of objects. Various approaches, such as tracking
+by detection, masked attention, object token association, and contrastive memory, have been explored to enhance
+VIS models. For instance, IDOL \cite{wu_defense_2022}, built on Deformable-DETR \cite{zhu_deformable_2021},
+incorporates contrastive learning to generate unique embeddings for object associations, while DVIS \cite{zhang_dvis_2023}
+decouples VIS into stages including image segmentation, tracking, and refinement. These advancements make VIS models
+more robust and applicable across different scenarios.
+
+Referring Video Object Segmentation (RVOS) introduces another level of complexity by segmenting target
+objects mentioned in natural language expressions within a video. Unlike VOS, which focuses on tracking objects
+based on predefined categories or initial frames, RVOS must handle both the action and appearance of the
+referred object across multiple frames, making it more challenging. Methods such as URVOS \cite{vedaldi_urvos_2020}
+and RefVOS \cite{bellver_refvos_2020} use cross-modal attention mechanisms to perform frame-by-frame segmentation,
+while recent models such as ReferFormer \cite{zhao_learning_2023} and MTTR \cite{botach_end--end_2022} adopt
+DETR-like structures to simplify the referring pipeline. Despite these advances, RVOS models still struggle
+with understanding temporal dependencies and reasoning across long video sequences, especially in cases where
+motion and contextual knowledge are crucial.
+
+The Segment Anything Model 2 (SAM 2) \cite{ravi_sam_2024} offers a promising advancement in RVOS by
+introducing a more robust memory attention mechanism that integrates both the visual information from past
+frames and textual descriptions. SAM 2 conditions the current frame's features on previous frame features,
+past predictions, and any new prompts, making it highly suited for RVOS tasks that involve complex referencing.
+
+Through its memory encoder and memory bank, SAM 2 stores and retrieves information from past frames,
+helping it maintain consistent object segmentation even across long sequences. This allows SAM 2 to better
+handle scenarios where the referred object undergoes significant motion or changes in appearance over time.
+Additionally, by leveraging both spatial and temporal memories, SAM 2 enhances its ability to segment and
+track objects over long video sequences, making it highly effective for both simple and complex referring expressions in RVOS.
+
+SAM 2's efficient integration of temporal reasoning alongside its advanced memory mechanisms sets it apart
+from earlier RVOS methods, bringing it closer to handling more complex, real-world scenarios where reasoning
+and inference are essential.
+
+\subsection{Reasoning Segmentation}
+
+Reasoning segmentation extends traditional visual recognition tasks by enabling models to interpret complex,
+implicit textual queries and generate corresponding segmentation masks. This capability is crucial for
+applications requiring nuanced understanding and interaction with visual content.
+
+In the realm of image segmentation, models such as LISA \cite{lai_lisa_2024} have pioneered the integration
+of large language models (LLMs) with segmentation frameworks. LISA employs a special $\langle$SEG$\rangle$ token to prompt
+segmentation models, allowing them to produce masks in response to complex textual instructions. This approach
+facilitates handling intricate reasoning tasks and demonstrates robust zero-shot capabilities.
+
+Building upon this foundation, GSVA \cite{xia_gsva_2024} (Generalized Segmentation Vision Assistant)
+introduces enhancements to address challenges in generalized referring expression segmentation (GRES).
+GSVA extends the use of the $\langle$SEG$\rangle$ token to support multiple mask references simultaneously and introduces
+a $\langle$REJ$\rangle$ token to explicitly reject null targets. These innovations enable GSVA to effectively manage
+multiple-target and empty-target scenarios, outperforming previous methods on benchmarks such as gRefCOCO.
+
+Extending reasoning segmentation to the video domain introduces additional complexities due to the
+temporal dimension. Models must not only understand and segment objects but also track them across
+frames in response to dynamic and evolving scenes.
+
+VISA (Video-based Large Language Instructed Segmentation Assistant) \cite{yan_visa_2024} leverages
+the capabilities of multimodal large language models to perform reasoning video object segmentation.
+By integrating a mask decoder with world knowledge reasoning, VISA can generate segmentation masks for
+objects based on complex textual prompts, facilitating tasks that require both visual understanding and temporal coherence.
+
+VideoLISA \cite{bai_one_2024} builds upon the foundation of LISA by incorporating temporal dynamics
+into the reasoning segmentation process. Utilizing a Sparse Dense Sampling strategy and a One-Token-Seg-All
+approach with a specially designed $\langle$TRK$\rangle$ token, VideoLISA enables temporally consistent segmentation
+across video frames. This design allows for effective tracking and segmentation of objects over time,
+addressing the challenges posed by dynamic video content.
+
+ViLLa (Video Reasoning Segmentation with Large Language Model) \cite{zheng_villa_2025} introduces
+several innovations to enhance video reasoning segmentation. Its architecture includes a Key Segment
+Extractor to identify relevant video segments, a Context Synthesizer to integrate visual and textual
+information, and a Hierarchical Temporal Synchronizer to model multi-scale temporal dependencies. These
+components collectively enable ViLLa to handle complex video scenarios involving multiple objects, occlusions,
+and rapid motion, outperforming previous models on various benchmarks.
+
+More recent advances have further pushed the boundaries of video reasoning segmentation (VRS). VRS-HQ \cite{gong_vrs_hq_2025}
+introduces hierarchical temporal tokens, employing frame-level $\langle$SEG$\rangle$ and temporal-level $\langle$TAK$\rangle$ tokens
+that leverage the MLLM's autoregressive learning to capture both local and global temporal information. Their
+Token-driven Keyframe Selection (TKS) mechanism filters keyframes based on SAM 2's occlusion scores during inference,
+achieving state-of-the-art performance on ReVOS with improvements of 5.9\% to 12.5\% over VISA across different subsets.
+
+A paradigm shift has emerged with reinforcement learning-based approaches to VRS. Veason-R1 \cite{gong_veason_r1_2025}
+is the first to apply Group Relative Policy Optimization (GRPO) augmented with Chain-of-Thought initialization,
+enabling structured reasoning trajectories that bridge video-level semantics with frame-level spatial grounding.
+This approach achieves significant improvements on ReasonVOS while exhibiting enhanced robustness to hallucinations.
+Similarly, VideoSeg-R1 \cite{xu_videoseg_r1_2025} introduces a decoupled architecture that formulates VRS as joint
+referring image segmentation and video mask propagation, incorporating a hierarchical text-guided frame sampler
+and task difficulty-aware mechanisms for adaptive reasoning.
+
+Notably, DecAF \cite{han_decaf_2025} demonstrates that competitive performance can be achieved without model retraining
+through decomposed attention fusion. By extracting attention maps via rollout mechanisms and applying contrastive
+object-background fusion with attention-guided SAM 2 prompting, DecAF achieves results comparable to training-based
+methods in a training-free manner. This finding suggests that the rich visual-linguistic alignments learned during
+pretraining may be sufficient for many VRS scenarios.
+
+Additionally, DeSa2VA \cite{dang_desa2va_2025} addresses the feature entanglement problem observed in prior approaches
+by proposing a decoupling-enhanced prompting scheme. Through linear projection that disentangles hidden states into
+distinct textual and visual feature subspaces, combined with triple supervision from predicted text masks, visual masks,
+and ground-truth annotations, DeSa2VA achieves state-of-the-art performance across diverse segmentation and grounding tasks.
+
+These recent developments highlight several important trends in video reasoning segmentation: the transition from
+supervised fine-tuning to reinforcement learning paradigms, the emergence of hierarchical token designs for better
+temporal modeling, the viability of training-free approaches, and the importance of feature decoupling for improved
+segmentation quality. These advances collectively address the core challenges of temporal consistency, computational
+efficiency, and complex reasoning that remain central to the field.
+

@@ -1,0 +1,11 @@
+# Requirements for local machine (M1 Mac — coding + unit tests, no GPU inference)
+numpy>=1.24
+scipy>=1.10
+Pillow>=9.0
+opencv-python>=4.8
+matplotlib>=3.7
+tqdm
+scikit-image>=0.20
+pandas
+pyyaml
+pytest

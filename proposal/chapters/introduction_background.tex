@@ -1,0 +1,76 @@
+% Introduction and Background of the Study
+\section{Introduction and Background of the Study}
+
+\subsection{The Evolution of Video Understanding: From Perception to Reasoning}
+
+The field of Computer Vision has witnessed a metamorphic transformation over the past decade. Historically,
+the discipline was concerned with Perception—the ability of a machine to recognize distinct visual patterns,
+such as edges, textures, and specific object classes (e.g., "car," "pedestrian"). Early methodologies relied
+on handcrafted features and heuristic algorithms, which were severely limited by their inability to generalize
+to unseen environments. The advent of Deep Convolutional Neural Networks \cite[CNNs]{krizhevsky_imagenet_2017}
+in the early 2010s marked the
+first major paradigm shift, enabling robust object detection and semantic segmentation based on visual taxonomy.
+
+However, the current decade has ushered in a second, more profound paradigm shift: the transition from
+Perception to Reasoning. In complex, real-world environments, identifying an object by its class is often
+insufficient. For instance, in an autonomous driving scenario, a system must distinguish between
+"the pedestrian waiting on the curb" and "the pedestrian about to cross against the light." Visually,
+they may look identical; the distinction lies in the temporal context and implicit intent. This necessity
+has gave rise to the field of Reasoning Video Segmentation (RVS).
+
+Unlike traditional Video Object Segmentation (VOS), which typically relies on an initial mask provided
+by a human user (semi-supervised) or simple category labels (unsupervised), RVS integrates Multimodal
+Large Language Models (MLLMs) into the visual pipeline. Systems such as \cite[LISA]{lai_lisa_2024} (Reasoning Segmentation
+via Large Language Model) and its video successors, \cite[VideoLISA]{bai_one_2024} and \cite[ViLLa]{zheng_villa_2025},
+allow users to query video
+data using complex, natural language expressions that require logical deduction, spatial awareness, and causal reasoning.
+For example, a query might be: "Segment the vehicle that caused the traffic jam." To execute this, the
+model must not only recognize vehicles but also understand the concept of a "traffic jam," identify the causal
+agent, and track that specific agent across time.
+
+\subsection{The Technological Backbone: Multimodal LLMs and Vision Transformers}
+
+The current state-of-the-art in RVS is built upon massive Foundation Models. Typically, these architectures
+follow a tripartite structure:
+
+\begin{enumerate}
+    \item The Visual Encoder: Utilizing architectures like \cite[CLIP]{radford_learning_2021} or
+          the \cite[SAM 2]{ravi_sam_2024} (Segment Anything Model 2)
+          image encoder to compress high-resolution video frames into abstract visual embeddings.
+    \item The Reasoning Core: A Large Language Model (e.g., \cite[LLaVA]{li_llava-onevision_2024} or
+          \cite[Vicuna]{zheng_judging_2023}) that processes the user's textual query and attends to the visual
+          embeddings to "reason" about which object matches the description.
+    \item The Mask Decoder: A specialized module that translates the LLM’s decision into a binary pixel mask.
+\end{enumerate}
+
+As of late 2025, \cite[SAM 2]{ravi_sam_2024} represents the pinnacle of this technology.
+It introduced a "streaming memory" architecture allowing the model to store information about an
+object in a memory bank, theoretically enabling it to handle occlusions and re-appearances.
+These advancements have pushed the semantic accuracy of video segmentation to unprecedented levels,
+allowing machines to understand nuanced human instructions.
+
+\subsection{The Theoretical Conflict: Stochastic Deep Learning vs. Deterministic Kinematics}
+
+Despite these advances, a fundamental theoretical conflict remains at the heart of modern video segmentation.
+Deep Learning models are inherently stochastic and data-driven. They treat every video frame as a new statistical
+puzzle to be solved. While attention mechanisms provide some temporal context, the model effectively "re-imagines"
+the object in every frame based on learned feature correlations.
+In contrast, the physical world is deterministic and kinematic. Objects in motion follow the laws of physics—momentum,
+inertia, and continuous trajectories. A car cannot teleport five meters to the left between Frame $t$ and Frame $t + 1$
+However, purely Deep Learning-based models often produce outputs that violate these physical laws, resulting in
+"temporal jitter" (flickering masks) or "hallucinations" (masks appearing in empty space).
+
+This thesis posits that the reliance on purely Deep Learning approaches for tracking is fundamentally inefficient.
+While Deep Learning is essential for the semantic reasoning (knowing "what" to track), Classical Mechanics and
+Geostatistics are far better suited for the spatial tracking (knowing "where" it will go). This study explores
+the intersection of these two fields, proposing that Spatio-Temporal Interpolation (specifically Kriging and
+Radial Basis Functions) and Trajectory Forecasting (\cite[LSTM]{hochreiter_long_1997}/ \cite[N-BEATS]{oreshkin_n-beats_2020})
+can stabilize the stochastic outputs of modern AI.
+
+\subsection{The Resource Crisis in Edge Computing}
+
+The background of this study is also defined by a hardware crisis. The computational cost of running models like
+\cite[VideoLISA]{bai_one_2024} or \cite[SAM 2]{ravi_sam_2024} s immense. A standard inference pass requires calculating
+attention matrices that scale quadratically with sequence length $(O(N^2))$. For a drone or an autonomous robot
+operating on battery power with limited thermal headroom, running a billion-parameter model at 30 Frames Per
+Second (FPS) is physically impossible.

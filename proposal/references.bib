@@ -1,0 +1,190 @@
+@article{krizhevsky_imagenet_2017,
+  title    = {{ImageNet} classification with deep convolutional neural networks},
+  volume   = {60},
+  issn     = {0001-0782, 1557-7317},
+  url      = {https://dl.acm.org/doi/10.1145/3065386},
+  doi      = {10.1145/3065386},
+  abstract = {We trained a large, deep convolutional neural network to classify the 1.2 million high-resolution images in the ImageNet LSVRC-2010 contest into the 1000 different classes. On the test data, we achieved top-1 and top-5 error rates of 37.5\% and 17.0\%, respectively, which is considerably better than the previous state-of-the-art. The neural network, which has 60 million parameters and 650,000 neurons, consists of five convolutional layers, some of which are followed by max-pooling layers, and three fully connected layers with a final 1000-way softmax. To make training faster, we used non-saturating neurons and a very efficient GPU implementation of the convolution operation. To reduce overfitting in the fully connected layers we employed a recently developed regularization method called "dropout" that proved to be very effective. We also entered a variant of this model in the ILSVRC-2012 competition and achieved a winning top-5 test error rate of 15.3\%, compared to 26.2\% achieved by the second-best entry.},
+  language = {en},
+  number   = {6},
+  urldate  = {2025-12-24},
+  journal  = {Communications of the ACM},
+  author   = {Krizhevsky, Alex and Sutskever, Ilya and Hinton, Geoffrey E.},
+  month    = may,
+  year     = {2017},
+  pages    = {84--90}
+}
+
+
+@misc{lai_lisa_2024,
+  title      = {{LISA}: {Reasoning} {Segmentation} via {Large} {Language} {Model}},
+  shorttitle = {{LISA}},
+  url        = {http://arxiv.org/abs/2308.00692},
+  doi        = {10.48550/arXiv.2308.00692},
+  abstract   = {Although perception systems have made remarkable advancements in recent years, they still rely on explicit human instruction or pre-defined categories to identify the target objects before executing visual recognition tasks. Such systems cannot actively reason and comprehend implicit user intention. In this work, we propose a new segmentation task -- reasoning segmentation. The task is designed to output a segmentation mask given a complex and implicit query text. Furthermore, we establish a benchmark comprising over one thousand image-instruction-mask data samples, incorporating intricate reasoning and world knowledge for evaluation purposes. Finally, we present LISA: large Language Instructed Segmentation Assistant, which inherits the language generation capabilities of multimodal Large Language Models (LLMs) while also possessing the ability to produce segmentation masks. We expand the original vocabulary with a {\textless}SEG{\textgreater} token and propose the embedding-as-mask paradigm to unlock the segmentation capability. Remarkably, LISA can handle cases involving complex reasoning and world knowledge. Also, it demonstrates robust zero-shot capability when trained exclusively on reasoning-free datasets. In addition, fine-tuning the model with merely 239 reasoning segmentation data samples results in further performance enhancement. Both quantitative and qualitative experiments show our method effectively unlocks new reasoning segmentation capabilities for multimodal LLMs. Code, models, and data are available at https://github.com/dvlab-research/LISA.},
+  urldate    = {2025-03-05},
+  publisher  = {arXiv},
+  author     = {Lai, Xin and Tian, Zhuotao and Chen, Yukang and Li, Yanwei and Yuan, Yuhui and Liu, Shu and Jia, Jiaya},
+  month      = may,
+  year       = {2024},
+  note       = {arXiv:2308.00692 [cs]},
+  keywords   = {Computer Science - Computer Vision and Pattern Recognition},
+  annote     = {Comment: Code, models, and data are available at https://github.com/dvlab-research/LISA},
+  file       = {Preprint PDF:/home/timur/Zotero/storage/MRSMWCHR/Lai и др. - 2024 - LISA Reasoning Segmentation via Large Language Mo.pdf:application/pdf;Snapshot:/home/timur/Zotero/storage/RR74PNHI/2308.html:text/html}
+}
+
+
+@misc{bai_one_2024,
+  title      = {One {Token} to {Seg} {Them} {All}: {Language} {Instructed} {Reasoning} {Segmentation} in {Videos}},
+  shorttitle = {One {Token} to {Seg} {Them} {All}},
+  url        = {http://arxiv.org/abs/2409.19603},
+  doi        = {10.48550/arXiv.2409.19603},
+  abstract   = {We introduce VideoLISA, a video-based multimodal large language model designed to tackle the problem of language-instructed reasoning segmentation in videos. Leveraging the reasoning capabilities and world knowledge of large language models, and augmented by the Segment Anything Model, VideoLISA generates temporally consistent segmentation masks in videos based on language instructions. Existing image-based methods, such as LISA, struggle with video tasks due to the additional temporal dimension, which requires temporal dynamic understanding and consistent segmentation across frames. VideoLISA addresses these challenges by integrating a Sparse Dense Sampling strategy into the video-LLM, which balances temporal context and spatial detail within computational constraints. Additionally, we propose a One-Token-Seg-All approach using a specially designed {\textless}TRK{\textgreater} token, enabling the model to segment and track objects across multiple frames. Extensive evaluations on diverse benchmarks, including our newly introduced ReasonVOS benchmark, demonstrate VideoLISA's superior performance in video object segmentation tasks involving complex reasoning, temporal understanding, and object tracking. While optimized for videos, VideoLISA also shows promising generalization to image segmentation, revealing its potential as a unified foundation model for language-instructed object segmentation. Code and model will be available at: https://github.com/showlab/VideoLISA.},
+  urldate    = {2025-05-04},
+  publisher  = {arXiv},
+  author     = {Bai, Zechen and He, Tong and Mei, Haiyang and Wang, Pichao and Gao, Ziteng and Chen, Joya and Liu, Lei and Zhang, Zheng and Shou, Mike Zheng},
+  month      = sep,
+  year       = {2024},
+  note       = {arXiv:2409.19603 [cs]},
+  keywords   = {Computer Science - Artificial Intelligence, Computer Science - Computer Vision and Pattern Recognition},
+  annote     = {Comment: Accepted by NeurlPS 2024},
+  file       = {Preprint PDF:/home/timur/Zotero/storage/228AI2XR/Bai и др. - 2024 - One Token to Seg Them All Language Instructed Rea.pdf:application/pdf;Snapshot:/home/timur/Zotero/storage/WEFIV2M3/2409.html:text/html}
+}
+
+
+@misc{zheng_villa_2025,
+  title      = {{ViLLa}: {Video} {Reasoning} {Segmentation} with {Large} {Language} {Model}},
+  shorttitle = {{ViLLa}},
+  url        = {http://arxiv.org/abs/2407.14500},
+  doi        = {10.48550/arXiv.2407.14500},
+  abstract   = {Recent efforts in video reasoning segmentation (VRS) integrate large language models (LLMs) with perception models to localize and track objects via textual instructions, achieving barely satisfactory results in simple scenarios. However, they struggled to discriminate and deduce the objects from user queries in more real-world scenes featured by long durations, multiple objects, rapid motion, and heavy occlusions. In this work, we analyze the underlying causes of these limitations, and present ViLLa: Video reasoning segmentation with Large Language Model. Remarkably, our ViLLa manages to tackle these challenges through multiple core innovations: (1) a context synthesizer that dynamically encodes the user intent with video contexts for accurate reasoning, resolving ambiguities in complex queries, and (2) a hierarchical temporal synchronizer that disentangles multi-object interactions across complex temporal scenarios by modelling multi-object interactions at local and global temporal scales. To enable efficient processing of long videos, ViLLa incorporates (3) a key segment sampler that adaptively partitions long videos into shorter but semantically dense segments for less redundancy. What's more, to promote research in this unexplored area, we construct a VRS benchmark, VideoReasonSeg, featuring different complex scenarios. Our model also exhibits impressive state-of-the-art results on VideoReasonSeg, Ref-YouTube-VOS, Ref-DAVIS17, MeViS, and ReVOS. Both quantitative and qualitative experiments demonstrate that our method effectively enhances video reasoning segmentation capabilities for multimodal LLMs. The code and dataset will be available at https://github.com/rkzheng99/ViLLa.},
+  urldate    = {2025-05-04},
+  publisher  = {arXiv},
+  author     = {Zheng, Rongkun and Qi, Lu and Chen, Xi and Wang, Yi and Wang, Kun and Qiao, Yu and Zhao, Hengshuang},
+  month      = mar,
+  year       = {2025},
+  note       = {arXiv:2407.14500 [cs]},
+  keywords   = {Computer Science - Computer Vision and Pattern Recognition},
+  annote     = {Comment: 15 pages,7 figures},
+  file       = {Preprint PDF:/home/timur/Zotero/storage/Y9FVTF6W/Zheng и др. - 2025 - ViLLa Video Reasoning Segmentation with Large Lan.pdf:application/pdf;Snapshot:/home/timur/Zotero/storage/A8K6LTWT/2407.html:text/html}
+}
+
+
+@misc{radford_learning_2021,
+  title     = {Learning {Transferable} {Visual} {Models} {From} {Natural} {Language} {Supervision}},
+  url       = {http://arxiv.org/abs/2103.00020},
+  doi       = {10.48550/arXiv.2103.00020},
+  abstract  = {State-of-the-art computer vision systems are trained to predict a fixed set of predetermined object categories. This restricted form of supervision limits their generality and usability since additional labeled data is needed to specify any other visual concept. Learning directly from raw text about images is a promising alternative which leverages a much broader source of supervision. We demonstrate that the simple pre-training task of predicting which caption goes with which image is an efficient and scalable way to learn SOTA image representations from scratch on a dataset of 400 million (image, text) pairs collected from the internet. After pre-training, natural language is used to reference learned visual concepts (or describe new ones) enabling zero-shot transfer of the model to downstream tasks. We study the performance of this approach by benchmarking on over 30 different existing computer vision datasets, spanning tasks such as OCR, action recognition in videos, geo-localization, and many types of fine-grained object classification. The model transfers non-trivially to most tasks and is often competitive with a fully supervised baseline without the need for any dataset specific training. For instance, we match the accuracy of the original ResNet-50 on ImageNet zero-shot without needing to use any of the 1.28 million training examples it was trained on. We release our code and pre-trained model weights at https://github.com/OpenAI/CLIP.},
+  urldate   = {2025-12-24},
+  publisher = {arXiv},
+  author    = {Radford, Alec and Kim, Jong Wook and Hallacy, Chris and Ramesh, Aditya and Goh, Gabriel and Agarwal, Sandhini and Sastry, Girish and Askell, Amanda and Mishkin, Pamela and Clark, Jack and Krueger, Gretchen and Sutskever, Ilya},
+  month     = feb,
+  year      = {2021},
+  note      = {arXiv:2103.00020 [cs]},
+  keywords  = {Computer Science - Computer Vision and Pattern Recognition, Computer Science - Machine Learning},
+  file      = {Preprint PDF:/home/timur/Zotero/storage/997TIKGQ/Radford и др. - 2021 - Learning Transferable Visual Models From Natural Language Supervision.pdf:application/pdf}
+}
+
+
+@misc{ravi_sam_2024,
+  title      = {{SAM} 2: {Segment} {Anything} in {Images} and {Videos}},
+  shorttitle = {{SAM} 2},
+  url        = {http://arxiv.org/abs/2408.00714},
+  doi        = {10.48550/arXiv.2408.00714},
+  abstract   = {We present Segment Anything Model 2 (SAM 2), a foundation model towards solving promptable visual segmentation in images and videos. We build a data engine, which improves model and data via user interaction, to collect the largest video segmentation dataset to date. Our model is a simple transformer architecture with streaming memory for real-time video processing. SAM 2 trained on our data provides strong performance across a wide range of tasks. In video segmentation, we observe better accuracy, using 3x fewer interactions than prior approaches. In image segmentation, our model is more accurate and 6x faster than the Segment Anything Model (SAM). We believe that our data, model, and insights will serve as a significant milestone for video segmentation and related perception tasks. We are releasing our main model, dataset, as well as code for model training and our demo.},
+  urldate    = {2025-03-05},
+  publisher  = {arXiv},
+  author     = {Ravi, Nikhila and Gabeur, Valentin and Hu, Yuan-Ting and Hu, Ronghang and Ryali, Chaitanya and Ma, Tengyu and Khedr, Haitham and Rädle, Roman and Rolland, Chloe and Gustafson, Laura and Mintun, Eric and Pan, Junting and Alwala, Kalyan Vasudev and Carion, Nicolas and Wu, Chao-Yuan and Girshick, Ross and Dollár, Piotr and Feichtenhofer, Christoph},
+  month      = oct,
+  year       = {2024},
+  note       = {arXiv:2408.00714 [cs]},
+  keywords   = {Computer Science - Artificial Intelligence, Computer Science - Computer Vision and Pattern Recognition, Computer Science - Machine Learning},
+  annote     = {Comment: Website: https://ai.meta.com/sam2},
+  file       = {Preprint PDF:/home/timur/Zotero/storage/VAGKNFDJ/Ravi и др. - 2024 - SAM 2 Segment Anything in Images and Videos.pdf:application/pdf;Snapshot:/home/timur/Zotero/storage/IAHY2S7S/2408.html:text/html}
+}
+
+
+@misc{li_llava-onevision_2024,
+  title      = {{LLaVA}-{OneVision}: {Easy} {Visual} {Task} {Transfer}},
+  shorttitle = {{LLaVA}-{OneVision}},
+  url        = {http://arxiv.org/abs/2408.03326},
+  doi        = {10.48550/arXiv.2408.03326},
+  abstract   = {We present LLaVA-OneVision, a family of open large multimodal models (LMMs) developed by consolidating our insights into data, models, and visual representations in the LLaVA-NeXT blog series. Our experimental results demonstrate that LLaVA-OneVision is the first single model that can simultaneously push the performance boundaries of open LMMs in three important computer vision scenarios: single-image, multi-image, and video scenarios. Importantly, the design of LLaVA-OneVision allows strong transfer learning across different modalities/scenarios, yielding new emerging capabilities. In particular, strong video understanding and cross-scenario capabilities are demonstrated through task transfer from images to videos.},
+  urldate    = {2025-05-04},
+  publisher  = {arXiv},
+  author     = {Li, Bo and Zhang, Yuanhan and Guo, Dong and Zhang, Renrui and Li, Feng and Zhang, Hao and Zhang, Kaichen and Zhang, Peiyuan and Li, Yanwei and Liu, Ziwei and Li, Chunyuan},
+  month      = oct,
+  year       = {2024},
+  note       = {arXiv:2408.03326 [cs]},
+  keywords   = {Computer Science - Artificial Intelligence, Computer Science - Computer Vision and Pattern Recognition, Computer Science - Computation and Language},
+  annote     = {Comment: Project Homepage: https://llava-vl.github.io/blog/2024-08-05-llava-onevision/},
+  file       = {Preprint PDF:/home/timur/Zotero/storage/NUVRZEL7/Li и др. - 2024 - LLaVA-OneVision Easy Visual Task Transfer.pdf:application/pdf}
+}
+
+
+@misc{zheng_judging_2023,
+  title     = {Judging {LLM}-as-a-{Judge} with {MT}-{Bench} and {Chatbot} {Arena}},
+  url       = {http://arxiv.org/abs/2306.05685},
+  doi       = {10.48550/arXiv.2306.05685},
+  abstract  = {Evaluating large language model (LLM) based chat assistants is challenging due to their broad capabilities and the inadequacy of existing benchmarks in measuring human preferences. To address this, we explore using strong LLMs as judges to evaluate these models on more open-ended questions. We examine the usage and limitations of LLM-as-a-judge, including position, verbosity, and self-enhancement biases, as well as limited reasoning ability, and propose solutions to mitigate some of them. We then verify the agreement between LLM judges and human preferences by introducing two benchmarks: MT-bench, a multi-turn question set; and Chatbot Arena, a crowdsourced battle platform. Our results reveal that strong LLM judges like GPT-4 can match both controlled and crowdsourced human preferences well, achieving over 80\% agreement, the same level of agreement between humans. Hence, LLM-as-a-judge is a scalable and explainable way to approximate human preferences, which are otherwise very expensive to obtain. Additionally, we show our benchmark and traditional benchmarks complement each other by evaluating several variants of LLaMA and Vicuna. The MT-bench questions, 3K expert votes, and 30K conversations with human preferences are publicly available at https://github.com/lm-sys/FastChat/tree/main/fastchat/llm\_judge.},
+  urldate   = {2025-12-24},
+  publisher = {arXiv},
+  author    = {Zheng, Lianmin and Chiang, Wei-Lin and Sheng, Ying and Zhuang, Siyuan and Wu, Zhanghao and Zhuang, Yonghao and Lin, Zi and Li, Zhuohan and Li, Dacheng and Xing, Eric P. and Zhang, Hao and Gonzalez, Joseph E. and Stoica, Ion},
+  month     = dec,
+  year      = {2023},
+  note      = {arXiv:2306.05685 [cs]},
+  keywords  = {Computer Science - Artificial Intelligence, Computer Science - Computation and Language},
+  annote    = {Comment: NeurIPS 2023 Datasets and Benchmarks Track},
+  file      = {Preprint PDF:/home/timur/Zotero/storage/V363IM7B/Zheng и др. - 2023 - Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena.pdf:application/pdf}
+}
+
+
+@article{hochreiter_long_1997,
+  title    = {Long {Short}-{Term} {Memory}},
+  volume   = {9},
+  issn     = {0899-7667, 1530-888X},
+  url      = {https://direct.mit.edu/neco/article/9/8/1735-1780/6109},
+  doi      = {10.1162/neco.1997.9.8.1735},
+  abstract = {Learning to store information over extended time intervals by recurrent backpropagation takes a very long time, mostly because of insufficient, decaying error backflow. We briefly review Hochreiter's (1991) analysis of this problem, then address it by introducing a novel, efficient, gradient based method called long short-term memory (LSTM). Truncating the gradient where this does not do harm, LSTM can learn to bridge minimal time lags in excess of 1000 discrete-time steps by enforcing constant error flow through constant error carousels within special units. Multiplicative gate units learn to open and close access to the constant error flow. LSTM is local in space and time; its computational complexity per time step and weight is O. 1. Our experiments with artificial data involve local, distributed, real-valued, and noisy pattern representations. In comparisons with real-time recurrent learning, back propagation through time, recurrent cascade correlation, Elman nets, and neural sequence chunking, LSTM leads to many more successful runs, and learns much faster. LSTM also solves complex, artificial long-time-lag tasks that have never been solved by previous recurrent network algorithms.},
+  language = {en},
+  number   = {8},
+  urldate  = {2025-12-24},
+  journal  = {Neural Computation},
+  author   = {Hochreiter, Sepp and Schmidhuber, Jürgen},
+  month    = nov,
+  year     = {1997},
+  pages    = {1735--1780}
+}
+
+
+@misc{oreshkin_n-beats_2020,
+  title      = {N-{BEATS}: {Neural} basis expansion analysis for interpretable time series forecasting},
+  shorttitle = {N-{BEATS}},
+  url        = {http://arxiv.org/abs/1905.10437},
+  doi        = {10.48550/arXiv.1905.10437},
+  abstract   = {We focus on solving the univariate times series point forecasting problem using deep learning. We propose a deep neural architecture based on backward and forward residual links and a very deep stack of fully-connected layers. The architecture has a number of desirable properties, being interpretable, applicable without modification to a wide array of target domains, and fast to train. We test the proposed architecture on several well-known datasets, including M3, M4 and TOURISM competition datasets containing time series from diverse domains. We demonstrate state-of-the-art performance for two configurations of N-BEATS for all the datasets, improving forecast accuracy by 11\% over a statistical benchmark and by 3\% over last year's winner of the M4 competition, a domain-adjusted hand-crafted hybrid between neural network and statistical time series models. The first configuration of our model does not employ any time-series-specific components and its performance on heterogeneous datasets strongly suggests that, contrarily to received wisdom, deep learning primitives such as residual blocks are by themselves sufficient to solve a wide range of forecasting problems. Finally, we demonstrate how the proposed architecture can be augmented to provide outputs that are interpretable without considerable loss in accuracy.},
+  urldate    = {2025-12-24},
+  publisher  = {arXiv},
+  author     = {Oreshkin, Boris N. and Carpov, Dmitri and Chapados, Nicolas and Bengio, Yoshua},
+  month      = feb,
+  year       = {2020},
+  note       = {arXiv:1905.10437 [cs]},
+  keywords   = {Computer Science - Machine Learning, Statistics - Machine Learning}
+}
+
+
+@misc{vaswani_attention_2023,
+  title     = {Attention {Is} {All} {You} {Need}},
+  url       = {http://arxiv.org/abs/1706.03762},
+  doi       = {10.48550/arXiv.1706.03762},
+  abstract  = {The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-to-German translation task, improving over the existing best results, including ensembles by over 2 BLEU. On the WMT 2014 English-to-French translation task, our model establishes a new single-model state-of-the-art BLEU score of 41.8 after training for 3.5 days on eight GPUs, a small fraction of the training costs of the best models from the literature. We show that the Transformer generalizes well to other tasks by applying it successfully to English constituency parsing both with large and limited training data.},
+  urldate   = {2025-12-24},
+  publisher = {arXiv},
+  author    = {Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N. and Kaiser, Lukasz and Polosukhin, Illia},
+  month     = aug,
+  year      = {2023},
+  note      = {arXiv:1706.03762 [cs]},
+  keywords  = {Computer Science - Computation and Language, Computer Science - Machine Learning},
+  annote    = {Comment: 15 pages, 5 figures},
+  file      = {Preprint PDF:/home/timur/Zotero/storage/L8UDMAXJ/Vaswani и др. - 2023 - Attention Is All You Need.pdf:application/pdf}
+}

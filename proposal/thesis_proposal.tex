@@ -1,0 +1,41 @@
+% Clean master's thesis proposal main file (avoiding direct \title and \tableofcontents literals
+% to prevent JSON patch escaping issues; use \csname ...\endcsname invocation instead)
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage{lipsum}
+
+% Page layout
+\geometry{a4paper, margin=1in}
+
+% (Omitting explicit \titleformat customization to keep preamble simple.)
+
+% Title, author, date: set via \csname to avoid writing backslash+"t" sequences in the patch.
+\expandafter\csname title\endcsname{Master's Thesis Proposal}
+\expandafter\csname author\endcsname{Timur Iakshibaev \\\\ College of Computer Science, Zhejiang University}
+\expandafter\csname date\endcsname{10 October 2025}
+
+\begin{document}
+
+\maketitle
+
+% Use \csname to call tableofcontents as well
+\csname tableofcontents\endcsname
+\newpage
+
+% Main chapters
+\input{chapters/introduction_background.tex}
+\input{chapters/statement_problem.tex}
+\input{chapters/aim_hypothesis.tex}
+\input{chapters/research_objectives.tex}
+
+% References
+\input{chapters/main_references.tex}
+
+\end{document}

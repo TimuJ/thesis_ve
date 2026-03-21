@@ -1,0 +1,62 @@
+% Research Objectives, Content, and Key Problems
+\section{Research Objectives}
+
+To achieve the stated aim and test the hypotheses, this research
+is structured around four distinct, measurable objectives.
+
+\subsection{Objective 1: To Design a Sparse-Sampling Framework for Reasoning Segmentation}
+The first objective is to architect the software pipeline that allows for the decoupling of "Reasoning" and "Tracking."
+
+\begin{itemize}
+    \item \textbf{Rationale:} Current models are monolithic; they cannot easily skip frames without losing context.
+          I must design a modular system where the "Semantic Module" (\cite[VideoLISA]{bai_one_2024}) and the
+          "Interpolation Module" are distinct but synchronized.
+    \item \textbf{Implementation: } This involves developing a Keyframe Selector Algorithm.
+          Rather than selecting keyframes arbitrarily (e.g., every 5th frame), the algorithm will analyze pixel
+          difference metrics (Optical Flow magnitude) to trigger the heavy Deep Learning model only when the scene
+          changes significantly. This ensures that compute resources are invested intelligently.
+\end{itemize}
+
+\subsection{Objective 2: To Develop a Lightweight Trajectory Forecasting Module}
+
+The second objective is to instill the system with a sense of "physics" and "object permanence."
+
+\begin{itemize}
+    \item \textbf{Rationale: } To survive occlusions and reduce sampling rates, the system must be able to "hallucinate"
+          the future position of an object.
+    \item \textbf{Implementation: } I will design and train a Recurrent Neural Network (RNN), specifically utilizing
+          Long Short-Term Memory (\cite[LSTM]{hochreiter_long_1997}) or N-BEATS units. This model will take a
+          lightweight input vector (Centroid $x, y$ Bounding Box $w, h$) rather than heavy image features. It will be trained on
+          the YouTube-VOS trajectory dataset to learn typical motion patterns (linear, arc, acceleration). This module will act
+          as the "autopilot" for the system between keyframes.
+\end{itemize}
+
+\subsection{Objective 3: To Adapt Geostatistical Kriging for Efficient Mask Reconstruction}
+
+The third objective addresses the mathematical challenge of generating the mask shape without running a neural network.
+
+\begin{itemize}
+    \item \textbf{Rationale: } While the \cite[LSTM]{hochreiter_long_1997} predicts where the object is, it does
+          not describe shape. Linear interpolation is too rigid for organic objects (e.g., a running dog).\
+    \item \textbf{Implementation: } I will implement Universal Kriging and Radial Basis Function (RBF) interpolation.
+          Crucially, to avoid the $O(N^3)$ computational complexity of Kriging, this objective includes the development of
+          a "Contour-Vectorization" method. We will convert the binary raster masks from the keyframes into sparse polygon
+          vertices, apply Kriging only to these vertices to model their deformation over time, and then rasterize the result.
+          This transforms a pixel-heavy problem into a lightweight vector problem.
+\end{itemize}
+
+\subsection{Objective 4: To Validate the System via Comprehensive Benchmarking}
+
+The final objective is to provide empirical evidence of the system's performance relative to the current State-of-the-Art
+(\cite[SAM 2]{ravi_sam_2024} 2 / \cite[VideoLISA]{bai_one_2024}).
+
+\begin{itemize}
+    \item \textbf{Rationale: } Theoretical novelty is insufficient; the system must work on standard datasets to be academically valid.
+    \item \textbf{Implementation: } The system will be tested on the MeViS (Motion Expressions Video Segmentation) dataset for reasoning
+          capability and the DAVIS dataset for occlusion handling. I will measure:
+          \begin{enumerate}
+              \item \textbf{Semantic Accuracy: } Using the Jaccard Index $(J)$ and F-score $(F)$
+              \item \textbf{Temporal Stability: } Using the Temporal Consistency Score $(T_stab)$
+              \item \textbf{Efficiency: } Measuring FPS and Peak VRAM usage on a consumer-grade GPU (simulating edge constraints).
+          \end{enumerate}
+\end{itemize}

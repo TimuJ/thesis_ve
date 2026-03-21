@@ -1,0 +1,34 @@
+# Requirements for GPU machine (CUDA)
+# Install PyTorch first:
+#   pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu121
+
+# Core
+numpy>=1.24
+scipy>=1.10
+Pillow>=9.0
+opencv-python>=4.8
+matplotlib>=3.7
+tqdm
+
+# Evaluation metrics
+scikit-image>=0.20
+
+# Deep learning utilities
+einops
+timm
+
+# Diffusion / generative
+diffusers>=0.27
+accelerate
+transformers>=4.38
+
+# State-space models
+# mamba-ssm  # Install from source if needed: pip install mamba-ssm
+
+# Perceptual metrics
+lpips
+
+# Utilities
+pandas
+pyyaml
+huggingface_hub

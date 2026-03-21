@@ -1,0 +1,45 @@
+% Research Aim and Hypothesis
+\section{Research Aim and Hypothesis}
+
+\subsection{Research Aim}
+
+The overarching aim of this research is to develop, implement, and validate a Hybrid Sparse-Sampling
+Architecture for Reasoning Video Segmentation. This architecture seeks to decouple the heavy semantic
+processing from the spatial tracking task.
+
+Specifically, the aim is to create a system that utilizes Deep Learning
+(\cite[VideoLISA]{bai_one_2024}/\cite[SAM 2]{ravi_sam_2024})
+only on sparse keyframes to establish semantic understanding, while employing lightweight Classical
+Interpolation (Kriging) and Trajectory Forecasting (\cite[LSTM]{hochreiter_long_1997}) to reconstruct
+the intermediate frames.
+By doing so, the research aims to prove that it is possible to achieve State-of-the-Art (SOTA)
+accuracy and stability on resource-constrained hardware, effectively solving the "Stability-Efficiency Trade-off."
+
+\subsection{Research Hypothesis}
+
+The study is guided by the following core hypothesis and sub-hypotheses:
+
+\textbf{Core Hypothesis:}
+
+\textit{It is hypothesized that a hybrid segmentation framework, which combines sparse semantic
+    keyframe extraction with geostatistical interpolation and LSTM-based trajectory forecasting, will achieve
+    higher temporal stability and computational efficiency than a purely deep-learning-based dense sampling approach,
+    without a statistically significant reduction in semantic accuracy.}
+
+\textbf{Sub-Hypothesis 1 (Efficiency):}
+
+\textit{By reducing the frequency of deep learning inference to 20\% of the video frames (Sparse Sampling)
+    and utilizing interpolation for the remaining 80\%, the system will achieve a processing speed increase of at
+    least 200\% (3x speedup) compared to the baseline \cite[VideoLISA]{bai_one_2024} model.}
+
+\textbf{Sub-Hypothesis 2 (Stability):}
+
+\textit{The application of Geostatistical Interpolation (Universal Kriging) on mask contours will result in
+    a lower "Flow-Warping Error" (a metric of temporal jitter) compared to masks generated independently by neural
+    networks, due to the variance-minimizing properties of the Kriging estimator.}
+
+\textbf{Sub-Hypothesis 3 (Occlusion):}
+
+\textit{An LSTM-based motion predictor, trained on object centroid trajectories, will maintain higher
+    Intersection-over-Union (IoU) scores during periods of full occlusion (5+ frames) compared to the standard
+    visual attention mechanisms of Transformers, as the LSTM explicitly models momentum and velocity.}

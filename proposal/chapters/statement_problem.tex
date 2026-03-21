@@ -1,0 +1,56 @@
+% Statement of the Problem
+\section{Statement of the Problem}
+
+The rapid advancement of Reasoning Video Segmentation (RVS) has created a dichotomy where
+semantic capability has outpaced temporal stability and computational efficiency. While we can
+now ask machines to perform complex visual reasoning tasks, the implementation of these systems
+in real-world, real-time scenarios is obstructed by three critical, interrelated problems.
+
+\subsection{Problem 1: The Computational Inefficiency of Dense Sampling}
+
+The first and most pragmatic problem is the prohibitive computational cost of Dense Sampling Strategies.
+Current state-of-the-art models, including \cite[VideoLISA]{bai_one_2024} and \cite[ViLLa]{zheng_villa_2025},
+are designed to process video data frame-by-frame.
+In this paradigm, the Multimodal Large Language Model (MLLM) and the Vision Encoder must perform a full forward
+pass for every single image in the video sequence.
+
+Given that a standard video operates at 30 to 60 FPS, and a single inference of an MLLM can take
+between 50ms to 200ms on high-end consumer hardware (e.g., NVIDIA RTX 4090), achieving real-time
+performance is mathematically impossible without massive hardware scaling. For edge applications—such
+as Search and Rescue Drones, Agricultural Robotics, or wearable AR devices—this latency is unacceptable.
+These devices typically operate on embedded chips (e.g., NVIDIA Jetson Orin) with a fraction of the
+compute power of a data center GPU. Consequently, the current RVS framework is confined to offline processing,
+rendering it useless for applications requiring immediate decision-making.
+
+\subsection{Problem 2: Temporal Jitter and Semantic Flickering}
+
+The second problem is the phenomenon of Temporal Jitter, also known as mask flickering.
+Deep Learning segmentation models typically process frames with a high degree of independence.
+Even with mechanisms like "Memory Attention" in \cite[SAM 2]{ravi_sam_2024}, the model re-evaluates the pixel-wise
+classification probabilities at each timestep.
+
+Because neural networks are sensitive to minor perturbations in input data (pixel noise, lighting changes,
+slight motion blur), the generated mask often exhibits high-frequency fluctuations in its boundary shape.
+An object that is rigid in the real world (e.g., a truck) might appear to "wobble" or deform in the segmented video.
+This is not merely an aesthetic issue; in downstream applications like robotic grasping or collision avoidance,
+these fluctuations introduce noise into the control loop, potentially leading to system failure.
+The problem stems from the fact that standard RVS models maximize Semantic Accuracy (IoU) on single frames but
+do not explicitly optimize for Kinematic Smoothness across time.
+
+\subsection{Problem 3: Tracking Failure During Occlusion (The "Object Permanence" Deficit)}
+
+The third and most complex problem is the failure of attention mechanisms during Occlusions. In video data, objects are
+frequently obscured by foreground elements (e.g., a pedestrian walking behind a tree).
+
+Modern Transformers rely on "Attention" to track objects. Attention calculates the similarity between the
+object's features in the current frame and its features in memory. However, when an object is fully occluded,
+its visual features disappear. The Attention mechanism effectively "loses sight" of the target. While models like
+\cite[SAM 2]{ravi_sam_2024} attempt to handle this with a memory bank, they often struggle with Long-Term Occlusion.
+If the object
+remains hidden for 20 or 30 frames, the attention weights decay, and the model "forgets" the object exists.
+When the object re-emerges, the model often treats it as a new, unrelated entity (ID Switch).
+
+This failure occurs because Transformers lack an explicit Motion Model. They do not intuitively understand
+"Object Permanence" or momentum. Unlike a human, who can predict where a car will emerge from a tunnel based
+on its speed before entering, a Transformer only knows what it can "see." This lack of predictive capability
+leads to segmented tracks that are broken, discontinuous, and unreliable in dynamic environments.
