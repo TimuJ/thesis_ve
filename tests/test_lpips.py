@@ -2,16 +2,10 @@
 import numpy as np
 import pytest
 
-try:
-    import torch
-    HAS_TORCH = True
-except ImportError:
-    HAS_TORCH = False
-
-from src.evaluation.metrics import lpips_score
+from src.evaluation.metrics import lpips_score, HAS_LPIPS
 
 
-@pytest.mark.skipif(not HAS_TORCH, reason="LPIPS requires torch")
+@pytest.mark.skipif(not HAS_LPIPS, reason="LPIPS requires torch and lpips packages")
 def test_lpips_identical():
     """Identical images should give LPIPS close to 0."""
     img = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
@@ -19,7 +13,7 @@ def test_lpips_identical():
     assert result < 0.01
 
 
-@pytest.mark.skipif(not HAS_TORCH, reason="LPIPS requires torch")
+@pytest.mark.skipif(not HAS_LPIPS, reason="LPIPS requires torch and lpips packages")
 def test_lpips_different():
     """Different images should give positive LPIPS."""
     img1 = np.zeros((64, 64, 3), dtype=np.uint8)
