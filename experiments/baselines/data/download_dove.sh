@@ -13,7 +13,12 @@ cd "$SCRIPT_DIR"
 # DOVE Google Drive folder: https://drive.google.com/drive/folders/1yNKG6rtTNtZQY8qL74GoQwA0jgjBUEby
 # Individual dataset IDs (from DOVE README)
 declare -A DATASET_IDS=(
-    ["UDM10"]="PLACEHOLDER_UDM10_ID"
+    ["UDM10"]="1AmGVSCwMm_OFPd3DKgNyTwj0GG2H-tG4"
+    ["SPMCS"]="1b2uktCFPKS-R1fTecWcLFcOnmUFIBNWT"
+    ["YouHQ40"]="1zO23UCStxL3htPJQcDUUnUeMvDrysLTh"
+    ["RealVSR"]="1wr4tTiCvQlqdYPeU1dmnjb5KFY4VjGCO"
+    ["MVSR4x"]="16sesBD_9Xx_5Grtx18nosBw1w94KlpQt"
+    ["VideoLQ"]="1lh0vkU_llxE0un1OigJ0DWPQwt1i68Vn"
 )
 
 DATASET="${1:-UDM10}"
@@ -38,16 +43,22 @@ fi
 
 GDRIVE_ID="${DATASET_IDS[$DATASET]}"
 
-# Download and extract
-gdown --folder "$GDRIVE_ID" -O "$DATASET" || {
+# Download archive and extract
+ARCHIVE="${DATASET}.zip"
+gdown "$GDRIVE_ID" -O "$ARCHIVE" || {
     echo ""
     echo "gdown failed (Google Drive quota limit). Manual download:"
     echo "  1. Go to: https://drive.google.com/drive/folders/1yNKG6rtTNtZQY8qL74GoQwA0jgjBUEby"
     echo "  2. Download the $DATASET folder"
     echo "  3. Extract to: $SCRIPT_DIR/$DATASET/"
     echo "  Expected structure: $DATASET/GT/ and $DATASET/LQ/"
+    rm -f "$ARCHIVE"
     exit 1
 }
+
+echo "Extracting $ARCHIVE..."
+unzip -q "$ARCHIVE" -d .
+rm -f "$ARCHIVE"
 
 echo "Done. Dataset at: $SCRIPT_DIR/$DATASET/"
 echo "Expected structure:"
