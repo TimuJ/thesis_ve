@@ -65,7 +65,7 @@ experiments/
 
 ### run_inference.sh
 - **Interface:** `--input <LQ_dir> --output <output_dir>`
-- Loops over each clip subdirectory in input
+- Upscale-A-Video expects video files as input (not frame directories). If DOVE provides frames, the script assembles them into video with ffmpeg first, then runs inference, then extracts output frames.
 - Calls `inference_upscale_a_video.py` with params: 150 steps, guidance 7, seed 30
 - Saves output frames to `--output` matching GT directory structure (per-clip subdirs)
 
@@ -79,12 +79,21 @@ experiments/
 1. Clone repo into `baselines/mgld_vsr/repo/`
 2. Create conda env from `environment.yaml`
 3. Install additional deps: xformers, mmcv, taming-transformers, CLIP
-4. Download checkpoints from HuggingFace (`ianyeung/MGLD-VSR`)
+4. Download checkpoints from HuggingFace (`Iceclear/MGLD-VSR`):
+   - `mgldvsr_unet.ckpt` — diffusion denoising U-net
+   - `DAPE.pth` — degradation-aware prompt extractor
+   - `raft-things.pth` — optical flow model
+   - Video VAE checkpoint (from repo or HuggingFace)
 
 ### run_inference.sh
-- **Interface:** `--input <LQ_dir> --output <output_dir>`
-- Calls `vsr_val_ddpm_text_T_vqganfin_oldcanvas_tile.py` with config for 4x SR
-- Params: 50 DDPM steps, dec_w 1.0, adain color fix
+- **Interface:** `--input <LQ_dir> --output <output_dir>` (wraps the native args)
+- Calls `scripts/vsr_val_ddpm_text_T_vqganfin_w_latent.py` with full native args:
+  - `--config configs/mgldvsr/mgldvsr_512_realbasicvsr_deg.yaml`
+  - `--ckpt <unet_checkpoint>` and `--vqgan_ckpt <vae_checkpoint>`
+  - `--seqs-path <input>` (mapped from `--input`)
+  - `--outdir <output>` (mapped from `--output`)
+  - `--latent-dir <temp_dir>` (intermediate latent storage)
+  - `--ddpm_steps 50 --dec_w 1.0 --colorfix_type adain --n_gpus 1`
 - Saves output frames to `--output` matching GT directory structure
 
 ## Shared Evaluation (`baselines/evaluate.py`)
@@ -114,17 +123,19 @@ python baselines/evaluate.py \
 {
   "model": "upscale_a_video",
   "dataset": "UDM10",
-  "overall": {"PSNR": 27.13, "SSIM": 0.843, "LPIPS": 0.190},
+  "overall": {"PSNR_mean": 27.13, "SSIM_mean": 0.843, "LPIPS_mean": 0.190},
   "per_clip": {
-    "clip_001": {"PSNR": 28.1, "SSIM": 0.87, "LPIPS": 0.15},
-    "clip_002": {"PSNR": 26.5, "SSIM": 0.82, "LPIPS": 0.21}
+    "clip_001": {"PSNR_mean": 28.1, "SSIM_mean": 0.87, "LPIPS_mean": 0.15},
+    "clip_002": {"PSNR_mean": 26.5, "SSIM_mean": 0.82, "LPIPS_mean": 0.21}
   }
 }
 ```
 
+Keys use `_mean` suffix to match existing `src/evaluation/metrics.py` conventions (`PSNR_mean`, `SSIM_mean` from `evaluate_sequence()`).
+
 ## Code Changes to `src/`
 
-- **`src/evaluation/metrics.py`** — add `lpips_score(pred, gt)` function, graceful degradation when GPU unavailable
+- **`src/evaluation/metrics.py`** — add `lpips_score(pred, gt)` function (graceful degradation when GPU unavailable) and integrate into `evaluate_sequence()` / `evaluate_dataset()` as `LPIPS_mean`
 - **`requirements-gpu.txt`** — add `lpips` package
 
 ## .gitignore Additions
