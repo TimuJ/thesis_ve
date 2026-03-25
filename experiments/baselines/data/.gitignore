@@ -1,0 +1,7 @@
+# Ignore downloaded datasets — download via download_dove.sh
+UDM10/
+SPMCS/
+YouHQ40/
+RealVSR/
+MVSR4x/
+VideoLQ/

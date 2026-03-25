@@ -17,6 +17,7 @@ __pycache__/
 .venv/
 venv/
 data/
+!experiments/baselines/data/
 checkpoints/
 outputs/
 *.egg-info/
