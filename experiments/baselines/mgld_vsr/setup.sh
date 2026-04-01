@@ -7,6 +7,16 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$SCRIPT_DIR/repo"
 
+# Auto-detect conda (support local miniconda installs)
+if ! command -v conda &> /dev/null; then
+    for p in "$HOME/miniconda3" "/data/disk1/timur/miniconda3"; do
+        if [[ -f "$p/bin/conda" ]]; then
+            eval "$("$p/bin/conda" shell.bash hook)"
+            break
+        fi
+    done
+fi
+
 # 1. Clone repo
 if [[ -d "$REPO_DIR" ]]; then
     echo "Repo already cloned at $REPO_DIR"

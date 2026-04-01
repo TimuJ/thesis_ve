@@ -36,7 +36,11 @@ for ckpt in mgldvsr_unet.ckpt; do
 done
 
 # Activate conda env
-eval "$(conda shell.bash hook)"
+if ! command -v conda &> /dev/null; then
+    for p in "$HOME/miniconda3" "/data/disk1/timur/miniconda3"; do
+        [[ -f "$p/bin/conda" ]] && eval "$("$p/bin/conda" shell.bash hook)" && break
+    done
+fi
 conda activate mgldvsr
 
 mkdir -p "$OUTPUT"

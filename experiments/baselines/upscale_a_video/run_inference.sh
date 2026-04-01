@@ -26,7 +26,11 @@ REPO_DIR="$SCRIPT_DIR/repo"
 TEMP_DIR="$SCRIPT_DIR/.tmp_videos"
 
 # Activate conda env
-eval "$(conda shell.bash hook)"
+if ! command -v conda &> /dev/null; then
+    for p in "$HOME/miniconda3" "/data/disk1/timur/miniconda3"; do
+        [[ -f "$p/bin/conda" ]] && eval "$("$p/bin/conda" shell.bash hook)" && break
+    done
+fi
 conda activate uav
 
 mkdir -p "$OUTPUT"
