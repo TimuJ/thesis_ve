@@ -17,6 +17,7 @@ __pycache__/
 .venv/
 venv/
 data/
+!src/data/
 !experiments/baselines/data/
 checkpoints/
 outputs/
@@ -24,8 +25,12 @@ outputs/
 .pytest_cache/
 wandb/
 
+# Private docs (server IPs, credentials, SSH keys)
+docs/private/
+
 # Baselines — large files
 experiments/baselines/data/UDM10/
 experiments/baselines/results/
 experiments/baselines/upscale_a_video/repo/
 experiments/baselines/mgld_vsr/repo/
+upscale_a_video-001.zip

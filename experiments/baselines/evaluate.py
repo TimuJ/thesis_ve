@@ -81,6 +81,13 @@ def main(argv=None):
         gt_frames = gt_frames[:n]
         pred_frames = pred_frames[:n]
 
+        # Crop pred frames to GT resolution if needed (models may pad to multiples of 64)
+        gh, gw = gt_frames[0].shape[:2]
+        ph, pw = pred_frames[0].shape[:2]
+        if (ph, pw) != (gh, gw):
+            print(f"  Cropping pred {pw}x{ph} -> {gw}x{gh}")
+            pred_frames = [f[:gh, :gw] for f in pred_frames]
+
         result = evaluate_sequence(pred_frames, gt_frames)
         clip_metrics = {
             "PSNR_mean": result["PSNR_mean"],
