@@ -34,3 +34,5 @@ experiments/baselines/results/
 experiments/baselines/upscale_a_video/repo/
 experiments/baselines/mgld_vsr/repo/
 upscale_a_video-001.zip
+papers/*.pdf
+.claude/projects/
