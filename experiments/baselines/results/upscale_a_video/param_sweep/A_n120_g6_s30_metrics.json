@@ -1,0 +1,21 @@
+{
+  "evaluation": {
+    "tool": "pyiqa",
+    "psnr": "Y channel (YCbCr)",
+    "ssim": "Y channel (YCbCr)",
+    "lpips": "RGB (AlexNet)",
+    "crop_border": 0
+  },
+  "overall": {
+    "PSNR_mean": 28.679161625523722,
+    "SSIM_mean": 0.8262039502947648,
+    "LPIPS_mean": 0.27096648850748617
+  },
+  "per_clip": {
+    "000": {
+      "PSNR_mean": 28.679161625523722,
+      "SSIM_mean": 0.8262039502947648,
+      "LPIPS_mean": 0.27096648850748617
+    }
+  }
+}
