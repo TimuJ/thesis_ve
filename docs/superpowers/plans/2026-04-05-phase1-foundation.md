@@ -30,156 +30,56 @@
 
 ---
 
-### Task 1: Complete UAV baseline verification (server-side)
+### Task 1: Complete UAV baseline verification (server-side) — DONE
 
 **Files:**
 - Modify: `experiments/baselines/target_metrics.md`
 
-This task depends on the UAV UDM10 inference completing on the server (~4 hours from April 5). Check status, evaluate, and record results.
+Completed April 6-7. UAV UDM10 inference finished. Evaluated and found significant gap from paper (PSNR 24.94 vs 30.79). Investigated with param sweep and DOVE cross-validation — confirmed pipeline is correct, gap is degradation mismatch.
 
-- [ ] **Step 1: Check UAV inference status on server**
-
-```bash
-ssh -i ~/.ssh/id_ed25519_timuj Timur@223.109.239.43 "tmux capture-pane -t uav_udm10_rb -p | tail -20"
-```
-
-If still running, wait. If complete, proceed.
-
-- [ ] **Step 2: Evaluate UAV UDM10 results with pyiqa**
-
-```bash
-ssh -i ~/.ssh/id_ed25519_timuj Timur@223.109.239.43 << 'REMOTE'
-cd /data/disk1/timur/thesis_ve
-/data/disk1/timur/miniconda3/envs/vsr/bin/python experiments/baselines/evaluate_pyiqa.py \
-    --sr experiments/baselines/results/upscale_a_video/UDM10-RealBasicVSR \
-    --gt /data/disk1/timur/data/UDM10_bicubic/GT \
-    --output experiments/baselines/results/upscale_a_video/uav_UDM10_rbvsr_pyiqa.json
-REMOTE
-```
-
-- [ ] **Step 3: Copy results to local machine**
-
-```bash
-scp -i ~/.ssh/id_ed25519_timuj Timur@223.109.239.43:/data/disk1/timur/thesis_ve/experiments/baselines/results/upscale_a_video/uav_UDM10_rbvsr_pyiqa.json \
-    experiments/baselines/results/upscale_a_video/
-```
-
-- [ ] **Step 4: Compare with paper targets and update target_metrics.md**
-
-Paper targets for UAV UDM10: PSNR 30.79, SSIM 0.878, LPIPS 0.133.
-
-Update the "Our results" row in `experiments/baselines/target_metrics.md` with actual values. Change status from "RUNNING" to verified/close/mismatch.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add experiments/baselines/target_metrics.md experiments/baselines/results/upscale_a_video/uav_UDM10_rbvsr_pyiqa.json
-git commit -m "results: add UAV UDM10 RealBasicVSR evaluation"
-```
+- [x] **Step 1: Check UAV inference status on server** — Done. Inference completed.
+- [x] **Step 2: Evaluate UAV UDM10 results with pyiqa** — Done. Result: PSNR 24.94, SSIM 0.7085, LPIPS 0.3280.
+- [x] **Step 3: Copy results to local machine** — Done. `uav_UDM10_rbvsr_pyiqa.json` copied.
+- [x] **Step 4: Compare with paper targets and update target_metrics.md** — Done. Significant gap: PSNR 24.94 vs paper 30.79 (-5.85 dB). Investigated with param sweep (5 configs, ~0.9 dB variation — not hyperparameters) and DOVE cross-validation (pipeline verified). Root cause: degradation mismatch.
+- [x] **Step 5: Commit** — Done. Commit `c4bedc3`.
 
 ---
 
-### Task 2: Run UAV on YouHQ40 with RealBasicVSR degradation (server-side)
+### Task 2: Run UAV on YouHQ40 with RealBasicVSR degradation (server-side) — DONE
 
 **Files:**
 - Modify: `experiments/baselines/target_metrics.md`
 
-- [ ] **Step 1: Check GPU availability on server**
+Completed April 6-7. Results: PSNR 23.40 vs paper 25.83 (-2.43 dB gap). Same degradation mismatch as UDM10. Results copied locally and committed.
 
-```bash
-ssh -i ~/.ssh/id_ed25519_timuj Timur@223.109.239.43 "nvidia-smi --query-gpu=index,memory.used,memory.total --format=csv,noheader"
-```
-
-Pick a GPU with >70GB free.
-
-- [ ] **Step 2: Launch UAV YouHQ40 inference in tmux**
-
-```bash
-ssh -i ~/.ssh/id_ed25519_timuj Timur@223.109.239.43 << 'REMOTE'
-tmux new-session -d -s uav_youhq40 "
-eval \"\$(/data/disk1/timur/miniconda3/bin/conda shell.bash hook)\"
-conda activate uav
-cd /data/disk1/timur/thesis_ve/experiments/baselines/upscale_a_video/repo
-
-for clip_dir in /data/disk1/timur/data/YouHQ40-Test-RealBasicVSR-LQ/*/; do
-    clip_name=\$(basename \"\${clip_dir%/}\")
-    out_dir=/data/disk1/timur/thesis_ve/experiments/baselines/results/upscale_a_video/YouHQ40-RealBasicVSR/\${clip_name}
-    if [ -d \"\${out_dir}\" ] && [ \$(ls \"\${out_dir}\"/*.png 2>/dev/null | wc -l) -gt 0 ]; then
-        echo \"Skipping \${clip_name} (already done)\"
-        continue
-    fi
-    mkdir -p \"\${out_dir}\"
-    echo \"Processing \${clip_name}...\"
-    CUDA_VISIBLE_DEVICES=GPU_ID python inference_upscale_a_video.py \
-        --input_path \"\${clip_dir}\" \
-        --output_path \"\${out_dir}\" \
-        --noise_level 150 \
-        --guidance_scale 7.5 \
-        --save_image \
-        --no_llava
-done
-echo 'ALL DONE'
-"
-REMOTE
-```
-
-Replace `GPU_ID` with the free GPU from Step 1.
-
-- [ ] **Step 3: Once complete, evaluate and copy results back**
-
-Same pattern as Task 1 Steps 2-4, but for YouHQ40. Paper target: PSNR 25.83, SSIM 0.733, LPIPS 0.268.
-
-- [ ] **Step 4: Update target_metrics.md and commit**
-
-```bash
-git add experiments/baselines/target_metrics.md experiments/baselines/results/upscale_a_video/
-git commit -m "results: add UAV YouHQ40 RealBasicVSR evaluation"
-```
+- [x] **Step 1: Check GPU availability on server** — Done.
+- [x] **Step 2: Launch UAV YouHQ40 inference** — Done.
+- [x] **Step 3: Evaluate and copy results back** — Done. `uav_YouHQ40_rbvsr_default_pyiqa.json` copied.
+- [x] **Step 4: Update target_metrics.md and commit** — Done. Commit `c4bedc3`.
 
 ---
 
-### Task 3: Update zjuthesis metadata for VSR topic
+### Task 3: Update zjuthesis metadata for VSR topic — NOT STARTED
 
 **Files:**
 - Modify: `zjuthesis/zjuthesis.tex`
 
+Note: Title is preliminary — will be refined once method is confirmed after April 9 meeting. Defer until direction is clearer.
+
 - [ ] **Step 1: Update thesis metadata fields**
-
-In `zjuthesis/zjuthesis.tex`, update:
-
-```latex
-    Topic           = {Video Super-Resolution for Long Videos},
-    Title           = {基于状态空间模型的长视频超分辨率方法研究},
-    TitleEng        = {{State-Space Model Based Video Super-Resolution for Long Videos}}
-```
-
-Note: Title is preliminary — will be refined once method is confirmed. Chinese title should be reviewed with supervisor.
-
 - [ ] **Step 2: Verify it compiles**
-
-```bash
-cd zjuthesis && latexmk
-```
-
-Check `out/zjuthesis.pdf` opens correctly.
-
 - [ ] **Step 3: Commit**
-
-```bash
-git add zjuthesis/zjuthesis.tex
-git commit -m "docs: update thesis title and topic for VSR"
-```
 
 ---
 
-### Task 4: Replace ref.bib with VSR references
+### Task 4: Replace ref.bib with VSR references — REMOVED
+
+Replaced by incremental approach: bibliography entries will be added as chapters are written, not pre-populated in bulk. The BibTeX entries listed below are kept as reference for when writing begins.
 
 **Files:**
 - Modify: `zjuthesis/body/ref.bib`
 
-- [ ] **Step 1: Replace VOS references with core VSR references**
-
-Keep the template references (zjuthesisrules, tikz, zjuthesis, zjugradthesisrules) at the top. Replace all VOS/segmentation references with VSR references. The following are the essential references needed for Introduction and Literature Review:
+Reference BibTeX entries for VSR thesis:
 
 ```bibtex
 % === Video Super-Resolution: CNN-based ===
@@ -463,12 +363,14 @@ git commit -m "refs: replace VOS references with VSR/diffusion/SSM bibliography"
 
 ---
 
-### Task 5: Deep literature research (before any thesis writing)
+### Task 5: Deep literature research (before any thesis writing) — NOT STARTED
+
+**Target:** Apr 9–18, after meeting confirms research direction.
 
 **Files:**
 - Create: `docs/research/vsr-literature-notes.md`
 
-This task MUST be completed before Tasks 6, 7 (ref.bib, Introduction, Lit Review). Writing without thorough research produces shallow content. The goal is to read and understand key papers, identify gaps, and collect precise claims/numbers to cite.
+This task MUST be completed before Tasks 6, 7 (Introduction, Lit Review). Writing without thorough research produces shallow content. The goal is to read and understand key papers, identify gaps, and collect precise claims/numbers to cite.
 
 - [ ] **Step 1: Survey VSR papers — identify all relevant methods and their limitations**
 
@@ -549,7 +451,7 @@ git commit -m "research: deep literature survey — VSR, diffusion, SSM, long-vi
 
 ---
 
-### Task 6: Rewrite Introduction chapter
+### Task 6: Rewrite Introduction chapter — NOT STARTED (blocked by Task 5)
 
 **Files:**
 - Modify: `zjuthesis/body/graduate-eng/introduction.tex`
@@ -659,7 +561,7 @@ git commit -m "thesis: rewrite Introduction chapter for VSR topic"
 
 ---
 
-### Task 7: Rewrite Literature Review chapter
+### Task 7: Rewrite Literature Review chapter — NOT STARTED (blocked by Task 5)
 
 **Files:**
 - Modify: `zjuthesis/body/graduate-eng/literature-review.tex`
@@ -864,7 +766,7 @@ git commit -m "thesis: write Literature Review chapter (VSR, diffusion, SSM)"
 
 ---
 
-### Task 8: Run baselines on long videos — document failure modes
+### Task 8: Run baselines on long videos — document failure modes — NOT STARTED (blocked by sample data from Apr 9 meeting)
 
 **Files:**
 - Create: `experiments/baselines/long_video_eval/README.md`
@@ -965,43 +867,40 @@ git commit -m "experiments: document baseline failure modes on long videos"
 
 ---
 
-### Task 9: Prepare baseline presentation for April 9 meeting
+### Task 9: Prepare baseline presentation for April 9 meeting — DONE
 
 **Files:**
 - Already exists: `reports/presentation_baseline_methods.md`
 
-- [ ] **Step 1: Review and update the existing presentation**
-
-Read `reports/presentation_baseline_methods.md`. Update with:
-- MGLD-VSR verified results (our numbers vs paper)
-- UAV results (once Task 1 completes)
-- Key finding: both papers use RealBasicVSR degradation
-- Issues encountered and resolved
-
-- [ ] **Step 2: Commit if changed**
-
-```bash
-git add reports/presentation_baseline_methods.md
-git commit -m "docs: update baseline presentation with verified results"
-```
+18-slide presentation completed last week. Should be updated with:
+- [x] MGLD-VSR verified results
+- [x] UAV results (RealBasicVSR gap + DOVE cross-validation)
+- [x] Key finding: degradation mismatch explains the gap
+- [ ] **Step 1: Add UAV RealBasicVSR gap + param sweep findings to presentation before meeting**
 
 ---
 
-## Dependency Graph
+## Dependency Graph (updated April 7)
 
 ```
-Task 1 (UAV eval) ──→ Task 2 (UAV YouHQ40) ──→ Task 9 (presentation update)
-                  └──→ Task 9 (presentation)
+Task 1 (UAV UDM10 eval)    ── DONE
+Task 2 (UAV YouHQ40 eval)  ── DONE
+Task 9 (presentation)      ── DONE (update with gap findings before Apr 9)
 
-Task 3 (thesis metadata) ──→ Task 4 (ref.bib) ─┐
-                                                ├──→ Task 5 (deep research) ──→ Task 6 (Introduction)
-                                                │                          └──→ Task 7 (Lit Review)
-                                                │                          └──→ update ref.bib with new refs
+Task 3 (thesis metadata)   ── deferred until direction confirmed (Apr 9)
+Task 4 (ref.bib)           ── REMOVED (incremental approach)
 
-Task 8 (long-video eval) — blocked by sample data (April 9 meeting)
+Task 5 (deep research)     ── NOT STARTED → start Apr 9 ──→ Task 6 (Introduction)
+                                                          └──→ Task 7 (Lit Review)
+                                                          └──→ ref.bib entries added as needed
+
+Task 8 (long-video eval)   ── blocked by sample data (April 9 meeting)
+
+NEW: UAV VideoLQ NR eval   ── RUNNING (2/50 clips, ~4 days)
+NEW: Param sweep           ── DONE (5 configs, ruled out hyperparameters)
+NEW: DOVE cross-validation ── DONE (pipeline verified)
 ```
 
-**Critical ordering:** Task 5 (deep research) MUST complete before Tasks 6-7 (writing).
-Tasks 1-2 (server) and Tasks 3-5 (research) can proceed in parallel.
-Task 8 is blocked until long-video data is available.
-Task 9 should be finalized by April 8 (day before meeting).
+**Critical path:** April 9 meeting → Task 5 (literature review) → Tasks 6-7 (writing). Must start Task 5 immediately after meeting.
+Task 8 is blocked until long-video data is available from PhD student.
+UAV VideoLQ NR eval runs autonomously on server.

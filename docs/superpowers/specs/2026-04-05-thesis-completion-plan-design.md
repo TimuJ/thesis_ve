@@ -1,7 +1,8 @@
 # Thesis Completion Plan — Video Super-Resolution for Long Videos
 
 **Date:** 2026-04-05
-**Status:** Approved
+**Last updated:** 2026-04-07
+**Status:** In Progress — Phase 1
 **Deadline:** July 15, 2026 (blind review submission)
 **Final deadline:** September 30, 2026
 
@@ -9,9 +10,10 @@
 
 Master's thesis at ZJU on 4x super-resolution for long HD videos (>1 minute). Collaboration with PhD student supervisor who specializes in diffusion-based models. Plan is to co-write a paper first, derive thesis from it — but thesis submission does not depend on paper acceptance.
 
-### Current State (April 5, 2026)
-- **MGLD-VSR baseline:** Verified (UDM10 PSNR 26.48 vs paper 25.99, VideoLQ NIQE 3.73 vs paper 3.53)
-- **Upscale-A-Video baseline:** Inference running on GPU 2, pending evaluation
+### Current State (April 7, 2026)
+- **MGLD-VSR baseline:** VERIFIED (UDM10 PSNR 26.48 vs paper 25.99, VideoLQ NR close to paper)
+- **Upscale-A-Video baseline:** PARTIALLY VERIFIED — pipeline confirmed via DOVE cross-validation, but ~5.8 dB gap on RealBasicVSR LQ (degradation mismatch, not a bug). VideoLQ NR evaluation in progress (2/50 clips)
+- **Param sweep:** 5 configs tested, ruled out hyperparameters as cause of gap (~0.9 dB variation)
 - **Research direction:** "SSM + diffusion for long-video VSR" — specifics TBD after April 9 meeting
 - **Dataset:** Sample long-video data from PhD student; full dataset (gov company) promised but delayed
 - **Thesis chapters:** Contain old VOS content, need complete rewrite
@@ -26,19 +28,26 @@ Parallel writing + research (Approach B) with dataset de-risking (Approach C). S
 
 **Goals:** Finish baseline verification, deep literature review, get research direction from PhD student.
 
-| Task | Deadline | Depends on |
-|------|----------|------------|
-| Finish UAV UDM10 evaluation, verify against paper | Apr 6 | Running now |
-| Run UAV on YouHQ40-RealBasicVSR | Apr 8 | UAV verified |
-| Prepare & present baseline papers at April 9 meeting | Apr 9 | — |
-| Get sample long-video data from PhD student | Apr 9 | Meeting |
-| Run both baselines on long videos (sample data) — document where they fail | Apr 14 | Sample data |
-| Deep literature review: SSM for video (Mamba, S4), diffusion VSR, long-video methods | Apr 18 | — |
-| Start writing: Introduction chapter (VSR problem, long-video challenge) | Apr 18 | — |
-| Start writing: Literature review chapter | Apr 18 | Lit review done |
-| Ask supervisor if proposal rewrite is required | Apr 9 | Meeting |
+| Task | Deadline | Status | Notes |
+|------|----------|--------|-------|
+| Finish UAV UDM10 evaluation | Apr 6 | **DONE** | PSNR 24.94 vs paper 30.79 — degradation mismatch |
+| Run UAV on YouHQ40-RealBasicVSR | Apr 8 | **DONE** | PSNR 23.40 vs paper 25.83 — same issue |
+| Investigate UAV gap (param sweep + DOVE cross-validation) | Apr 7 | **DONE** | Unplanned but necessary — pipeline verified, gap is degradation |
+| Run UAV VideoLQ NR evaluation | Apr 11 | **RUNNING** | 2/50 clips, ~4 days remaining |
+| Prepare & present baseline papers at April 9 meeting | Apr 9 | **READY** | 18-slide presentation done |
+| Get sample long-video data from PhD student | Apr 9 | PENDING | Meeting tomorrow |
+| Ask supervisor if proposal rewrite is required | Apr 9 | PENDING | Meeting tomorrow |
+| Run both baselines on long videos — document where they fail | Apr 14 | NOT STARTED | Blocked on sample data from meeting |
+| Deep literature review: SSM for video (Mamba, S4), diffusion VSR, long-video methods | Apr 18 | NOT STARTED | Start after Apr 9 meeting |
+| Start writing: Introduction chapter (VSR problem, long-video challenge) | Apr 18 | NOT STARTED | Start after lit review |
+| Start writing: Literature review chapter | Apr 18 | NOT STARTED | Start after lit review |
 
 **Key output:** Research direction confirmed. "Baselines fail on long videos" documented. Intro + lit review drafts started.
+
+### Phase 1 — Remaining priorities (Apr 8–18)
+1. **Apr 9 meeting** — present baselines, get long-video sample data, clarify research direction with PhD student
+2. **Apr 9–14** — run baselines on long videos (if data received), start literature review
+3. **Apr 14–18** — deep literature review, begin Introduction and Literature Review chapter drafts
 
 ---
 
