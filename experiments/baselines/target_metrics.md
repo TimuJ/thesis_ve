@@ -327,6 +327,4 @@ The UAV inference pipeline itself is verified (via DOVE cross-validation). The R
 ## 10. Next Steps
 
 1. **Complete UAV VideoLQ NR evaluation** — compare NR metrics with MGLD-VSR on same real-world data
-2. **Investigate degradation mismatch further** — consider contacting UAV authors for their exact degradation seeds/params
-3. **Both models verified** -> test on long-video sequences (>1 minute) to expose temporal consistency limitations
-4. **Begin SSM literature review** — state-space models for long-context video processing
+2. **Both models verified** -> test on long-video sequences (>1 minute) to expose temporal consistency limitations
