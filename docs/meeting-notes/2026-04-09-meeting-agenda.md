@@ -102,12 +102,15 @@ DOVE paper comparison table (UDM10, DOVE LQ) — includes MGLD-VSR [50], VEnhanc
 
 ### Immediate (this week)
 1. **Run MGLD-VSR on DOVE UDM10 LQ** — validate against DOVE paper's MGLD numbers (PSNR 24.23, SSIM 0.6957, LPIPS 0.3272)
-   - **Status:** MGLD-VSR inference launched (tmux `mgld_dove`, GPU 3) with `--input_size -1` for native resolution
-   - First attempt produced 512x512 crops (wrong) — fixed by patching inference script
+   - **Status:** Running (tmux `mgld_dove`, GPU 3) at 512x512 center crop + auto DOVE eval after
+   - DOVE paper likely also evaluated MGLD-VSR at 512x512 (MGLD's native resolution) — no full-res details in their paper
+   - Previous attempts: native resolution failed (UNet skip connection size mismatch on non-square input)
 2. **Check DOVE evaluation code** — clone https://github.com/zhengchen1999/DOVE, understand their metrics pipeline, compare with our pyiqa approach
-   - **Status: DONE.** Key finding: DOVE uses **RGB PSNR/SSIM** by default (no `--test_y_channel`), while we use Y-channel. This explains the +1.5 dB gap with UAV. DOVE's `inference.sh` calls `eval_metrics.py --metrics psnr,ssim,lpips,dists,clipiqa` without Y-channel flag.
+   - **Status: DONE.** Key finding: DOVE uses **RGB PSNR/SSIM** by default (no `--test_y_channel`), while we use Y-channel. DOVE's `inference.sh` calls `eval_metrics.py --metrics psnr,ssim,lpips,dists,clipiqa` without Y-channel flag.
 3. **Re-evaluate UAV on DOVE UDM10 LQ** using DOVE's evaluation script (not just pyiqa)
-   - **Status:** Pending — will run after MGLD-VSR DOVE inference completes
+   - **Status: DONE.** DOVE eval gives PSNR 22.96 vs paper's 21.72 (+1.24 dB gap). SSIM/LPIPS/DISTS/CLIPIQA all close.
+   - Gap likely from inference settings: we used `n150 g7`, UAV defaults are `n120 g6`
+   - **Re-running UAV with default settings** (tmux `uav_dove_default`, GPU 5) to narrow the gap
 4. **Cleaned up invalid results on server** — removed MP4 runs, bicubic, old wrong-degradation outputs
 
 ### Next priority
