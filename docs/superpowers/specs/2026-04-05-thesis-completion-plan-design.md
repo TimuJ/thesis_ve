@@ -142,9 +142,11 @@ Parallel writing + research (Approach B) with dataset de-risking (Approach C). S
 | PhD student direction too vague after Apr 9 | Method design stalls | Fall back to "SSM replaces attention in diffusion VSR"; schedule weekly check-ins |
 | Training doesn't converge | No results for thesis | Simplify after 1 week max; worst case, contribution shifts to long-video evaluation benchmark + baseline analysis |
 
-## Immediate Actions (before April 9)
+## Immediate Actions (after April 9 meeting)
 
-1. Finish UAV UDM10 evaluation (already running)
-2. Start literature review on SSMs for video (Mamba, S4, S5)
-3. Start writing Introduction chapter ("long-video VSR is unsolved" framing)
-4. Get sample long-video data at the April 9 meeting
+1. ~~Finish UAV UDM10 evaluation~~ — DONE (PSNR 24.94, gap from paper)
+2. **Align evaluation with DOVE benchmark** — run MGLD-VSR on DOVE LQ, check DOVE eval scripts, re-validate UAV
+3. **Set up VBench** — clone, test short videos, investigate long-video OOM fix (beta)
+4. Start literature review on SSMs for video (Mamba, S4, S5)
+5. Wait for long-video sample data (another student collecting)
+6. Wait for research direction (PhD student exploring i2v papers)

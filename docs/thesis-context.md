@@ -83,3 +83,11 @@ A new thesis proposal will need to be written for the VSR topic. The `proposal/`
 4. Training data strategy for long videos?
 5. Is the contribution the SSM temporal module, the full pipeline, or the long-video evaluation?
 6. Paper target venue?
+
+## April 9 Meeting Update
+- PhD student still exploring i2v (image-to-video) papers — **research direction still TBD**
+- Long-video sample data will be collected by another student
+- Gov dataset provided but not public — internal tests only
+- Proposal rewrite likely needed — **deadline May 31, 2026**
+- **Evaluation strategy shift:** align with DOVE benchmark instead of individual paper numbers
+- **VBench** needed for human-perception-aligned evaluation (OOM on long videos — beta exists)
