@@ -102,14 +102,19 @@ DOVE paper comparison table (UDM10, DOVE LQ) — includes MGLD-VSR [50], VEnhanc
 
 ### Immediate (this week)
 1. **Run MGLD-VSR on DOVE UDM10 LQ** — validate against DOVE paper's MGLD numbers (PSNR 24.23, SSIM 0.6957, LPIPS 0.3272)
+   - **Status:** MGLD-VSR inference launched (tmux `mgld_dove`, GPU 3) with `--input_size -1` for native resolution
+   - First attempt produced 512x512 crops (wrong) — fixed by patching inference script
 2. **Check DOVE evaluation code** — clone https://github.com/zhengchen1999/DOVE, understand their metrics pipeline, compare with our pyiqa approach
+   - **Status: DONE.** Key finding: DOVE uses **RGB PSNR/SSIM** by default (no `--test_y_channel`), while we use Y-channel. This explains the +1.5 dB gap with UAV. DOVE's `inference.sh` calls `eval_metrics.py --metrics psnr,ssim,lpips,dists,clipiqa` without Y-channel flag.
 3. **Re-evaluate UAV on DOVE UDM10 LQ** using DOVE's evaluation script (not just pyiqa)
+   - **Status:** Pending — will run after MGLD-VSR DOVE inference completes
+4. **Cleaned up invalid results on server** — removed MP4 runs, bicubic, old wrong-degradation outputs
 
 ### Next priority
-4. **Set up VBench** — clone repo, test on short videos, then try long-video beta
-5. **Wait for long-video sample data** from other student
-6. **Wait for research direction** from PhD student (i2v exploration ongoing)
+5. **Set up VBench** — clone repo, test on short videos, then try long-video beta
+6. **Wait for long-video sample data** from other student
+7. **Wait for research direction** from PhD student (i2v exploration ongoing)
 
 ### May
-7. **Proposal rewrite** — deadline May 31
+8. **Proposal rewrite** — deadline May 31
 
