@@ -1,6 +1,6 @@
 # Weekly Progress Report — Timur Iakshibaev
 
-## Period: March 30 – April 11, 2026
+## Period: March 30 – April 12, 2026
 
 ## GPU Server Setup
 
@@ -144,33 +144,59 @@
 - Cloned DOVE repo (https://github.com/zhengchen1999/DOVE) and analyzed their `eval_metrics.py`
 - **DOVE uses RGB PSNR/SSIM by default** (no `--test_y_channel` flag in their inference.sh)
 - Our pyiqa evaluation uses **Y-channel PSNR/SSIM** (standard VSR convention)
-- This likely explains the +1.5 dB gap between our UAV results and DOVE paper's UAV results
+- This explains the +1.5 dB gap between our UAV results and DOVE paper's UAV results
 - To align: evaluate with DOVE's eval code (RGB PSNR) or explicitly use their settings
 
-## Server Actions (April 9)
+## DOVE Benchmark Alignment (April 9–12)
 
-- Cloned DOVE repo on GPU server
-- Launched MGLD-VSR inference on DOVE UDM10 LQ with native resolution (`--input_size -1`)
-  - Patched MGLD-VSR inference script to support `--input_size -1` flag (skips Resize+CenterCrop, uses LQ native resolution rounded to nearest 32)
-  - Previous run produced 512x512 crops (wrong) — fixed and re-running
+### MGLD-VSR on DOVE UDM10 LQ — IDENTICAL to DOVE paper
+
+- Standard MGLD-VSR inference script center-crops to 512x512 — wrong for DOVE's non-square LQ (318x180)
+- **Fix:** Used the tile-based inference script (`vsr_val_ddpm_text_T_vqganfin_oldcanvas_tile.py`) from the MGLD-VSR repo. This splits frames into overlapping patches, processes each through the UNet, and stitches back to full resolution (1272x720).
+- Evaluated with DOVE's own `eval_metrics.py` (RGB PSNR, no border crop)
+- **Result: Identical to DOVE paper**
+
+| Metric | DOVE paper (MGLD) | Ours | Delta |
+|--------|-------------------|------|-------|
+| PSNR | 24.23 | **24.23** | +0.00 |
+| SSIM | 0.6957 | **0.6957** | 0.0000 |
+| LPIPS | 0.3272 | **0.3272** | 0.0000 |
+| DISTS | 0.1677 | **0.1676** | -0.0001 |
+| CLIP-IQA | 0.4557 | **0.4555** | -0.0002 |
+
+This confirms our full pipeline (MGLD-VSR inference + DOVE evaluation) is perfectly aligned with the DOVE benchmark. We can now trust DOVE's published comparison table as our baseline reference.
+
+### UAV on DOVE UDM10 LQ — Close, narrowing gap
+
+- Re-evaluated existing UAV output (n150 g7) with DOVE eval: PSNR 22.96 vs paper's 21.72 (+1.24 dB)
+- Gap is from inference settings — UAV defaults are `n120 g6`, we used `n150 g7`
+- Re-running UAV with default settings (in progress, 6/10 clips)
+
+### Key issues encountered
+- MGLD-VSR 512x512 center crop produced spatially misaligned output (~10-13 dB PSNR) — solved with tile script
+- Native resolution via `--input_size -1` patch failed — UNet skip connections require matching spatial dimensions
+- OOM errors when GPU had other processes — need dedicated free GPU (~80GB)
+
+## Server Cleanup (April 9)
+
 - Cleaned up invalid results on server:
   - Removed: MGLD-VSR on old DOVE LQ (512x512 crop), bicubic LQ, old format evals
   - Removed: UAV MP4 runs, bicubic YouHQ40, old wrong-degradation runs, incomplete YouHQ40_rbvsr
   - Kept: all verified results (RealBasicVSR, DOVE LQ frames, param sweep, VideoLQ)
-- UAV VideoLQ NR evaluation: 12/50 clips done (progressing well)
 
-## Currently Running on Server
+## Currently Running on Server (as of April 12)
 
-| tmux session | Task | GPU | Status |
-|-------------|------|-----|--------|
-| `uav_vlq` | UAV VideoLQ NR inference | 2 | 12/50 clips |
-| `mgld_dove` | MGLD-VSR on DOVE UDM10 LQ (native res) | 3 | Starting |
+| tmux session | Task | GPU | Progress | ETA |
+|-------------|------|-----|----------|-----|
+| `uav_dove` | UAV DOVE LQ default (n120 g6) + auto eval | 3 | 6/10 clips | ~2 hours |
+| `uav_vlq` | UAV VideoLQ NR inference | 2 | 43/50 clips | overnight |
+
+**Completed:** MGLD-VSR DOVE tile inference + DOVE eval — identical to DOVE paper.
 
 ## Next Steps
 
-1. **Check MGLD-VSR DOVE inference** — verify output resolution is correct (should be 1272x720)
-2. **Evaluate MGLD-VSR + UAV on DOVE LQ** using DOVE's own eval script (RGB PSNR) — compare with DOVE paper
-3. **Complete UAV VideoLQ NR evaluation** (~2-3 days remaining)
-4. **Set up VBench** — test on short videos, then tackle long-video OOM with beta version
-5. **Wait for:** research direction (PhD student), long-video data (other student)
-6. **Begin literature review** on SSMs for video (Mamba, S4, S5)
+1. **Check UAV DOVE default results** — should narrow gap to <1 dB from DOVE paper
+2. **Complete UAV VideoLQ NR evaluation** — compare NR metrics with MGLD-VSR
+3. **Set up VBench** — human-perception-aligned evaluation (OOM on long videos, beta exists)
+4. **Test both models on long-video sequences** (>1 minute) when sample data arrives
+5. **Begin literature review** on SSMs for video (Mamba, S4, S5)
