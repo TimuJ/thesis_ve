@@ -184,19 +184,37 @@ This confirms our full pipeline (MGLD-VSR inference + DOVE evaluation) is perfec
   - Removed: UAV MP4 runs, bicubic YouHQ40, old wrong-degradation runs, incomplete YouHQ40_rbvsr
   - Kept: all verified results (RealBasicVSR, DOVE LQ frames, param sweep, VideoLQ)
 
-## Currently Running on Server (as of April 12)
+## In Progress at End of Period
 
-| tmux session | Task | GPU | Progress | ETA |
-|-------------|------|-----|----------|-----|
-| `uav_dove` | UAV DOVE LQ default (n120 g6) + auto eval | 3 | 6/10 clips | ~2 hours |
-| `uav_vlq` | UAV VideoLQ NR inference | 2 | 43/50 clips | overnight |
+| Task | Progress |
+|------|----------|
+| UAV DOVE LQ default (n120 g6) — expected to close the 1.24 dB gap | 7/10 clips completed |
+| UAV VideoLQ NR inference | 43/50 clips completed |
 
-**Completed:** MGLD-VSR DOVE tile inference + DOVE eval — identical to DOVE paper.
+**Completed:** MGLD-VSR DOVE tile inference + DOVE evaluation — identical to DOVE paper.
+
+## Issue: Server Disk Failure (April 12)
+
+- The lab GPU server's main data disk (`/data/disk1`) has experienced an I/O-level failure
+- Symptoms: all paths under `/data/disk1` return "Input/output error"; `df -h /data/disk1` fails
+- Impact on our work:
+  - Running experiments crashed (both `uav_dove` and `uav_vlq` tmux sessions terminated)
+  - Server-side data temporarily inaccessible: code repo, model checkpoints, LQ datasets, intermediate results, conda environments
+- **Safe (already on local machine):**
+  - All committed source code and evaluation scripts
+  - MGLD-VSR DOVE eval results (the "identical match" table above) — confirmed verified
+  - UAV DOVE LQ (n150 g7) eval results with DOVE script
+  - Verified MGLD-VSR and UAV results from previous weeks (RealBasicVSR, VideoLQ 43/50 NR)
+- **Needs re-running when disk is restored:**
+  - UAV DOVE LQ default (n120 g6) inference — was 7/10 clips done, not yet evaluated
+  - UAV VideoLQ NR — was 43/50 clips done
+- **Action required:** Contacted lab admin about the disk failure. No further progress possible on server until resolved.
 
 ## Next Steps
 
-1. **Check UAV DOVE default results** — should narrow gap to <1 dB from DOVE paper
-2. **Complete UAV VideoLQ NR evaluation** — compare NR metrics with MGLD-VSR
-3. **Set up VBench** — human-perception-aligned evaluation (OOM on long videos, beta exists)
-4. **Test both models on long-video sequences** (>1 minute) when sample data arrives
-5. **Begin literature review** on SSMs for video (Mamba, S4, S5)
+1. **Resolve server disk failure** with lab admin — blocker for all further GPU work
+2. **Re-run lost inferences** once disk is restored (UAV DOVE default + final 7 VideoLQ clips)
+3. **Complete UAV VideoLQ NR evaluation** — compare NR metrics with MGLD-VSR on real-world data
+4. **Set up VBench** — human-perception-aligned evaluation (OOM on long videos, beta version exists and may need extension)
+5. **Test both models on long-video sequences** (>1 minute) when sample data arrives from collaborating student
+6. **Proposal rewrite** — deadline May 31 (on track)
