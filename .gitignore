@@ -36,3 +36,4 @@ experiments/baselines/mgld_vsr/repo/
 upscale_a_video-001.zip
 papers/*.pdf
 .claude/projects/
+synthetic.zip

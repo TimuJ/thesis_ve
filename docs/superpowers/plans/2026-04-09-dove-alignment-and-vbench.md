@@ -92,36 +92,41 @@ If our numbers match → pipeline aligned. If not → investigate metric impleme
 
 ---
 
-## Task 3: Re-evaluate UAV on DOVE UDM10 LQ with DOVE's eval code — IN PROGRESS
+## Task 3: Re-evaluate UAV on DOVE UDM10 LQ with DOVE's eval code — IN PROGRESS (+1.33 dB gap)
 
 **Why:** Our pyiqa gave UAV PSNR 23.22 vs DOVE paper's 21.72. Using DOVE's own eval code should resolve whether the gap is metric implementation or inference settings.
 
-- [x] **Step 1: Run DOVE evaluation on existing UAV output** — PSNR 22.96 (n150 g7 settings), DOVE paper: 21.72 (+1.24 dB gap)
+- [x] **Step 1: Run with DOVE defaults (n120 g6 s30) + DOVE eval** — PSNR 23.05 (10/10 clips, DOVE eval_metrics.py RGB)
+- [x] **Step 2: Test MKV vs PNG input** — Identical results (22.3843 on clip 000 for both)
+- [x] **Step 3: Test empty prompt** — PSNR went UP to 22.61 (wrong direction, blurrier output)
+- [ ] **Step 4: Full UDM10 with empty prompt** — Running on GPU 7 (10 clips + auto-eval)
+- [ ] **Step 5: Test with torch 2.5.1** — Setting up uav25 env (DOVE uses torch >= 2.5.0, most likely cause)
 
-We already have UAV frames at `results/upscale_a_video/UDM10_v2/`. Run DOVE's eval script on these.
+| Source | PSNR | SSIM | LPIPS | DISTS |
+|--------|------|------|-------|-------|
+| DOVE paper (UAV) | 21.72 | 0.5913 | 0.4116 | 0.2230 |
+| Our n150 g7 (DOVE eval) | 22.96 | 0.6183 | 0.4050 | 0.2194 |
+| **Our n120 g6 (DOVE eval)** | **23.05** | **0.6164** | **0.4252** | **0.2364** |
 
-- [x] **Step 2: Compare results** — Gap is from inference settings (n150 g7 vs default n120 g6). Re-running with defaults (6/10 clips done, ~2 hours)
-
-| Source | PSNR | SSIM | LPIPS |
-|--------|------|------|-------|
-| DOVE paper (UAV) | 21.72 | 0.5913 | 0.4116 |
-| Our pyiqa | 23.22 | 0.6183 | 0.4050 |
-| DOVE eval code | ? | ? | ? |
-
-If DOVE eval matches their paper → the gap was metric implementation (different Y-channel, crop, etc.).
-If DOVE eval matches our pyiqa → the gap is inference settings.
+**Ruled out:** input format (MKV=PNG), seed (hardcoded 10), frame count, resolution, eval script.
+**Most likely cause:** PyTorch version difference (2.0.1+cu117 vs >= 2.5.0). Diffusion models produce numerically different outputs across torch versions even with fixed seed.
 
 ---
 
-## Task 4: Set up VBench
+## Task 4: Set up VBench — INSTALLED, needs debugging
 
 **Why:** VBench provides human-perception-aligned video quality metrics. Needed for our evaluation, but has OOM issues on long videos.
 
-- [ ] **Step 1: Clone VBench repo on server**
+- [x] **Step 1: Install VBench** — `pip install vbench` in `vbench` conda env (v0.1.5, torch 2.5.1+cu121)
+
+- [ ] **Step 2: Test on short video** — Test run crashed with PyTorch distributed error. Needs single-GPU investigation.
 
 ```bash
-cd /data/disk1/timur
-git clone https://github.com/Vchitect/VBench.git
+# Old path (disk1 dead):
+# cd /data/disk1/timur
+# New path:
+cd /data/disk2/timur
+# VBench installed via pip, not repo clone
 ```
 
 - [ ] **Step 2: Set up environment**
@@ -178,9 +183,17 @@ Replace the RealBasicVSR-based comparison with DOVE-aligned comparison.
 4. **Task 5** (update eval infrastructure) — partially done (target_metrics.md updated)
 5. **Task 4** (VBench) — NOT STARTED
 
-## Currently Running (as of April 12)
+## Currently Running (as of April 15 — disk2 migration)
+
+**Note:** disk1 failed April 12. All infrastructure rebuilt on `/data/disk2/timur/` on April 15.
 
 | tmux session | Task | GPU | Status |
 |-------------|------|-----|--------|
-| `uav_dove` | UAV DOVE LQ default (n120 g6) + auto eval | 3 | 6/10 clips |
-| `uav_vlq` | UAV VideoLQ NR eval | 2 | 43/50 clips |
+| `uav_dove` | UAV DOVE UDM10 default (n120 g6 s30) | 2 | Re-running all 10 clips |
+| `mgld_ckpt` | MGLD-VSR checkpoint downloads | — | Downloading (~12 GB) |
+| `mgld_env` | MGLD-VSR conda env setup | — | Installing |
+| `vbench_setup` | VBench conda env | — | Installing |
+
+Previous disk1 sessions (lost):
+- UAV DOVE default: was 7/10 clips — re-running from scratch
+- UAV VideoLQ NR: was 43/50 clips — needs re-run after DOVE alignment done
