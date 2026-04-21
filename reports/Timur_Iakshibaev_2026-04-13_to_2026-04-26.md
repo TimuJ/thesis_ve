@@ -62,7 +62,11 @@ Cross-dataset verification:
 **Gap is consistent across datasets** (+1.33 dB UDM10, +1.68 dB SPMCS). Confirms environmental cause (torch/xformers version), not dataset-specific.
 
 Active investigation:
-- **DOVE-matched environment (`uav_dove` env):** torch 2.5.1+cu121, xformers 0.0.35, transformers 4.46.2 — crashed with Flash Attention compatibility error. Needs xformers version fix. `XFORMERS_DISABLE_FLASH_ATTN=1` env var also didn't help.
+- **DOVE-matched environment (`uav_dove` env):** torch 2.5.1+cu121, xformers 0.0.28.post3, transformers 4.37.0
+  - Fixed: xformers 0.0.35 → 0.0.28.post3 (Flash Attention 2 crash)
+  - Fixed: transformers 4.46.2 → 4.37.0 (`_expand_mask` removed in 4.38+, UAV's LLaVA needs it)
+  - Fixed: LLaVA config registration (`exist_ok=True` for transformers with built-in LLaVA)
+  - **Test running:** clip 000 on GPU 0, results pending
 
 ### UAV Code Patches Applied (same as disk1)
 1. `inference_upscale_a_video.py` line 101: `local_files_only=True` (server has no HF access)
@@ -117,7 +121,20 @@ MGLD-VSR completed on all 5 synthetic long videos using disk2 env (einops 0.3.0 
 | mJog8DlRk_4 | 5000 | Done |
 | **Total** | **22,412** | **All done** |
 
-Output at `/data/disk2/timur/results/mgld_synthetic/`. Evaluation pending.
+Output at `/data/disk2/timur/results/mgld_synthetic/`.
+
+NR evaluation (no GT available):
+
+| Video | CLIP-IQA ↑ | MUSIQ ↑ | NIQE ↓ | BRISQUE ↓ |
+|-------|-----------|---------|--------|-----------|
+| 7WHI2L_FDNg | 0.457 | 68.68 | 4.29 | 25.75 |
+| BrRLKMbBTYQ | 0.529 | 62.31 | 6.20 | 28.74 |
+| KZ8p6b1zJ9U | 0.493 | 62.86 | 3.83 | 20.34 |
+| hhszUXL1Cu8 | 0.456 | 65.36 | 4.72 | 26.20 |
+| mJog8DlRk_4 | 0.543 | 66.15 | 4.32 | 22.69 |
+| **Mean** | **0.496** | **65.07** | **4.67** | **24.74** |
+
+MP4 versions converted at `/data/disk2/timur/results/mgld_synthetic_mp4/` for VBench evaluation.
 
 ### Disk2 Env Setup Issues (documented)
 
@@ -181,7 +198,31 @@ Server taken offline for security investigation — suspected compromise via ano
 | KZ8p6b1zJ9U | 29.7 | — | 0.981 |
 | mJog8DlRk_4 | 45.5 | — | 0.963 |
 
-VBench 2.0 (long video beta) — repo clone failed due to server connectivity. Needs retry.
+### VBench 2.0 Long-Video Evaluation — WORKING (April 21)
+
+VBench 2.0 (`vbench2_beta_long`) successfully evaluated all 5 MGLD-SR synthetic videos and LQ baselines.
+
+**Setup fixes:** moviepy 2.x → 1.0.3 (API change), torchvision `pict_type="NONE"` → `0` (PyAV int enum), `PYTHONPATH` set to repo source (pip package missing configs).
+
+**Results — LQ vs MGLD-SR (5 videos, 3 dimensions):**
+
+| Dimension | LQ Baseline | MGLD-SR | Improvement |
+|-----------|------------|---------|-------------|
+| imaging_quality ↑ | 0.439 | **0.681** | +0.242 (+55%) |
+| motion_smoothness ↑ | 0.987 | **0.989** | +0.002 |
+| temporal_flickering ↑ | 0.981 | **0.984** | +0.003 |
+
+**Per-video imaging_quality:**
+
+| Video | LQ | MGLD-SR | Gain |
+|-------|-----|---------|------|
+| 7WHI2L_FDNg | 34.87 | 69.85 | +35.0 |
+| BrRLKMbBTYQ | 59.96 | 71.74 | +11.8 |
+| KZ8p6b1zJ9U | 29.52 | 63.50 | +34.0 |
+| hhszUXL1Cu8 | 47.28 | 66.24 | +19.0 |
+| mJog8DlRk_4 | 45.75 | 68.23 | +22.5 |
+
+MGLD-SR significantly improves image quality while preserving temporal consistency. These are target metrics for our method.
 
 ## Completed (April 15–20)
 
@@ -197,11 +238,17 @@ VBench 2.0 (long video beta) — repo clone failed due to server connectivity. N
 - [x] Server incident documented with recovery roadmap
 - [x] `uav_dove` env created (torch 2.5.1) — needs xformers fix
 
+## Currently Running (as of April 21)
+
+| tmux session | Task | GPU |
+|-------------|------|-----|
+| `uav_t25` | UAV clip 000 with torch 2.5.1 env → then VBench 2.0 test | 0 |
+
 ## Next Steps
 
-1. Evaluate MGLD synthetic outputs with DOVE metrics (no-reference since no GT)
-2. Fix UAV `uav_dove` env (torch 2.5.1) — close the PSNR gap
-3. Clone VBench 2.0 repo and test long-video evaluation
-4. Run UAV on synthetic videos
-5. Evaluate all SR outputs with DOVE metrics + VBench
-6. Start local thesis writing (Introduction + Literature Review chapters)
+1. Check UAV torch 2.5.1 results — if PSNR gap closes, run full UDM10+SPMCS with this env
+2. Check VBench 2.0 long-video test results
+3. Run UAV on synthetic videos (after DOVE alignment confirmed)
+4. Evaluate all SR outputs with DOVE metrics + VBench 2.0
+5. Start local thesis writing (Introduction + Literature Review chapters)
+6. Proposal outline when PhD student provides materials
