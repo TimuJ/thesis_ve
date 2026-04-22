@@ -175,25 +175,22 @@ Replace the RealBasicVSR-based comparison with DOVE-aligned comparison.
 
 ---
 
-## Priority Order (updated April 12)
+## Priority Order (updated April 22)
 
 1. ~~**Task 1** (check DOVE eval code)~~ — DONE
-2. ~~**Task 2** (MGLD-VSR on DOVE LQ)~~ — DONE, IDENTICAL MATCH
-3. **Task 3** (re-evaluate UAV with DOVE eval) — IN PROGRESS, re-running with default settings
-4. **Task 5** (update eval infrastructure) — partially done (target_metrics.md updated)
-5. **Task 4** (VBench) — NOT STARTED
+2. ~~**Task 2** (MGLD-VSR on DOVE LQ)~~ — DONE, IDENTICAL MATCH (re-verified on disk2, April 20)
+3. **Task 3** (UAV DOVE alignment) — BLOCKED. Gap persists (+1.33 dB UDM10, +1.68 dB SPMCS). Torch 2.5.1 test failed (cuDNN incompatibility with server). Need to contact DOVE authors.
+4. ~~**Task 4** (VBench)~~ — DONE. VBench 1.0 + VBench 2.0 long-video both working. LQ + MGLD-SR baselines collected.
+5. **Task 5** (update eval infrastructure) — partially done
 
-## Currently Running (as of April 15 — disk2 migration)
+## Completed Experiments (April 15–22)
 
-**Note:** disk1 failed April 12. All infrastructure rebuilt on `/data/disk2/timur/` on April 15.
-
-| tmux session | Task | GPU | Status |
-|-------------|------|-----|--------|
-| `uav_dove` | UAV DOVE UDM10 default (n120 g6 s30) | 2 | Re-running all 10 clips |
-| `mgld_ckpt` | MGLD-VSR checkpoint downloads | — | Downloading (~12 GB) |
-| `mgld_env` | MGLD-VSR conda env setup | — | Installing |
-| `vbench_setup` | VBench conda env | — | Installing |
-
-Previous disk1 sessions (lost):
-- UAV DOVE default: was 7/10 clips — re-running from scratch
-- UAV VideoLQ NR: was 43/50 clips — needs re-run after DOVE alignment done
+- MGLD-VSR UDM10 re-verification: IDENTICAL match (disk1 env, einops 0.3.0)
+- MGLD-VSR synthetic: all 5 videos done (22,412 frames)
+- MGLD synthetic NR eval: CLIP-IQA, MUSIQ, NIQE, BRISQUE
+- UAV UDM10 (n120 g6): PSNR 23.05 (+1.33 dB gap)
+- UAV SPMCS (n120 g6): PSNR 20.49 (+1.68 dB gap)
+- UAV empty prompt full UDM10: PSNR 23.72 (wrong direction)
+- VBench 1.0 LQ baselines: imaging_quality, motion_smoothness, temporal_flickering
+- VBench 2.0 LQ + MGLD-SR: imaging_quality +55% improvement
+- UAV torch 2.5.1 test: BLOCKED (cuDNN error on all CUDA variants)
