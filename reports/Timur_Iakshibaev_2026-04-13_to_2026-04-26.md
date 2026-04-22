@@ -224,31 +224,59 @@ VBench 2.0 (`vbench2_beta_long`) successfully evaluated all 5 MGLD-SR synthetic 
 
 MGLD-SR significantly improves image quality while preserving temporal consistency. These are target metrics for our method.
 
-## Completed (April 15–20)
+## MGLD-VSR Disk2 Environment Verification (April 22)
+
+Ran UDM10 clip 000 on disk2 env to check if different package versions affect quality. Despite `open-clip-torch 2.20.0` (vs 2.0.2 on disk1), results are **identical** (PSNR 23.9881). Low quality on synthetic videos is content-related, not environmental.
+
+## VBench 2.0 Full Evaluation — In Progress (April 22)
+
+Expanding from 3 to all 16 VBench dimensions. Required downloading ~4 GB of model weights locally and SCP'ing to server (DreamSim 1.2 GB, ViCLIP 1.6 GB, GRiT 398 MB, UMT 579 MB, DINO 327 MB, RAFT 78 MB, CLIP 338 MB).
+
+Completed (5/16 MGLD, 3/16 LQ):
+
+| Dimension | MGLD-SR | LQ | Category |
+|-----------|---------|-----|----------|
+| imaging_quality | 0.6810 | 0.4388 | Quality |
+| motion_smoothness | 0.9886 | 0.9873 | Quality |
+| temporal_flickering | 0.9840 | 0.9811 | Quality |
+| aesthetic_quality | 0.5080 | — | Quality |
+| dynamic_degree | 0.5942 | — | Quality |
+
+Running on GPU 5 (subject/background consistency) and GPU 6 (remaining dims) in parallel.
+
+## UAV Torch 2.5.1 Test — Blocked (April 21-22)
+
+All CUDA variants of torch 2.5.1 fail on server:
+- cu124: cuDNN CUDNN_STATUS_NOT_INITIALIZED
+- cu121: same cuDNN error
+- cu118: missing libcudart.so.11.0
+
+Server CUDA driver (v570/12.8) incompatible with torch 2.5.1's bundled cuDNN. Need to contact DOVE authors for their exact environment.
+
+## Completed (April 15–22)
 
 - [x] Disk2 migration — full infrastructure rebuilt
 - [x] UAV DOVE UDM10 default settings — PSNR 23.05 vs 21.72 target (+1.33 dB gap)
 - [x] UAV DOVE SPMCS default settings — PSNR 20.49 vs 18.81 target (+1.68 dB gap)
-- [x] UAV alignment investigation — ruled out: input format, seed, settings, frame count, resolution, empty prompt. Gap consistent across datasets → environmental cause
-- [x] MGLD-VSR UDM10 re-verification (disk1 env) — IDENTICAL match (PSNR 24.2339)
-- [x] MGLD-VSR synthetic — all 5 videos done (22,412 frames)
-- [x] VBench 1.0 working via Python API — partial LQ baselines collected
+- [x] UAV alignment investigation — ruled out: input format, seed, settings, frame count, resolution, empty prompt, env version. Gap consistent across datasets.
+- [x] MGLD-VSR UDM10 re-verification — IDENTICAL match on both disk1 and disk2 envs
+- [x] MGLD-VSR synthetic — all 5 videos done (22,412 frames) + NR eval (CLIP-IQA, MUSIQ, NIQE, BRISQUE)
+- [x] VBench 2.0 working — 3 initial dims for MGLD+LQ, now expanding to all 16
 - [x] SPMCS dataset downloaded and UAV evaluated
-- [x] Home dir cleaned (21 GB → 184 KB)
-- [x] Server incident documented with recovery roadmap
-- [x] `uav_dove` env created (torch 2.5.1) — needs xformers fix
+- [x] UAV torch 2.5.1 test attempted — blocked by cuDNN incompatibility
+- [x] VBench model weights downloaded locally and SCP'd (DreamSim, DINO, GRiT, UMT, ViCLIP, RAFT, CLIP)
 
-## Currently Running (as of April 21)
+## Currently Running (as of April 22)
 
-| tmux session | Task | GPU |
-|-------------|------|-----|
-| `uav_t25` | UAV clip 000 with torch 2.5.1 env → then VBench 2.0 test | 0 |
+| GPU | Task | Status |
+|-----|------|--------|
+| 5 | VBench subject_consistency + background_consistency (MGLD + LQ) | Running |
+| 6 | VBench remaining dims (color → scene → appearance → ...) | Running |
 
 ## Next Steps
 
-1. Check UAV torch 2.5.1 results — if PSNR gap closes, run full UDM10+SPMCS with this env
-2. Check VBench 2.0 long-video test results
-3. Run UAV on synthetic videos (after DOVE alignment confirmed)
-4. Evaluate all SR outputs with DOVE metrics + VBench 2.0
-5. Start local thesis writing (Introduction + Literature Review chapters)
-6. Proposal outline when PhD student provides materials
+1. Complete VBench 2.0 all 16 dims — calculate Quality Score + Semantic Score
+2. Run UAV on synthetic long videos with original `uav` env (torch 2.0.1+cu117, n120 g6 s30) — same env that produced closest results to DOVE paper (+1.33 dB gap documented)
+3. Evaluate UAV synthetic with DOVE metrics + VBench 2.0 for comparison with MGLD-SR
+4. Start thesis writing (Introduction + Literature Review chapters)
+5. Proposal outline when PhD student provides materials
