@@ -232,17 +232,28 @@ Ran UDM10 clip 000 on disk2 env to check if different package versions affect qu
 
 Expanding from 3 to all 16 VBench dimensions. Required downloading ~4 GB of model weights locally and SCP'ing to server (DreamSim 1.2 GB, ViCLIP 1.6 GB, GRiT 398 MB, UMT 579 MB, DINO 327 MB, RAFT 78 MB, CLIP 338 MB).
 
-Completed (5/16 MGLD, 3/16 LQ):
+Completed so far (7/16 MGLD, 7/16 LQ):
 
 | Dimension | MGLD-SR | LQ | Category |
 |-----------|---------|-----|----------|
 | imaging_quality | 0.6810 | 0.4388 | Quality |
 | motion_smoothness | 0.9886 | 0.9873 | Quality |
 | temporal_flickering | 0.9840 | 0.9811 | Quality |
-| aesthetic_quality | 0.5080 | — | Quality |
-| dynamic_degree | 0.5942 | — | Quality |
+| aesthetic_quality | 0.5080 | 0.4128 | Quality |
+| dynamic_degree | 0.5942 | 0.5628 | Quality |
+| subject_consistency | — | — | Quality (running) |
+| background_consistency | — | — | Quality (running) |
+| overall_consistency | 0.0826 | — | Semantic |
+| temporal_style | — | 0.0961 | Semantic |
+| object_class | — | — | Semantic (needs detectron2) |
+| multiple_objects | — | — | Semantic (needs detectron2) |
+| spatial_relationship | — | — | Semantic (needs detectron2) |
+| human_action | — | — | Semantic (running) |
+| color | — | — | Semantic (pending) |
+| scene | — | — | Semantic (running, needs Tag2Text 4.2GB) |
+| appearance_style | — | — | Semantic (pending) |
 
-Running on GPU 5 (subject/background consistency) and GPU 6 (remaining dims) in parallel.
+Running on GPUs 3, 5, 7 in parallel. detectron2 building from source. Tag2Text (4.2 GB) still needed for `scene` dim.
 
 ## UAV Torch 2.5.1 Test — Blocked (April 21-22)
 
