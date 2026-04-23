@@ -232,7 +232,7 @@ Ran UDM10 clip 000 on disk2 env to check if different package versions affect qu
 
 Expanding from 3 to all 16 VBench dimensions. Required downloading ~4 GB of model weights locally and SCP'ing to server (DreamSim 1.2 GB, ViCLIP 1.6 GB, GRiT 398 MB, UMT 579 MB, DINO 327 MB, RAFT 78 MB, CLIP 338 MB).
 
-Completed so far (7/16 MGLD, 7/16 LQ):
+Quality Score dimensions (all 7 done):
 
 | Dimension | MGLD-SR | LQ | Category |
 |-----------|---------|-----|----------|
@@ -241,19 +241,21 @@ Completed so far (7/16 MGLD, 7/16 LQ):
 | temporal_flickering | 0.9840 | 0.9811 | Quality |
 | aesthetic_quality | 0.5080 | 0.4128 | Quality |
 | dynamic_degree | 0.5942 | 0.5628 | Quality |
-| subject_consistency | — | — | Quality (running) |
-| background_consistency | — | — | Quality (running) |
-| overall_consistency | 0.0826 | — | Semantic |
-| temporal_style | — | 0.0961 | Semantic |
-| object_class | — | — | Semantic (needs detectron2) |
-| multiple_objects | — | — | Semantic (needs detectron2) |
-| spatial_relationship | — | — | Semantic (needs detectron2) |
-| human_action | — | — | Semantic (running) |
-| color | — | — | Semantic (pending) |
-| scene | — | — | Semantic (running, needs Tag2Text 4.2GB) |
-| appearance_style | — | — | Semantic (pending) |
+| subject_consistency | 0.8927 | 0.8936 | Quality |
+| background_consistency | 0.9235 | 0.9333 | Quality |
 
-Running on GPUs 3, 5, 7 in parallel. detectron2 building from source. Tag2Text (4.2 GB) still needed for `scene` dim.
+Semantic Score dimensions — **not applicable for SR** (April 23 finding):
+
+All 9 Semantic dims require text prompts as ground truth. VBench was designed for text-to-video generation benchmarking. For SR evaluation without prompts, these dimensions produce meaningless scores:
+- `overall_consistency` — ViCLIP video-text similarity (uses filename as "prompt" → 0.08)
+- `appearance_style`, `temporal_style` — require `auxiliary_info` with style labels
+- `human_action` — extracts action label from filename, matches against Kinetics-400 (→ 0.0)
+- `color`, `object_class`, `multiple_objects`, `spatial_relationship` — GRiT/detectron2 vs text prompt
+- `scene` — Tag2Text scene vs text prompt
+
+**Conclusion:** Only the 7 Quality Score dimensions are meaningful for SR evaluation. The biggest wins are imaging_quality (+55%) and aesthetic_quality (+23%). Temporal metrics are nearly identical, confirming SR preserves temporal coherence. subject_consistency and background_consistency are slightly lower for SR due to diffusion-based frame-to-frame variation.
+
+Fixes applied April 23: DINO cache git commit, detectron2 installed (--no-build-isolation), timm downgraded to 1.0.12, Tag2Text SCP'd.
 
 ## UAV Torch 2.5.1 Test — Blocked (April 21-22)
 
@@ -272,22 +274,21 @@ Server CUDA driver (v570/12.8) incompatible with torch 2.5.1's bundled cuDNN. Ne
 - [x] UAV alignment investigation — ruled out: input format, seed, settings, frame count, resolution, empty prompt, env version. Gap consistent across datasets.
 - [x] MGLD-VSR UDM10 re-verification — IDENTICAL match on both disk1 and disk2 envs
 - [x] MGLD-VSR synthetic — all 5 videos done (22,412 frames) + NR eval (CLIP-IQA, MUSIQ, NIQE, BRISQUE)
-- [x] VBench 2.0 working — 3 initial dims for MGLD+LQ, now expanding to all 16
+- [x] VBench 2.0 — all 7 Quality Score dims complete for MGLD+LQ. 9 Semantic dims not applicable for SR (require text prompts)
 - [x] SPMCS dataset downloaded and UAV evaluated
 - [x] UAV torch 2.5.1 test attempted — blocked by cuDNN incompatibility
 - [x] VBench model weights downloaded locally and SCP'd (DreamSim, DINO, GRiT, UMT, ViCLIP, RAFT, CLIP)
 
-## Currently Running (as of April 22)
+## Currently Running (as of April 23)
 
 | GPU | Task | Status |
 |-----|------|--------|
-| 5 | VBench subject_consistency + background_consistency (MGLD + LQ) | Running |
-| 6 | VBench remaining dims (color → scene → appearance → ...) | Running |
+| 3 | UAV synthetic inference (hhszUXL1Cu8 → all 5 videos, n120 g6 s30) | Running |
 
 ## Next Steps
 
-1. Complete VBench 2.0 all 16 dims — calculate Quality Score + Semantic Score
-2. Run UAV on synthetic long videos with original `uav` env (torch 2.0.1+cu117, n120 g6 s30) — same env that produced closest results to DOVE paper (+1.33 dB gap documented)
-3. Evaluate UAV synthetic with DOVE metrics + VBench 2.0 for comparison with MGLD-SR
-4. Start thesis writing (Introduction + Literature Review chapters)
-5. Proposal outline when PhD student provides materials
+1. Complete UAV synthetic inference (22,412 frames) → evaluate with NR metrics + VBench Quality Score
+2. Compare MGLD-SR vs UAV on synthetic long videos
+4. Compare MGLD-SR vs UAV on synthetic long videos
+5. Start thesis writing (Introduction + Literature Review chapters)
+6. Proposal outline when PhD student provides materials

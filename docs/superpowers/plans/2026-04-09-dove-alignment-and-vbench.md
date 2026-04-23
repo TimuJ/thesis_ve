@@ -175,22 +175,31 @@ Replace the RealBasicVSR-based comparison with DOVE-aligned comparison.
 
 ---
 
-## Priority Order (updated April 22)
+## Priority Order (updated April 23)
 
 1. ~~**Task 1** (check DOVE eval code)~~ — DONE
 2. ~~**Task 2** (MGLD-VSR on DOVE LQ)~~ — DONE, IDENTICAL MATCH (re-verified on disk2, April 20)
-3. **Task 3** (UAV DOVE alignment) — BLOCKED. Gap persists (+1.33 dB UDM10, +1.68 dB SPMCS). Torch 2.5.1 test failed (cuDNN incompatibility with server). Need to contact DOVE authors.
-4. ~~**Task 4** (VBench)~~ — DONE. VBench 1.0 + VBench 2.0 long-video both working. LQ + MGLD-SR baselines collected.
+3. **Task 3** (UAV DOVE alignment) — Proceeding with original env (+1.33 dB gap documented). UAV synthetic inference running.
+4. ~~**Task 4** (VBench)~~ — DONE. All 7 Quality Score dims complete. 9 Semantic dims not applicable for SR (require text prompts).
 5. **Task 5** (update eval infrastructure) — partially done
 
-## Completed Experiments (April 15–22)
+## Completed Experiments (April 15–23)
 
 - MGLD-VSR UDM10 re-verification: IDENTICAL match (disk1 env, einops 0.3.0)
 - MGLD-VSR synthetic: all 5 videos done (22,412 frames)
-- MGLD synthetic NR eval: CLIP-IQA, MUSIQ, NIQE, BRISQUE
+- MGLD synthetic NR eval: CLIP-IQA 0.496, MUSIQ 65.07, NIQE 4.67, BRISQUE 24.74
 - UAV UDM10 (n120 g6): PSNR 23.05 (+1.33 dB gap)
 - UAV SPMCS (n120 g6): PSNR 20.49 (+1.68 dB gap)
 - UAV empty prompt full UDM10: PSNR 23.72 (wrong direction)
-- VBench 1.0 LQ baselines: imaging_quality, motion_smoothness, temporal_flickering
-- VBench 2.0 LQ + MGLD-SR: imaging_quality +55% improvement
 - UAV torch 2.5.1 test: BLOCKED (cuDNN error on all CUDA variants)
+- VBench 2.0 Quality Score (all 7 dims, MGLD + LQ):
+  - imaging_quality: MGLD 0.6810 vs LQ 0.4388 (+55%)
+  - motion_smoothness: MGLD 0.9886 vs LQ 0.9873
+  - temporal_flickering: MGLD 0.9840 vs LQ 0.9811
+  - aesthetic_quality: MGLD 0.5080 vs LQ 0.4128 (+23%)
+  - dynamic_degree: MGLD 0.5942 vs LQ 0.5628
+  - subject_consistency: MGLD 0.8927 vs LQ 0.8936
+  - background_consistency: MGLD 0.9235 vs LQ 0.9333
+- VBench 2.0 Semantic Score: all 9 dims require text prompts — not applicable for SR evaluation
+- Fixes: DINO cache, detectron2 installed, timm 1.0.12, Tag2Text SCP'd
+- UAV synthetic inference running (22,412 frames, GPU 3)
