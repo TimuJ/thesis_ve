@@ -1,0 +1,34 @@
+# VBench 2.0 Long-Video Evaluation — tested dependencies
+# Install PyTorch first: https://pytorch.org/get-started/locally/
+# Tested with: torch 2.5.1+cu121, Python 3.10
+
+# Core VBench
+vbench==0.1.5
+Pillow
+numpy<2.0.0
+matplotlib
+timm>=0.9,<=1.0.12
+scipy
+opencv-python
+scikit-learn
+scikit-image
+openai-clip
+decord
+requests
+pyyaml
+easydict
+pyiqa
+omegaconf
+pycocoevalcap
+
+# VBench long-video specific
+moviepy==1.0.3
+scenedetect[opencv]
+
+# For subject/background consistency
+dreamsim
+peft==0.11.0
+transformers==4.45.2
+
+# setuptools needed for pkg_resources (CLIP dependency)
+setuptools<81
