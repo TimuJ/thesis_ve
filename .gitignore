@@ -37,3 +37,4 @@ upscale_a_video-001.zip
 papers/*.pdf
 .claude/projects/
 synthetic.zip
+results/mgld_synthetic_mp4/*

@@ -1,6 +1,6 @@
 # MGLD-VSR Synthetic Long-Video Evaluation Results
 
-**Date:** April 23, 2026 (updated)
+**Date:** April 28, 2026 (updated)
 **Model:** MGLD-VSR (ECCV 2024)
 **Dataset:** 5 synthetic long videos (320x180 LQ → 1280x720 SR, 4x upscale)
 **Total frames:** 22,412
@@ -60,6 +60,44 @@ For super-resolution evaluation (no text prompts), these dimensions produce mean
 - **human_action** — extracts expected action from filename, compares to Kinetics-400 predictions
 - **color, object_class, multiple_objects, spatial_relationship** — GRiT/detectron2 detection vs text prompt
 - **scene** — Tag2Text scene classification vs text prompt
+
+## DOVE Benchmark Results (UDM10, full-reference)
+
+MGLD-VSR matches DOVE paper exactly on UDM10:
+
+| Metric | MGLD-VSR (ours) | DOVE paper |
+|--------|----------------|------------|
+| PSNR ↑ | 24.2339 | 24.23 |
+| SSIM ↑ | 0.6957 | 0.6957 |
+| LPIPS ↓ | 0.3272 | 0.3272 |
+| DISTS ↓ | 0.1676 | — |
+| CLIP-IQA ↑ | 0.4555 | — |
+
+## DOVER Video Quality (no-reference, per-video)
+
+Evaluated with [DOVER](https://github.com/VQAssessment/DOVER) — disentangled aesthetic + technical video quality.
+
+| Video | MGLD-SR Aesthetic | MGLD-SR Technical | MGLD-SR Overall | LQ Overall |
+|-------|-------------------|-------------------|-----------------|------------|
+| 7WHI2L_FDNg | 99.84 | 11.85 | 78.27 | 4.09 |
+| BrRLKMbBTYQ | 99.30 | 7.38 | 59.59 | 20.22 |
+| KZ8p6b1zJ9U | 99.90 | 11.37 | 80.94 | 3.08 |
+| hhszUXL1Cu8 | 99.94 | 8.58 | 81.01 | 16.11 |
+| mJog8DlRk_4 | 99.59 | 10.19 | 69.22 | 8.71 |
+| **Mean** | **99.71** | **9.87** | **73.81** | **10.44** |
+
+MGLD-SR overall quality ~7x higher than LQ. Aesthetic scores near-perfect; technical scores lower (expected for diffusion-based SR).
+
+## E\*warp Temporal Consistency (running)
+
+Computing warping error via RAFT optical flow on MGLD-SR and LQ videos. Lower = better temporal consistency.
+
+## UAV Synthetic (in progress)
+
+UAV inference running on synthetic videos (n120 g6 s30, chunked at 2500 frames):
+- hhszUXL1Cu8 (2412 frames): **Done** — video at `uav_synthetic/hhszUXL1Cu8/video/`
+- BrRLKMbBTYQ (5000 frames): Running (chunk 1/2)
+- KZ8p6b1zJ9U, 7WHI2L_FDNg, mJog8DlRk_4: Pending
 
 ## Environment
 
