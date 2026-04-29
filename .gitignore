@@ -38,3 +38,4 @@ papers/*.pdf
 .claude/projects/
 synthetic.zip
 results/mgld_synthetic_mp4/*
+results/uav_synthetic_mp4/*

@@ -88,16 +88,29 @@ Evaluated with [DOVER](https://github.com/VQAssessment/DOVER) — disentangled a
 
 MGLD-SR overall quality ~7x higher than LQ. Aesthetic scores near-perfect; technical scores lower (expected for diffusion-based SR).
 
-## E\*warp Temporal Consistency (running)
+## E\*warp Temporal Consistency (RAFT optical flow warping error)
 
-Computing warping error via RAFT optical flow on MGLD-SR and LQ videos. Lower = better temporal consistency.
+Lower = better (less temporal inconsistency between adjacent frames).
+
+| Video | MGLD-SR ↓ | LQ ↓ | Delta |
+|-------|----------|------|-------|
+| 7WHI2L_FDNg | 0.0106 | 0.0060 | +0.0046 |
+| BrRLKMbBTYQ | 0.0144 | 0.0124 | +0.0020 |
+| KZ8p6b1zJ9U | 0.0124 | 0.0116 | +0.0008 |
+| hhszUXL1Cu8 | 0.0021 | 0.0013 | +0.0008 |
+| mJog8DlRk_4 | 0.0174 | 0.0149 | +0.0025 |
+| **Mean** | **0.0114** | **0.0092** | **+0.0022** |
+
+SR introduces slightly more temporal inconsistency (+24%) than LQ — expected for diffusion-based SR where each frame is independently denoised. Absolute values are low for both.
 
 ## UAV Synthetic (in progress)
 
 UAV inference running on synthetic videos (n120 g6 s30, chunked at 2500 frames):
-- hhszUXL1Cu8 (2412 frames): **Done** — video at `uav_synthetic/hhszUXL1Cu8/video/`
-- BrRLKMbBTYQ (5000 frames): Running (chunk 1/2)
-- KZ8p6b1zJ9U, 7WHI2L_FDNg, mJog8DlRk_4: Pending
+
+- hhszUXL1Cu8 (2412 frames): **Done**
+- BrRLKMbBTYQ (5000 frames): **Done**
+- KZ8p6b1zJ9U (5000 frames): Running
+- 7WHI2L_FDNg, mJog8DlRk_4: Pending
 
 ## Environment
 
