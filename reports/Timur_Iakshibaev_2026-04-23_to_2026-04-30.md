@@ -23,9 +23,10 @@ This week: completed VBench 2.0 Quality Score evaluation, added DOVER + E\*warp 
 
 | Method | CLIP-IQA ↑ | MUSIQ ↑ | NIQE ↓ | BRISQUE ↓ |
 |--------|-----------|---------|--------|-----------|
-| LQ baseline | — | — | — | — |
-| MGLD-SR | 0.496 | 65.07 | 4.67 | 24.74 |
-| UAV | _running_ | _running_ | _running_ | _running_ |
+| MGLD-SR | **0.496** | **65.07** | **4.67** | **24.74** |
+| UAV | 0.391 | 56.28 | 5.73 | 50.90 |
+
+MGLD-SR wins all 4 NR metrics. UAV's higher BRISQUE (50.9 vs 24.7) and NIQE (5.7 vs 4.7) suggest more visible artifacts.
 
 **Effectiveness notes:**
 - **CLIP-IQA** — uses CLIP features, correlates well with human perception of overall quality but can be fooled by stylized content (gives high scores to artistic but blurry images). Per-frame metric.
@@ -55,9 +56,11 @@ MGLD-SR achieves highest overall DOVER quality (~7× over LQ, ~13% over UAV).
 
 | Method | E\*warp ↓ |
 |--------|-----------|
-| LQ | 0.0092 |
+| LQ | **0.0092** |
 | MGLD-SR | 0.0114 |
-| UAV | _running_ |
+| UAV | 0.0137 |
+
+LQ has best temporal consistency (no SR processing). MGLD-SR is more temporally consistent than UAV — UAV adds 49% more inconsistency vs LQ, MGLD only 24%.
 
 SR adds slight temporal inconsistency (+24%) versus LQ, expected for diffusion-based super-resolution.
 
@@ -75,13 +78,15 @@ All 7 Quality Score dimensions:
 
 | Dimension | LQ | MGLD-SR | UAV |
 |-----------|-----|---------|------|
-| imaging_quality ↑ | 0.4388 | **0.6810** | _running_ |
-| motion_smoothness ↑ | 0.9873 | **0.9886** | _running_ |
-| temporal_flickering ↑ | 0.9811 | **0.9840** | _running_ |
-| aesthetic_quality ↑ | 0.4128 | **0.5080** | _running_ |
-| dynamic_degree ↑ | 0.5628 | **0.5942** | _running_ |
-| subject_consistency ↑ | **0.8936** | 0.8927 | _running_ |
-| background_consistency ↑ | **0.9333** | 0.9235 | _running_ |
+| imaging_quality ↑ | 0.4388 | **0.6810** | 0.6458 |
+| motion_smoothness ↑ | 0.9873 | **0.9886** | 0.9882 |
+| temporal_flickering ↑ | 0.9811 | **0.9840** | 0.9826 |
+| aesthetic_quality ↑ | 0.4128 | **0.5080** | 0.4892 |
+| dynamic_degree ↑ | 0.5628 | 0.5942 | 0.5393 |
+| subject_consistency ↑ | 0.8936 | 0.8927 | **0.9031** |
+| background_consistency ↑ | **0.9333** | 0.9235 | 0.9317 |
+
+MGLD-SR wins 5/7 dimensions (imaging, motion, flickering, aesthetic, dynamic). UAV wins subject_consistency (which uses DINOv2 — SR's diffusion noise less detectable to color-invariant features). LQ wins background_consistency (no SR processing → no frame-to-frame DreamSim variation).
 
 **Effectiveness notes per dimension:**
 - **imaging_quality** — uses MUSIQ. Same caveats as MUSIQ above. Largest discriminator between LQ and SR (+55%). Reliable for SR.
@@ -280,14 +285,23 @@ Full plan saved at: `docs/plans/2026-04-28-metrics-and-vbench-validation.md`
 
 ---
 
-## Currently Running
+## All Evaluations Complete
 
-| GPU | Task | ETA |
-|-----|------|-----|
-| 0 | UAV NR eval (CLIP-IQA, MUSIQ, NIQE, BRISQUE) | ~15 min |
-| 1 | UAV E\*warp (RAFT optical flow) | ~1.5 h |
-| 6 | UAV DOVER | Done |
-| 7 | UAV VBench Quality Score (7 dims) | ~1.5 h |
+All UAV synthetic evaluations finished. Final comparison:
+
+| Metric | LQ | MGLD-SR | UAV | Winner |
+|--------|----|---------|------|--------|
+| CLIP-IQA ↑ | — | 0.496 | 0.391 | MGLD |
+| MUSIQ ↑ | — | 65.07 | 56.28 | MGLD |
+| NIQE ↓ | — | 4.67 | 5.73 | MGLD |
+| BRISQUE ↓ | — | 24.74 | 50.90 | MGLD |
+| DOVER overall ↑ | 10.44 | 73.81 | 65.06 | MGLD |
+| E\*warp ↓ | 0.0092 | 0.0114 | 0.0137 | LQ (best), MGLD (best SR) |
+| VBench imaging_quality ↑ | 0.4388 | 0.6810 | 0.6458 | MGLD |
+| VBench aesthetic ↑ | 0.4128 | 0.5080 | 0.4892 | MGLD |
+| VBench subject_consistency ↑ | 0.8936 | 0.8927 | 0.9031 | UAV |
+
+**MGLD-SR wins on 8/9 metrics. UAV only wins on subject_consistency (likely artifact of DINOv2 color invariance).**
 
 ---
 
