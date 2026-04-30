@@ -73,6 +73,26 @@ MGLD-VSR matches DOVE paper exactly on UDM10:
 | DISTS ↓ | 0.1676 | — |
 | CLIP-IQA ↑ | 0.4555 | — |
 
+## VBench-2.0 Human_Identity (patched)
+
+Identity consistency score (RetinaFace + ArcFace, ~0–1, higher = more consistent).
+Two patches applied to original VBench-2.0:
+1. Allow multi-face frames (pick largest face) — original required exactly 1 face
+2. Allow late reference frame initialization — original required face in frame 0
+
+| Video | MGLD-SR | UAV |
+|-------|---------|-----|
+| 7WHI2L_FDNg | 0.035 | **0.116** |
+| BrRLKMbBTYQ | **0.401** | 0.339 |
+| KZ8p6b1zJ9U | 0.534 | **0.537** |
+| hhszUXL1Cu8 | **0.011** | 0.009 |
+| mJog8DlRk_4 | **0.018** | 0.012 |
+| **Mean** | 0.200 | **0.203** |
+
+**Caveat — VBench-2.0 designed for single-person videos.** Algorithm tracks one reference identity (largest face) and compares each frame's largest face to it. For our crowd scenes (multiple people), the largest face can belong to different people across frames, producing artificially low scores. Even so, UAV slightly edges out MGLD overall (+0.003).
+
+A multi-person identity consistency metric would require an algorithm change (e.g., cluster-based identity tracking, score = fraction of faces matching any tracked cluster). To do later.
+
 ## DOVER Video Quality (no-reference, per-video)
 
 Evaluated with [DOVER](https://github.com/VQAssessment/DOVER) — disentangled aesthetic + technical video quality.
