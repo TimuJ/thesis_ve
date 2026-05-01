@@ -1,6 +1,6 @@
-# Weekly Progress Report — Timur Iakshibaev
+# Biweekly Progress Report — Timur Iakshibaev
 
-## Period: April 13 – April 26, 2026
+## Period: April 13 – May 1, 2026
 
 ## Disk2 Migration (April 15)
 
@@ -279,16 +279,120 @@ Server CUDA driver (v570/12.8) incompatible with torch 2.5.1's bundled cuDNN. Ne
 - [x] UAV torch 2.5.1 test attempted — blocked by cuDNN incompatibility
 - [x] VBench model weights downloaded locally and SCP'd (DreamSim, DINO, GRiT, UMT, ViCLIP, RAFT, CLIP)
 
-## Currently Running (as of April 23)
+## UAV Synthetic Inference — Completed (April 27 – April 30)
 
-| GPU | Task | Status |
-|-----|------|--------|
-| 3 | UAV synthetic inference (hhszUXL1Cu8 → all 5 videos, n120 g6 s30) | Running |
+### Chunked Inference for Long Videos
+
+UAV's default implementation OOM'd on 5,000-frame videos at 1280x720. Implemented chunked inference (2,500 frames per chunk) to fit in 80 GB VRAM. Frames re-assembled into MP4 with cv2.VideoWriter.
+
+All 22,412 frames super-resolved across 5 videos over ~48h on GPU 7. Results saved to `/data/disk2/timur/results/uav_synthetic_mp4/` and SCP'd locally (~770 MB).
+
+### Full MGLD vs UAV Evaluation (April 30)
+
+All metrics ran in parallel on free GPUs. **MGLD-SR wins 8/9 metrics**:
+
+| Metric | LQ | MGLD-SR | UAV | Winner |
+|--------|----|---------|------|--------|
+| CLIP-IQA ↑ | — | **0.496** | 0.391 | MGLD |
+| MUSIQ ↑ | — | **65.07** | 56.28 | MGLD |
+| NIQE ↓ | — | **4.67** | 5.73 | MGLD |
+| BRISQUE ↓ | — | **24.74** | 50.90 | MGLD |
+| DOVER overall ↑ | 10.44 | **73.81** | 65.06 | MGLD |
+| E\*warp ↓ | 0.0092 | **0.0114** | 0.0137 | MGLD (best SR) |
+| VBench imaging_quality ↑ | 0.4388 | **0.6810** | 0.6458 | MGLD |
+| VBench aesthetic ↑ | 0.4128 | **0.5080** | 0.4892 | MGLD |
+| VBench subject_consistency ↑ | 0.8936 | 0.8927 | **0.9031** | UAV |
+
+UAV's only win on `subject_consistency` is likely a DINOv2 color-invariance artifact rather than real superiority — diffusion noise in MGLD trips DINOv2 features more than UAV's smoother output.
+
+## New Metrics: DOVER + E\*warp (April 28)
+
+Added two missing DOVE benchmark metrics that weren't in our pipeline:
+
+- **DOVER** (no-reference video quality, aesthetic + technical) — installed from `VQAssessment/DOVER`, 229 MB weights downloaded locally + SCP'd. Uses fragment sampling, robust to long videos.
+- **E\*warp** (temporal warping error via RAFT optical flow) — implemented from scratch using torchvision RAFT. The DOVE repo had `eval_ewarp.py` that imports `from ewarp import Ewarp` but the actual `ewarp.py` was never published. Wrote it based on the algorithm (forward+backward flow, occlusion mask via FB consistency check, masked L2 error in non-occluded regions).
+
+KVQ confirmed as a separate dataset (Kaleidoscope Video Quality), not a metric — colleague had asked but it doesn't appear in the DOVE benchmark table.
+
+## VBench Effectiveness Validation Plan (April 28)
+
+Drafted plan to validate whether VBench metrics actually capture the long-range artifacts that matter for SR. Identified 7 limitations from source-code analysis:
+
+1. `temporal_flickering` has no long-range branch — only adjacent-frame MAE; gradual drift undetectable
+2. Fast branch samples only ~2% of frames (first frame per clip)
+3. DINOv2 (`subject_consistency`) is color-invariant — misses color drift
+4. PySceneDetect can hide chunk-boundary artifacts (splits at brightness jumps)
+5. Score mapping calibrated for text-to-video, not SR
+6. Cosine similarity blind to certain degradation types (uniform brightness/sharpness)
+7. Slow/fast 50:50 fusion is arbitrary, not validated for SR-specific artifacts
+
+Designed 5 synthetic test datasets (color drift, periodic flicker, chunk-boundary jumps, identity degradation, long-range background change) with parameterized severity levels — all buildable on M1 Mac with OpenCV. Plan includes complementary metrics: long-range tOF (k=[1,5,10,30,60,120]), tLP, CLIP-IQA temporal trajectory variance, FVD.
+
+Plan saved at `docs/plans/2026-04-28-metrics-and-vbench-validation.md`.
+
+## VBench-2.0 — The Real Version (April 30 – May 1)
+
+Discovered the package we'd been calling "VBench 2.0" (`vbench2_beta_long`) is actually the long-video extension of VBench 1.0. The real **VBench-2.0** is a separate module focused on intrinsic faithfulness (physics, anatomy, motion order) for text-to-video generation, with 18 new dimensions.
+
+### Applicability Analysis
+
+Of 18 dimensions:
+- **13 require text prompts** — composition, dynamic_attribute, complex_plot, mechanics, etc. Use LLaVA-Video or Qwen to compare video to prompt. Not applicable for SR.
+- **3 not applicable for other reasons** — diversity (needs N=20 generations per prompt), camera_motion (needs expected camera label), instance_preservation (needs prompt instance list).
+- **2 repurposable for SR** — **Human_Anatomy** (ViTDetector anomaly detection per frame, no prompt needed) and **Human_Identity** (RetinaFace + ArcFace, no prompt needed).
+- **Multi_View_Consistency deferred** — designed for multi-camera 3D coherence, conceptually different from long-video drift.
+
+Plan saved at `docs/plans/2026-04-30-vbench2-applicability.md`.
+
+### Phase 1: Initial Setup
+
+Goal: run VBench-2.0 directly on our SR videos before building long-video adapter.
+
+**Setup work:**
+
+- Disk cleanup — root partition was 100% full (0 bytes free), blocking all temp file creation. Moved 9 GB cache to `/data/disk2/timur/cache/` with symlinks (`vbench/`, `clip/`). Root now has 8.7 GB free.
+- Installed `mmcv 2.2.0` (prebuilt wheel for torch 2.4 cu121, ABI-compatible with torch 2.5.1), `mmdet 3.3.0`, `mmyolo 0.6.0`. Patched mmdet/mmyolo `__init__.py` to relax `mmcv_maximum_version` checks.
+- Installed `retinaface`, `retinaface-pytorch`, `gdown`. Numpy temporarily upgraded to 2.x then downgraded back to 1.26.4.
+- VBench-2.0 weights downloaded locally + SCP'd: ArcFace `resnet18_110.pth` (98 MB), RetinaFace zip (97 MB), YOLO-World (168 MB), anomaly detector human/face/hand `.pth` (88 MB each).
+- YOLO-World source SCP'd. Patched syntax error: `self.text_feats, None = ...` → `self.text_feats, _ = ...`.
+- ViTDetector config patched: replaced author's hardcoded `/mnt/petrelfs/zhengdian/code/ckpt/clip-vit-base-patch32` with `openai/clip-vit-base-patch32`.
+- timm `_pil_interp` import fixed in ViTDetector — `from timm.data.transforms import str_to_interp_mode as _pil_interp` (renamed in newer timm).
+
+### Human_Identity — Working
+
+VBench-2.0's `human_identity` algorithm has two issues for our crowd-scene videos:
+1. Required exactly 1 face per frame — fails on multi-person scenes
+2. Required reference face in frame 0 — fails if first frame has no face
+
+Patched `IDTracker.update()` to pick the largest face on multi-face frames, and `evaluate_id_consistency()` to find the first valid frame as reference (not strictly frame 0).
+
+Results on all 5 MGLD + 5 UAV videos:
+
+| Video | MGLD-SR | UAV |
+|-------|---------|-----|
+| 7WHI2L_FDNg | 0.035 | **0.116** |
+| BrRLKMbBTYQ | **0.401** | 0.339 |
+| KZ8p6b1zJ9U | 0.534 | **0.537** |
+| hhszUXL1Cu8 | **0.011** | 0.009 |
+| mJog8DlRk_4 | **0.018** | 0.012 |
+| **Mean** | 0.200 | **0.203** |
+
+UAV slightly better identity preservation overall (+0.003). Most scores are low because the algorithm tracks a single identity (largest face), but our videos contain crowds with multiple people. A multi-person extension (cluster-based identity tracking) is noted as future work.
+
+### Human_Anatomy — Blocked
+
+All weights and dependencies in place except CLIP-ViT-Base-Patch32 (577 MB pytorch_model.bin). SCP keeps disconnecting after 3-5 MB transferred — server connection unstable today. Will retry with smaller chunks at off-peak time, or use a HuggingFace mirror once available.
+
+## Currently Running (as of May 1)
+
+No active jobs. CLIP transfer pending for Human_Anatomy unblock.
 
 ## Next Steps
 
-1. Complete UAV synthetic inference (22,412 frames) → evaluate with NR metrics + VBench Quality Score
-2. Compare MGLD-SR vs UAV on synthetic long videos
-4. Compare MGLD-SR vs UAV on synthetic long videos
-5. Start thesis writing (Introduction + Literature Review chapters)
-6. Proposal outline when PhD student provides materials
+1. Unblock CLIP transfer for Human_Anatomy (split into smaller chunks, retry off-peak, or use HuggingFace mirror)
+2. Implement multi-person Human_Identity adaptation (cluster-based tracking)
+3. Build long-video adapter for VBench-2.0 (slow-fast pattern from `vbench2_beta_long`)
+4. Implement VBench validation test datasets (Tests A–E from plan): synthetic videos with parameterized artifacts
+5. Add long-range tOF + tLP metrics to evaluation pipeline
+6. Continue thesis writing (Introduction + Literature Review chapters)
+7. Proposal outline when PhD student provides materials

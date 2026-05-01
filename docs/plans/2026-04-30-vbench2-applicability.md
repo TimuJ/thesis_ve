@@ -172,6 +172,46 @@ scripts/
     aggregate_results.py    # produce unified report
 ```
 
+## Phase 1 Progress (May 1)
+
+### human_identity — WORKING
+
+- All weights downloaded and SCP'd: ArcFace `resnet18_110.pth` (98MB), RetinaFace zip (97MB)
+- Two algorithm patches applied:
+  - Allow multi-face frames (pick largest face) — original required exactly 1 face
+  - Allow late reference frame initialization — original required face in frame 0
+- All 5 MGLD + 5 UAV videos evaluated successfully
+- Mean: MGLD 0.200 vs UAV 0.203 (UAV very slightly better)
+- Documented multi-person limitation (algorithm tracks single identity)
+
+### human_anatomy — BLOCKED
+
+Setup completed up to but not including CLIP weights:
+- mmcv 2.2.0, mmdet 3.3.0, mmyolo 0.6.0 installed
+- Patched mmdet/mmyolo version checks (accept mmcv 2.2.0)
+- Patched timm `_pil_interp` import (use `str_to_interp_mode`)
+- YOLO-World source SCP'd, syntax error patched (`text_feats, _` instead of `text_feats, None`)
+- ViTDetector config patched (replaced `/mnt/petrelfs/...` with `openai/clip-vit-base-patch32`)
+- Anomaly detector weights SCP'd: human/face/hand .pth (88MB each), YOLO-World 168MB
+- **BLOCKER:** CLIP-ViT-Base-Patch32 weights (577MB pytorch_model.bin) — SCP keeps disconnecting after 3-5MB transferred. Server connection unstable today. Need to retry when network is calmer, or split into smaller chunks (10MB blocks also failing). Once weights present, anatomy should run.
+
+### TODO: Multi-person adaptation for human_identity (deferred)
+
+VBench-2.0 `human_identity` tracks a single reference identity (largest face per frame).
+For our synthetic videos with crowds, this produces artificially low scores because the
+"largest face" can belong to different people across frames.
+
+Initial run on 5 MGLD + 5 UAV videos showed mean ~0.20 (very low) due to this limitation.
+
+**Proposed fix** (to implement after human_anatomy):
+- Cluster-based identity tracking: maintain a set of tracked identities, not one
+- For each detected face: find best-matching cluster; if similarity > threshold, count as
+  consistent and update cluster centroid; else register a new identity
+- Score = fraction of detected faces that match an existing cluster (>= threshold)
+
+This properly measures "are individual people preserved consistently" rather than "is
+the single largest face the same across frames".
+
 ### Multi-view consistency (deferred)
 
 `multi_view_consistency` is harder to repurpose — it expects multiple camera angles. Consider after the 2-dim adapter is working. Possible adaptation: measure long-range view drift in single-view videos by comparing first-frame to subsequent-clip first-frames in feature space.
