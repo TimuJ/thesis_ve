@@ -93,6 +93,31 @@ Two patches applied to original VBench-2.0:
 
 A multi-person identity consistency metric would require an algorithm change (e.g., cluster-based identity tracking, score = fraction of faces matching any tracked cluster). To do later.
 
+## VBench-2.0 Human_Identity — Slow-Fast Adapter (long-video extension)
+
+Implemented slow-fast adapter (`scripts/vbench2_long/human_identity_long.py`):
+- **Slow branch:** split video into 2-sec clips, run patched VBench-2.0 identity per clip, aggregate
+- **Fast branch:** concatenate first frame of each clip into a "fast video", run identity on it (catches long-range identity drift)
+- **Fusion:** weighted average (default 50/50)
+
+| Video | MGLD slow | MGLD fast | MGLD fused | UAV slow | UAV fast | UAV fused |
+|-------|-----------|-----------|------------|----------|----------|-----------|
+| 7WHI2L_FDNg | 0.681 | 0.052 | 0.366 | 0.594 | 0.080 | 0.337 |
+| BrRLKMbBTYQ | 0.756 | -1.0¹ | 0.756 | 0.675 | 0.286 | 0.481 |
+| KZ8p6b1zJ9U | 0.703 | 0.611 | 0.657 | 0.723 | 0.778 | **0.751** |
+| hhszUXL1Cu8 | 0.757 | 0.553 | 0.655 | 0.732 | 0.188 | 0.460 |
+| mJog8DlRk_4 | 0.512 | 0.170 | 0.341 | 0.473 | 0.098 | 0.285 |
+| **Overall** | **0.682** | 0.346 | **0.555** | 0.639 | 0.286 | 0.463 |
+
+¹ fast=-1 means no faces detected in clip first-frames — falls back to slow only.
+
+**MGLD wins 4/5 videos on fused score and overall (+0.092).** UAV only wins on KZ8p6b1zJ9U.
+
+The slow-fast adapter scores are much higher than the whole-video custom_input run (MGLD 0.555 vs 0.200) because:
+1. Per-clip evaluation avoids identity drift accumulating across the whole video
+2. Each 2-sec clip typically has consistent identity, even in crowd scenes
+3. The fast branch specifically targets long-range drift while slow captures local consistency
+
 ## DOVER Video Quality (no-reference, per-video)
 
 Evaluated with [DOVER](https://github.com/VQAssessment/DOVER) — disentangled aesthetic + technical video quality.

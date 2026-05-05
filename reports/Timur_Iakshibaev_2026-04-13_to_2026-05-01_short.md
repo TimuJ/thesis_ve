@@ -46,14 +46,17 @@ Identified that real VBench-2.0 (separate from `vbench2_beta_long`) has 18 dimen
 - **Human_Anatomy** — anomaly detection (per-frame, no prompt needed)
 - **Human_Identity** — face identity consistency (RetinaFace + ArcFace)
 
-Human_Identity ran via VBench-2.0's standard `custom_input` mode (no long-video slow-fast adapter built yet — that's the next step). Patched the algorithm to handle multi-face frames and late reference initialization. Initial results across 5 videos:
+Patched the algorithm to handle multi-face frames and late reference initialization. Built a slow-fast long-video adapter (`scripts/vbench2_long/human_identity_long.py`):
+- **Slow:** per 2-sec clip identity consistency
+- **Fast:** identity across clip-first-frames concatenated as a "fast video"
+- **Fused:** weighted average
 
-| Method | Mean Identity Score |
-|--------|---------------------|
-| MGLD-SR | 0.200 |
-| UAV | **0.203** |
+| Method | Slow | Fast | Fused |
+|--------|------|------|-------|
+| MGLD-SR | **0.682** | **0.346** | **0.555** |
+| UAV | 0.639 | 0.286 | 0.463 |
 
-Single-identity tracking limits scores in crowd scenes; multi-person extension noted as future work.
+MGLD wins 4/5 videos on fused score (+0.092 overall). Whole-video custom_input mode previously gave 0.200/0.203 (very low) because identity drift accumulates over minutes; slow-fast adapter properly localizes per-clip evaluation. Multi-person identity tracking still pending for crowd scenes.
 
 ### 6. VBench Effectiveness Validation Plan
 
