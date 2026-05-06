@@ -46,8 +46,20 @@ CLIP-ViT-Base-Patch32 weights (605MB) needed for VBench-2.0 Human_Anatomy (YOLO-
 4. Start VBench effectiveness validation — generate test datasets with parameterized artifacts (color drift, periodic flicker, identity degradation, etc.)
 5. Add long-range tOF + tLP metrics to evaluation pipeline
 
-## Open Questions for Group
+## Tomorrow's Meeting (Thursday May 7)
 
-- Is per-clip 2-second granularity reasonable, or should it be longer (e.g., 4–6 seconds) to capture more within-clip drift?
-- Multi-person identity tracking — should "fraction of detected faces consistent with any tracked cluster" be the metric, or weighted by face area?
-- For the validation experiment: which parameterized artifacts most need coverage (we have 5 candidate datasets — see `docs/plans/`)?
+### Talking points (3-min recap)
+
+1. **Headline.** MGLD-SR beats UAV by +0.092 on Human_Identity (0.555 vs 0.463 fused), wins 4/5 videos. Slow-fast adapter fixed the whole-video collapse (0.20 → 0.55) by per-2sec-clip evaluation.
+2. **Transport breakthrough.** Trans-Pacific SCP capped at 11 KB/s (server-side rate-limited on long flows). Pivoted to a HuggingFace dataset relay via `hf-mirror.com` — works from the lab server (Google Drive and `huggingface.co` are blocked) at ~9 MB/s. Used it to route CLIP-ViT-Base-Patch32 (605 MB) *and* re-download two corrupt VBench-2.0 anomaly-detector `.pth` files (their `gdown` paths were truncated).
+3. **Anatomy unblocked.** Fixed three pre-existing issues (YOLO-World config hard-coded HF path; missing `VBENCH2_CACHE_DIR` env var; corrupt analyzer weights). Running on GPU 0 now; results expected by the meeting or shortly after.
+4. **Multi-person metric design committed.** Per-clip cluster-purity (self-consistency) + LQ-reference IoU-matched-pair variant, both running through the existing slow-fast scaffold. Ablation plan defined for thesis evidence: τ sensitivity, slow/fast weight sweep, self-vs-LQ-ref correlation, single-vs-multi discrimination test. Spec: `docs/plans/2026-05-06-multiperson-identity-metric.md`.
+
+### Blocking questions
+
+1. **Metric direction.** Spec proposes per-clip cluster purity (Approach 1) as headline + anchor-based (Approach 3) as fast fallback column, *both* self-consistency and LQ-reference variants. Does the group endorse, or push for a simpler/different formulation?
+2. **LQ-reference feasibility.** Main empirical risk: at 320×180 LQ, RetinaFace may miss many faces, making LQ-ref sparse. Acceptable to fall back to self-only if `evaluable_clips_pct < 50%`, or worth swapping in a small-face detector to keep it?
+3. **Real long-video ground truth.** Are the 5 synthetic videos enough for validating "long-video metric effectiveness," or should we add a real long-video set with HQ↔LQ pairs? Any group recommendation for source data?
+4. **VBench validation experiment priority.** Five candidate parameterized synthetic test datasets (color drift, periodic flicker, chunk-boundary jumps, identity degradation, long-range BG change). Which 2–3 first to maximize thesis-relevance?
+5. **Multi_view_consistency dimension.** Designed for orbit cameras in VBench-2.0; could be repurposed for long-range view drift in SR. Worth the effort or skip?
+6. **Per-clip granularity.** Currently 2 seconds at 24 fps (= 48 frames). Worth a sensitivity sweep (1, 2, 4, 6 sec), or stay with 2 by default?
