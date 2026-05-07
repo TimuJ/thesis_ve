@@ -28,6 +28,53 @@ This is the strongest-form thesis evidence for the "metric effectiveness for lon
 - It contradicts the expectation that "MGLD wins identity → MGLD looks better" — at least on this video.
 - It points at a concrete failure mode (we don't yet know which: anomaly-detector overconfidence on diffusion artifacts? RetinaFace mis-localization in MGLD's plate? ArcFace embedding drift on noisy SR output?). The diagnostic below will tell us which.
 
+## Step 1 results — anatomy per-frame trace (DONE 2026-05-07)
+
+Both runs completed on GPU 0; outputs at `results/vbench2_anatomy/diagnostic_KZ8p6b1zJ9U/{mgld,uav}_KZ8p6b1zJ9U_per_frame.json`. Verifies cleanly: `1 - total_abnormal/total_people` from the per-frame trace reproduces the `eval_results.json` score (MGLD 0.1435, UAV 0.4346) exactly.
+
+| | MGLD | UAV |
+|---|---|---|
+| Frames | 5000 | 5000 |
+| Frames with detected people | 78.9% | 72.0% |
+| Frames where **all** detected people flagged abnormal | **84.8%** | 53.2% |
+| Per-frame abnormal-rate, mean | 0.863 | 0.557 |
+| Per-frame abnormal-rate, median | **1.000** | 1.000 |
+| Detector triggers (above threshold) — human / face / hand | 2179 / 2074 / 2714 | 858 / 973 / 1520 |
+
+Two findings:
+
+1. **All three detectors fire ~2× more on MGLD.** Not a single-detector artefact — human, face, and hand all light up uniformly more.
+2. **Failure is uniform across the video, not localized.** Binned into 10-second windows, *every* window has MGLD's abnormal-rate strictly above UAV's, by +0.13 to +0.52. There is no specific "bad moment" — MGLD is flagged more consistently from `0s` through `200s`.
+
+### Why MGLD wins on the other 4 videos but loses on this one
+
+A "diffusion is uniformly penalized" hypothesis would predict MGLD < UAV on *all* videos. It doesn't — MGLD wins 4/5. So that one-line story is wrong. The corrected reading uses the absolute score levels:
+
+| Video | MGLD | UAV | Detector regime (both methods) |
+|-------|------|-----|--------------------------------|
+| 7WHI2L_FDNg | 0.832 | 0.735 | low trigger — detector "stable" |
+| BrRLKMbBTYQ | 0.522 | 0.437 | medium |
+| **KZ8p6b1zJ9U** | **0.144** | **0.435** | **high trigger — detector "unstable"** |
+| hhszUXL1Cu8 | 0.925 | 0.878 | low trigger |
+| mJog8DlRk_4 | 0.577 | 0.541 | medium |
+
+`KZ8p6b1zJ9U` is the only video where the anomaly detector is firing heavily on **both methods** (both scores < 0.5). On the other 4 videos the detector is in a low-fire regime and MGLD wins by small margins (the order most evaluators would expect). So:
+
+- **Stable regime (4/5 videos):** detector fires rarely, MGLD's slightly cleaner output → MGLD wins as expected.
+- **Unstable regime (`KZ8p6b1zJ9U`):** something about this scene content drives the detector into a high-fire state, and within that regime MGLD's diffusion output is asymmetrically more triggering than UAV's smooth output. The detector's behaviour flips.
+
+The thesis-relevant claim is therefore narrower but still strong: `Human_Anatomy` **is not metrically stable** under diffusion-style SR. On most content it agrees with the expected ordering; on certain content it inverts hard enough to drag the per-video mean to a tie. This is a usability failure for the metric on long videos that contain even a single such scene.
+
+What's distinctive about `KZ8p6b1zJ9U` is the next thing to check (close-up faces? specific lighting? motion-blurred hands?). The user has already looked and confirms it's a single-person scene without crowd, so the failure is not multi-person related.
+
+### Step 1.5 — per-frame anatomy on a MGLD-wins video (queued)
+
+Run the same per-frame diagnostic on **`hhszUXL1Cu8`** (MGLD's biggest win, 0.925 vs 0.878) the next time GPUs are free. Goal: confirm that in the stable-regime case both methods have near-zero abnormal rates and the MGLD/UAV ordering is small but consistent. If the detector triggers ~2× more on MGLD there too (just at very low absolute rates), then the "MGLD always trips it more" story is right and the per-video mean only flips when the absolute rate is high enough; if the detector triggers ~equally low for both, the failure is genuinely content-specific to KZ and we should look at scene properties.
+
+### Step 2 — per-clip identity (queued, GPUs saturated as of May 7 17:30 CST)
+
+Original Step 2 still planned: run `human_identity_long.py --save_clip_detail` on `KZ8p6b1zJ9U` for both methods, persist per-clip slow scores. Determines whether identity fails in the same uniform way or localizes to specific clip ranges.
+
 ## Plan
 
 ### Step 1 — per-frame anatomy trace (cheap)

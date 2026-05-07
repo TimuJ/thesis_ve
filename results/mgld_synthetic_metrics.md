@@ -131,9 +131,12 @@ Anomaly-detector score (ViTDetector ensemble: human / face / hand) over all fram
 | mJog8DlRk_4 | **0.577** | 0.541 | MGLD |
 | **Mean** | 0.600 | **0.605** | UAV (+0.005, tie) |
 
-Per-video: **MGLD wins 4/5**. UAV wins only `KZ8p6b1zJ9U` — same outlier where UAV won on Human_Identity. The 0.144 score there drags MGLD's mean to a statistical tie even though it wins everywhere else. `KZ8p6b1zJ9U` is a single-person scene (not crowd), so the multi-person hypothesis from earlier reports does not apply — the per-frame anomaly signal genuinely prefers UAV on that video.
+Per-video: **MGLD wins 4/5**. UAV wins only `KZ8p6b1zJ9U` — same outlier where UAV won on Human_Identity. The 0.144 score there drags MGLD's mean to a statistical tie even though it wins everywhere else. `KZ8p6b1zJ9U` is a single-person scene (not crowd), so the multi-person hypothesis from earlier reports does not apply.
+
+**Per-frame diagnostic on `KZ8p6b1zJ9U`:** MGLD is flagged abnormal in 84.8% of frames-with-people (median rate 1.0); UAV in 53.2%. All three detectors fire ~2× more on MGLD (human 2179 vs 858, face 2074 vs 973, hand 2714 vs 1520). Failure is uniform across the video — every 10-second window has MGLD's abnormal-rate above UAV's. The detector regime explains the per-video pattern: on the 4 MGLD-wins videos the detector is in a low-fire regime (both scores high) and MGLD's slightly cleaner output beats UAV by small margins; on `KZ8p6b1zJ9U` the detector is in a high-fire regime (both scores low) where MGLD's diffusion output asymmetrically over-triggers it. Diagnostic doc: `docs/plans/2026-05-07-metric-failure-diagnostic.md`.
 
 Raw eval JSONs: `results/vbench2_anatomy/{mgld,uav}_anatomy_eval_results.json`.
+Per-frame trace: `results/vbench2_anatomy/diagnostic_KZ8p6b1zJ9U/{mgld,uav}_KZ8p6b1zJ9U_per_frame.json`.
 Patches applied to upstream VBench-2.0 to make the run go through (CLIP-ViT-Base-Patch32 path, `VBENCH2_CACHE_DIR` env, anomaly-detector weight re-download): see `scripts/vbench2_long/README.md`.
 
 ## DOVER Video Quality (no-reference, per-video)
