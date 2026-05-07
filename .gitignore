@@ -39,3 +39,6 @@ papers/*.pdf
 synthetic.zip
 results/mgld_synthetic_mp4/*
 results/uav_synthetic_mp4/*
+
+# Local mirror of server result JSONs/CSVs (read-only reference, not source-of-truth)
+results/_server_mirror/
