@@ -38,22 +38,47 @@ CLIP-ViT-Base-Patch32 weights (605MB) needed for VBench-2.0 Human_Anatomy (YOLO-
 - **Measured:** 10MB transfer took 14:46 → ~11 KB/s (10× slower than the BDP cap → suggests ISP/server-side rate-limiting on long flows)
 - **Workaround:** parallel SCP with 6 concurrent streams (each connection gets its own TCP window, total throughput multiplies). Currently running.
 
-## Next Steps (May 6 – May 7)
+## Anatomy results (completed May 7 ~02:24 server time)
 
-1. Complete CLIP weights transfer (parallel SCP running now)
-2. Run VBench-2.0 Human_Anatomy on MGLD + UAV synthetic videos
-3. Multi-person Human_Identity adaptation (cluster-based identity tracking) — addresses crowd-scene limitation
-4. Start VBench effectiveness validation — generate test datasets with parameterized artifacts (color drift, periodic flicker, identity degradation, etc.)
-5. Add long-range tOF + tLP metrics to evaluation pipeline
+Both runs done. MGLD took 3h 30min, UAV 47min for the same 5 videos.
 
-## Tomorrow's Meeting (Thursday May 7)
+| Video | MGLD-SR | UAV | Winner |
+|-------|---------|-----|--------|
+| 7WHI2L_FDNg | **0.832** | 0.735 | MGLD |
+| BrRLKMbBTYQ | **0.522** | 0.437 | MGLD |
+| KZ8p6b1zJ9U | 0.144 | **0.435** | UAV (large gap) |
+| hhszUXL1Cu8 | **0.925** | 0.878 | MGLD |
+| mJog8DlRk_4 | **0.577** | 0.541 | MGLD |
+| **Mean** | 0.600 | **0.605** | UAV (+0.005, tie) |
+
+**MGLD wins 4/5 per-video on anatomy too**, but loses on the same outlier video as identity (`KZ8p6b1zJ9U`). The 0.144 there is enough to drag MGLD's mean to a statistical tie.
+
+**Visual inspection contradicts the metric on `KZ8p6b1zJ9U`:** UAV's SR looks clearly worse than MGLD's — yet both VBench-2.0 metrics (Identity *and* Anatomy) score UAV higher on this video. Both metrics fail in the same direction, on a single-person scene, ruling out crowd/multi-face artefacts. This is exactly the failure mode the metric-effectiveness study is designed to surface — strong evidence that VBench-2.0 quality scores do not always track perceptual SR quality on long videos. Diagnostic plan to localize *where* in the video they fail: `docs/plans/2026-05-07-metric-failure-diagnostic.md`.
+
+Side-by-side with identity:
+
+| Metric | MGLD | UAV | Δ |
+|--------|------|-----|---|
+| Identity (slow-fast fused) | 0.555 | 0.463 | **+0.092 MGLD** |
+| Anatomy (whole-video) | 0.600 | 0.605 | −0.005 (tie) |
+
+## Next Steps
+
+1. **Per-frame/per-clip metric-failure diagnostic on `KZ8p6b1zJ9U`** (`docs/plans/2026-05-07-metric-failure-diagnostic.md`). Persist the per-frame anatomy results (already computed, currently dropped) and per-clip identity scores; locate the time windows where MGLD scores worse than UAV; extract those frames and confirm visually. Strongest near-term thesis evidence on metric effectiveness.
+2. Implement multi-person Human_Identity per `docs/plans/2026-05-06-multiperson-identity-metric.md`.
+3. Start VBench effectiveness validation — generate test datasets with parameterized artifacts (color drift, periodic flicker, identity degradation, etc.).
+4. Add long-range tOF + tLP metrics to evaluation pipeline.
+
+## Group Meeting (moved Thursday May 7 → Thursday May 14)
 
 ### Talking points (3-min recap)
 
-1. **Headline.** MGLD-SR beats UAV by +0.092 on Human_Identity (0.555 vs 0.463 fused), wins 4/5 videos. Slow-fast adapter fixed the whole-video collapse (0.20 → 0.55) by per-2sec-clip evaluation.
-2. **Transport breakthrough.** Trans-Pacific SCP capped at 11 KB/s (server-side rate-limited on long flows). Pivoted to a HuggingFace dataset relay via `hf-mirror.com` — works from the lab server (Google Drive and `huggingface.co` are blocked) at ~9 MB/s. Used it to route CLIP-ViT-Base-Patch32 (605 MB) *and* re-download two corrupt VBench-2.0 anomaly-detector `.pth` files (their `gdown` paths were truncated).
-3. **Anatomy unblocked.** Fixed three pre-existing issues (YOLO-World config hard-coded HF path; missing `VBENCH2_CACHE_DIR` env var; corrupt analyzer weights). Running on GPU 0 now; results expected by the meeting or shortly after.
-4. **Multi-person metric design committed.** Per-clip cluster-purity (self-consistency) + LQ-reference IoU-matched-pair variant, both running through the existing slow-fast scaffold. Ablation plan defined for thesis evidence: τ sensitivity, slow/fast weight sweep, self-vs-LQ-ref correlation, single-vs-multi discrimination test. Spec: `docs/plans/2026-05-06-multiperson-identity-metric.md`.
+1. **Headline.** MGLD-SR beats UAV by **+0.092 on Human_Identity (slow-fast fused)** (0.555 vs 0.463), wins 4/5 videos. The slow-fast adapter fixed the whole-video collapse (0.20 → 0.55) by per-2sec-clip evaluation.
+2. **Anatomy is a tie at the mean (0.600 vs 0.605) but MGLD wins 4/5 per-video.** UAV's win on `KZ8p6b1zJ9U` (0.435 vs 0.144) drags MGLD to break-even. Same outlier video as identity, single-person scene — and **visual inspection clearly favors MGLD on this video**, so both metrics fail together against perception. Per-frame/per-clip diagnostic planned to localize the failure: `docs/plans/2026-05-07-metric-failure-diagnostic.md`.
+3. **Transport breakthrough.** Trans-Pacific SCP capped at 11 KB/s (server-side rate-limited on long flows). Pivoted to a HuggingFace dataset relay via `hf-mirror.com` — works from the lab server (Google Drive and `huggingface.co` are blocked) at ~9 MB/s. Used it to route CLIP-ViT-Base-Patch32 (605 MB) *and* re-download two corrupt VBench-2.0 anomaly-detector `.pth` files (their `gdown` paths were truncated).
+4. **Anatomy unblocked.** Fixed three pre-existing issues (YOLO-World config hard-coded HF path; missing `VBENCH2_CACHE_DIR` env var; corrupt analyzer weights).
+5. **Multi-person metric design committed.** Per-clip cluster-purity (self-consistency) + LQ-reference IoU-matched-pair variant, both running through the existing slow-fast scaffold. Ablation plan defined for thesis evidence: τ sensitivity, slow/fast weight sweep, self-vs-LQ-ref correlation, single-vs-multi discrimination test. Spec: `docs/plans/2026-05-06-multiperson-identity-metric.md`.
+6. **VBench-2.0 code shared.** Mirrored to `scripts/vbench2_long/` (renamed the prior dir to `scripts/vbench1_long/` since it was actually VBench 1.x). All three patches and the slow-fast adapter visible in the repo.
 
 ### Blocking questions
 

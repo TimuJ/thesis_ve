@@ -1,0 +1,27 @@
+{
+    "Human_Anatomy": [
+        0.6000277377126817,
+        [
+            {
+                "video_path": "/data/disk2/timur/results/mgld_synthetic_mp4/7WHI2L_FDNg.mp4",
+                "video_results": 0.8322245659581373
+            },
+            {
+                "video_path": "/data/disk2/timur/results/mgld_synthetic_mp4/BrRLKMbBTYQ.mp4",
+                "video_results": 0.521862833183588
+            },
+            {
+                "video_path": "/data/disk2/timur/results/mgld_synthetic_mp4/KZ8p6b1zJ9U.mp4",
+                "video_results": 0.14351345438634877
+            },
+            {
+                "video_path": "/data/disk2/timur/results/mgld_synthetic_mp4/hhszUXL1Cu8.mp4",
+                "video_results": 0.9252988047808764
+            },
+            {
+                "video_path": "/data/disk2/timur/results/mgld_synthetic_mp4/mJog8DlRk_4.mp4",
+                "video_results": 0.5772390302544581
+            }
+        ]
+    ]
+}

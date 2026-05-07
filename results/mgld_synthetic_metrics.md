@@ -91,7 +91,7 @@ Two patches applied to original VBench-2.0:
 
 **Caveat — VBench-2.0 designed for single-person videos.** Algorithm tracks one reference identity (largest face) and compares each frame's largest face to it. For our crowd scenes (multiple people), the largest face can belong to different people across frames, producing artificially low scores. Even so, UAV slightly edges out MGLD overall (+0.003).
 
-A multi-person identity consistency metric would require an algorithm change (e.g., cluster-based identity tracking, score = fraction of faces matching any tracked cluster). To do later.
+A multi-person identity consistency metric would require an algorithm change (e.g., cluster-based identity tracking, score = fraction of faces matching any tracked cluster). Design spec: `docs/plans/2026-05-06-multiperson-identity-metric.md`.
 
 ## VBench-2.0 Human_Identity — Slow-Fast Adapter (long-video extension)
 
@@ -117,6 +117,24 @@ The slow-fast adapter scores are much higher than the whole-video custom_input r
 1. Per-clip evaluation avoids identity drift accumulating across the whole video
 2. Each 2-sec clip typically has consistent identity, even in crowd scenes
 3. The fast branch specifically targets long-range drift while slow captures local consistency
+
+## VBench-2.0 Human_Anatomy (whole-video custom_input)
+
+Anomaly-detector score (ViTDetector ensemble: human / face / hand) over all frames. Higher = fewer anatomical anomalies.
+
+| Video | MGLD-SR | UAV | Winner |
+|-------|---------|-----|--------|
+| 7WHI2L_FDNg | **0.832** | 0.735 | MGLD |
+| BrRLKMbBTYQ | **0.522** | 0.437 | MGLD |
+| KZ8p6b1zJ9U | 0.144 | **0.435** | UAV (large gap) |
+| hhszUXL1Cu8 | **0.925** | 0.878 | MGLD |
+| mJog8DlRk_4 | **0.577** | 0.541 | MGLD |
+| **Mean** | 0.600 | **0.605** | UAV (+0.005, tie) |
+
+Per-video: **MGLD wins 4/5**. UAV wins only `KZ8p6b1zJ9U` — same outlier where UAV won on Human_Identity. The 0.144 score there drags MGLD's mean to a statistical tie even though it wins everywhere else. `KZ8p6b1zJ9U` is a single-person scene (not crowd), so the multi-person hypothesis from earlier reports does not apply — the per-frame anomaly signal genuinely prefers UAV on that video.
+
+Raw eval JSONs: `results/vbench2_anatomy/{mgld,uav}_anatomy_eval_results.json`.
+Patches applied to upstream VBench-2.0 to make the run go through (CLIP-ViT-Base-Patch32 path, `VBENCH2_CACHE_DIR` env, anomaly-detector weight re-download): see `scripts/vbench2_long/README.md`.
 
 ## DOVER Video Quality (no-reference, per-video)
 

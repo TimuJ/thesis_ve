@@ -114,6 +114,11 @@ def main():
     ap.add_argument("--w_slow", type=float, default=0.5)
     ap.add_argument("--w_fast", type=float, default=0.5)
     ap.add_argument("--keep_clips", action="store_true", help="don't delete temp clips after eval")
+    ap.add_argument(
+        "--save_clip_detail",
+        action="store_true",
+        help="persist per-clip and per-fast-frame raw scores under per_video[<v>].clip_detail / .fast_detail",
+    )
     args = ap.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -202,6 +207,20 @@ def main():
             "n_clips": len(clip_paths),
             "n_clips_with_faces": len(valid),
         }
+        if args.save_clip_detail:
+            # per-clip slow scores in clip-index order; -1 = no faces in that clip
+            results["per_video"][base]["clip_detail"] = [
+                {
+                    "clip_index": i,
+                    "clip_path": os.path.basename(d.get("video_path", clip_paths[i])),
+                    "score": float(d["video_results"]),
+                }
+                for i, d in enumerate(clip_detail)
+            ]
+            # fast branch: identity over the concat-of-clip-first-frames synthetic video
+            results["per_video"][base]["fast_detail"] = (
+                {"score": float(fast_detail[0]["video_results"])} if fast_detail else None
+            )
         if fused != -1.0:
             fused_scores.append(fused)
 
