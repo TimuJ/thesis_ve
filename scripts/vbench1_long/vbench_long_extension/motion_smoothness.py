@@ -1,5 +1,5 @@
 from vbench.motion_smoothness import compute_motion_smoothness
-from vbench2_beta_long.utils import reorganize_clips_results
+from vbench_long_extension.utils import reorganize_clips_results
 
 
 def compute_long_motion_smoothness(json_dir, device, submodules_list, **kwargs):

@@ -1,6 +1,6 @@
 
 from vbench.scene import compute_scene
-from vbench2_beta_long.utils import reorganize_clips_results
+from vbench_long_extension.utils import reorganize_clips_results
 
 
 def compute_long_scene(json_dir, device, submodules_list, **kwargs):

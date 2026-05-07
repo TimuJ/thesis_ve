@@ -23,18 +23,18 @@ First, we use PySceneDetect to split a long video into multiple semantically con
 
 For example
 ```python
-from vbench2_beta_long.utils import split_video_into_scenes
+from vbench_long_extension.utils import split_video_into_scenes
 split_video_into_scenes(video_path, output_dir, threshold)
 ```
 
 ### 1.2 Create Slow-Fast Branches
 
-Next, we split the videos from the previous step into shorter fixed-length clips to enable the slow-fast evaluation introduced in the next section.  Since some evaluation dimensions use models trained on longer video clips, such as UMT and ViCLIP, for `human_action` and `overall_consistency`, we established different fixed-length durations for different dimensions. These durations can be found in `vbench2_beta_long/configs/clip_length_mix.yaml`.
+Next, we split the videos from the previous step into shorter fixed-length clips to enable the slow-fast evaluation introduced in the next section.  Since some evaluation dimensions use models trained on longer video clips, such as UMT and ViCLIP, for `human_action` and `overall_consistency`, we established different fixed-length durations for different dimensions. These durations can be found in `vbench_long_extension/configs/clip_length_mix.yaml`.
 
 
 Usage:
 ```python
-from vbench2_beta_long.utils import split_video_into_clips
+from vbench_long_extension.utils import split_video_into_clips
 split_video_into_clips(video_path, base_output_dir, duration, fps)
 ```
 
@@ -56,7 +56,7 @@ Previously, VBench evaluated temporal consistency primarily by calculating the c
 
 You can use the command below to evaluate long videos sampled based on the standard prompt of VBench:
 ```bash []
-python vbench2_beta_long/eval_long.py \
+python vbench_long_extension/eval_long.py \
     --videos_path $videos_path \
     --dimension $dimension \ 
     --mode 'long_vbench_standard' \
@@ -64,7 +64,7 @@ python vbench2_beta_long/eval_long.py \
 ```
 For dimension `temporal_flickering`, **static filter** should be implemented before evaluaing videos. We ensembled static filter function into preprocess for **VBench-Long**, and you can use flag `static_filter_flag` to execute static filter, such as:
 ```bash []
-python vbench2_beta_long/eval_long.py \
+python vbench_long_extension/eval_long.py \
     --videos_path $videos_path \
     --dimension 'temporal_flickering' \ 
     --mode 'long_vbench_standard' \
@@ -77,7 +77,7 @@ python vbench2_beta_long/eval_long.py \
 For long video evaluation, we support customized videos / prompts for the following dimensions: `subject_consistency`, `background_consistency`, `motion_smoothness`, `dynamic_degree`, `aesthetic_quality`, `imaging_quality`
 
 ```bash []
-python vbench2_beta_long/eval_long.py \
+python vbench_long_extension/eval_long.py \
     --videos_path $videos_path \
     --dimension $dimension \ 
     --mode 'long_custom_input' \
@@ -85,9 +85,9 @@ python vbench2_beta_long/eval_long.py \
 ```
 
 ### 3.3 Automatic Evaluation Script
-We provide the [evaluate_long.sh](https://github.com/Vchitect/VBench/blob/master/vbench2_beta_long/evaluate_long.sh) script for automating the evaluation across all dimensions. To use the script, simply provide the path to your videos in the following command and run it:
+We provide the [evaluate_long.sh](https://github.com/Vchitect/VBench/blob/master/vbench_long_extension/evaluate_long.sh) script for automating the evaluation across all dimensions. To use the script, simply provide the path to your videos in the following command and run it:
 ```
-sh vbench2_beta_long/evaluate_long.sh $VIDEOS_PATH
+sh vbench_long_extension/evaluate_long.sh $VIDEOS_PATH
 ```
 
 ### 3.4 Example of Evaluating OpenSoraPlan

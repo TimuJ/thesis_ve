@@ -1,5 +1,5 @@
 from vbench.imaging_quality import compute_imaging_quality
-from vbench2_beta_long.utils import reorganize_clips_results
+from vbench_long_extension.utils import reorganize_clips_results
 
 
 def compute_long_imaging_quality(json_dir, device, submodules_list, **kwargs):

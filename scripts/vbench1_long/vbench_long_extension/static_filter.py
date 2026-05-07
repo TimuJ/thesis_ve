@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 from vbench.utils import CACHE_DIR, load_json
 from vbench.third_party.RAFT.core.raft import RAFT
 from vbench.third_party.RAFT.core.utils_core.utils import InputPadder
-from vbench2_beta_long.utils import get_prompt_from_filename
+from vbench_long_extension.utils import get_prompt_from_filename
 
 
 CUR_PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

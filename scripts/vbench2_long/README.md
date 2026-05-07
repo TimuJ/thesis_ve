@@ -2,7 +2,18 @@
 
 Patched [VBench-2.0](https://github.com/Vchitect/VBench/tree/master/VBench-2.0) for evaluating long super-resolution videos. Includes a slow-fast adapter that wraps `Human_Identity` for >1-min videos and three small upstream patches.
 
-For VBench 1.x (the older `vbench2_beta_long` quality dimensions), see `scripts/vbench1_long/`.
+For VBench 1.x (the older long-video quality dimensions), see `scripts/vbench1_long/`.
+
+## Setup
+
+```bash
+conda create -n vbench python=3.10 -y
+conda activate vbench
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121  # adjust to your CUDA
+pip install -r requirements.txt
+```
+
+`requirements.txt` is the upstream VBench-2.0 pinned set. Note `mmdet`, `mmengine`, `mmyolo`, `timm`, `decord`, and the upstream-cloned `YOLO-World` and `Instance_detector` repos are required by `Human_Anatomy`. `arcface` and `retinaface` are required by `Human_Identity`.
 
 ## Layout
 

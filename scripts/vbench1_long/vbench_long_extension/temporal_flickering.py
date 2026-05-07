@@ -6,8 +6,8 @@ from collections import defaultdict
 
 from vbench.temporal_flickering import compute_temporal_flickering
 from vbench.utils import CACHE_DIR, save_json, load_json, load_dimension_info
-from vbench2_beta_long.utils import reorganize_clips_results, build_filtered_info_json
-from vbench2_beta_long.static_filter import static_filter
+from vbench_long_extension.utils import reorganize_clips_results, build_filtered_info_json
+from vbench_long_extension.static_filter import static_filter
 
 def compute_long_temporal_flickering(json_dir, device, submodules_list, **kwargs):
     video_list, _ = load_dimension_info(json_dir, dimension='temporal_flickering', lang='en')

@@ -30,9 +30,9 @@ if [ "$subdirs_found" = true ]; then
 
         # Check if the dimension is 'temporal_flickering' and add the static filter flag
         if [ "$dimension" == "temporal_flickering" ]; then
-            python vbench2_beta_long/eval_long.py --videos_path $videos_path --dimension $dimension --mode 'long_vbench_standard' --dev_flag --static_filter_flag
+            python vbench_long_extension/eval_long.py --videos_path $videos_path --dimension $dimension --mode 'long_vbench_standard' --dev_flag --static_filter_flag
         else
-            python vbench2_beta_long/eval_long.py --videos_path $videos_path --dimension $dimension --mode 'long_vbench_standard' --dev_flag
+            python vbench_long_extension/eval_long.py --videos_path $videos_path --dimension $dimension --mode 'long_vbench_standard' --dev_flag
         fi
     done
 else
@@ -47,9 +47,9 @@ else
 
         # Check if the dimension is 'temporal_flickering' and add the static filter flag
         if [ "$dimension" == "temporal_flickering" ]; then
-            python vbench2_beta_long/eval_long.py --videos_path $videos_path --dimension $dimension --mode 'long_vbench_standard' --dev_flag --static_filter_flag
+            python vbench_long_extension/eval_long.py --videos_path $videos_path --dimension $dimension --mode 'long_vbench_standard' --dev_flag --static_filter_flag
         else
-            python vbench2_beta_long/eval_long.py --videos_path $videos_path --dimension $dimension --mode 'long_vbench_standard' --dev_flag
+            python vbench_long_extension/eval_long.py --videos_path $videos_path --dimension $dimension --mode 'long_vbench_standard' --dev_flag
         fi
     done
 fi

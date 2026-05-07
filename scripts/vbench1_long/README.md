@@ -1,6 +1,6 @@
 # VBench 1.x Long-Video Evaluation
 
-Patched version of [VBench v0.1.5](https://github.com/Vchitect/VBench) for long-video quality evaluation using its `vbench2_beta_long` module. The "vbench2_beta" naming comes from upstream — this is **VBench 1.x** with the long-video extension that shipped while v2 was in beta. For VBench-2.0 (different metrics: Human_Anatomy, Human_Identity, Multi_View_Consistency, etc.), see `scripts/vbench2_long/`.
+Patched version of [VBench v0.1.5](https://github.com/Vchitect/VBench) for long-video quality evaluation using its `vbench_long_extension` module. The "vbench2_beta" naming comes from upstream — this is **VBench 1.x** with the long-video extension that shipped while v2 was in beta. For VBench-2.0 (different metrics: Human_Anatomy, Human_Identity, Multi_View_Consistency, etc.), see `scripts/vbench2_long/`.
 
 ## Setup
 
@@ -15,7 +15,7 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 # 3. Install dependencies
 pip install -r requirements_long.txt
 
-# 4. Install VBench source (needed for vbench2_beta_long imports)
+# 4. Install VBench source (needed for vbench_long_extension imports)
 export PYTHONPATH=/path/to/this/repo:$PYTHONPATH
 ```
 
@@ -26,10 +26,10 @@ export PYTHONPATH=/path/to/this/repo:$PYTHONPATH
 Only the **Quality Score** dimensions are meaningful for custom videos without text prompts:
 
 ```bash
-python vbench2_beta_long/eval_long.py \
+python vbench_long_extension/eval_long.py \
     --videos_path /path/to/mp4/videos/ \
     --output_path /path/to/output/dim_name \
-    --full_json_dir vbench2_beta_long/VBench_full_info.json \
+    --full_json_dir vbench_long_extension/VBench_full_info.json \
     --dimension imaging_quality \
     --mode long_custom_input
 ```
@@ -65,10 +65,10 @@ for dim in imaging_quality motion_smoothness temporal_flickering \
            aesthetic_quality dynamic_degree subject_consistency \
            background_consistency; do
     echo "=== $dim ==="
-    CUDA_VISIBLE_DEVICES=$GPU python vbench2_beta_long/eval_long.py \
+    CUDA_VISIBLE_DEVICES=$GPU python vbench_long_extension/eval_long.py \
         --videos_path "$VIDEOS" \
         --output_path "$OUTPUT/$dim" \
-        --full_json_dir vbench2_beta_long/VBench_full_info.json \
+        --full_json_dir vbench_long_extension/VBench_full_info.json \
         --dimension "$dim" \
         --mode long_custom_input
 done

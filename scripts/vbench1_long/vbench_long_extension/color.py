@@ -1,6 +1,6 @@
 
 from vbench.color import compute_color
-from vbench2_beta_long.utils import reorganize_clips_results
+from vbench_long_extension.utils import reorganize_clips_results
 
 
 def compute_long_color(json_dir, device, submodules_list, **kwargs):

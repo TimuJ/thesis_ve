@@ -2,7 +2,7 @@ import torch
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from vbench2_beta_long import VBenchLong
+from vbench_long_extension import VBenchLong
 from datetime import datetime
 import argparse
 import json

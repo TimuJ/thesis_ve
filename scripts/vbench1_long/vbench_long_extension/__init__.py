@@ -4,8 +4,8 @@ import importlib
 from itertools import chain
 from pathlib import Path
 from vbench.utils import get_prompt_from_filename, init_submodules, save_json, load_json
-from vbench2_beta_long.utils import split_video_into_scenes, split_video_into_clips, load_clip_lengths, get_duration_from_json
-from vbench2_beta_long.temporal_flickering import filter_static_clips
+from vbench_long_extension.utils import split_video_into_scenes, split_video_into_clips, load_clip_lengths, get_duration_from_json
+from vbench_long_extension.temporal_flickering import filter_static_clips
 from vbench import VBench
 
 
@@ -103,7 +103,7 @@ class VBenchLong(VBench):
         # print('AFTER BUILDING')
         for dimension in dimension_list:
             try:
-                dimension_module = importlib.import_module(f'vbench2_beta_long.{dimension}')
+                dimension_module = importlib.import_module(f'vbench_long_extension.{dimension}')
                 evaluate_func = getattr(dimension_module, f'compute_long_{dimension}')
             except Exception as e:
                 raise NotImplementedError(f'UnImplemented dimension {dimension}!, {e}')
