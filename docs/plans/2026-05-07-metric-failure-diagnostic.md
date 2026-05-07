@@ -67,13 +67,57 @@ The thesis-relevant claim is therefore narrower but still strong: `Human_Anatomy
 
 What's distinctive about `KZ8p6b1zJ9U` is the next thing to check (close-up faces? specific lighting? motion-blurred hands?). The user has already looked and confirms it's a single-person scene without crowd, so the failure is not multi-person related.
 
-### Step 1.5 — per-frame anatomy on a MGLD-wins video (queued)
+### Step 1.5 results — per-frame anatomy on hhszUXL1Cu8 (DONE 2026-05-07)
 
-Run the same per-frame diagnostic on **`hhszUXL1Cu8`** (MGLD's biggest win, 0.925 vs 0.878) the next time GPUs are free. Goal: confirm that in the stable-regime case both methods have near-zero abnormal rates and the MGLD/UAV ordering is small but consistent. If the detector triggers ~2× more on MGLD there too (just at very low absolute rates), then the "MGLD always trips it more" story is right and the per-video mean only flips when the absolute rate is high enough; if the detector triggers ~equally low for both, the failure is genuinely content-specific to KZ and we should look at scene properties.
+| | MGLD | UAV |
+|---|---|---|
+| Frames with detected people | 94.0% | 94.9% |
+| Total people / total abnormal | 3012 / 225 | 3060 / 372 |
+| Per-frame abnormal-rate, mean | 0.058 | 0.104 |
+| Per-frame abnormal-rate, median | **0.000** | **0.000** |
+| % frames with **no** abnormal flag | 90.6% | 84.8% |
+| Detector triggers — human / face / hand | **0 / 0 / 242** | **0 / 2 / 391** |
+| Score | 0.9253 | 0.8784 |
 
-### Step 2 — per-clip identity (queued, GPUs saturated as of May 7 17:30 CST)
+**Confirms the regime hypothesis.** In the low-fire regime, the median per-frame abnormal-rate is **0 for both methods** (vs 1.0 for both on KZ), and **MGLD has fewer triggers than UAV** (242 vs 393, total). So the "MGLD always trips the detector more" story is wrong — the bias only emerges in a high-fire regime tripped by certain content. Where the detector is stable (this video), MGLD wins as expected because its outputs are slightly cleaner.
 
-Original Step 2 still planned: run `human_identity_long.py --save_clip_detail` on `KZ8p6b1zJ9U` for both methods, persist per-clip slow scores. Determines whether identity fails in the same uniform way or localizes to specific clip ranges.
+Notable: on this video the only firing detector is `hand` (the human and face detectors barely fire). On KZ all three detectors fire heavily for both methods. The KZ failure may therefore be content-specific to scenes that activate the human/face anomaly detectors at high rates — which is the next thing to characterize if we want to pin down what triggers the regime switch.
+
+### Step 2 results — per-clip identity slow-fast on KZ8p6b1zJ9U (DONE 2026-05-07)
+
+| | MGLD | UAV |
+|---|---|---|
+| Total clips | 83 | 104 |
+| Clips with faces detected | 42 (51%) | 42 (40%) |
+| Per-clip score: mean / median / stdev | 0.703 / 0.854 / 0.336 | 0.723 / 0.951 / 0.358 |
+| **Slow** (within-clip avg) | **0.7025** | **0.7233** |
+| **Fast** (cross-clip first-frames) | **0.6111** | **0.7778** |
+| Fused (50/50) | 0.6568 | 0.7505 |
+
+**Identity failure is localized, not uniform — and the failure mechanism differs from anatomy.**
+
+- Within-clip slow scores are essentially tied (MGLD 0.7025 vs UAV 0.7233 — gap 0.02). MGLD does not lose locally.
+- The whole identity gap comes from the **fast branch** (cross-clip identity): MGLD 0.611 vs UAV 0.778 — gap 0.17.
+- Of 15 clips with faces detected in **both** methods, wins are split: UAV 6, MGLD 5, tied 4. Mean per-clip delta ≈ +0.008. So no uniform bias — just clip-specific drifts in different time windows.
+- Top UAV-wins clips cluster at `t=56–72s` (clips 28, 29, 30, 36) where MGLD scores 0.14–0.58 vs UAV 1.0.
+- Top MGLD-wins clips at `t=18s, 44s, 50s` (clips 9, 22, 25) where MGLD scores 0.82–1.0 vs UAV 0.04–0.30.
+
+**Mechanism:** the fast branch concatenates the *first frame of every clip* into a synthetic video and runs identity on the resulting frame sequence. UAV's smoother SR produces **more consistent face appearance across clip boundaries** because diffusion is absent — same blur, same lack of detail. MGLD's diffusion adds chunk-dependent fine-grained variation (different noise patterns per processing chunk) that ArcFace reads as identity drift across clip boundaries, even when within each clip the same person is clearly recognizable.
+
+This is a different failure than anatomy:
+
+- **Anatomy** — content-dependent detector instability (some scenes trigger an unstable high-fire regime).
+- **Identity** — cross-clip ArcFace embedding drift; smoother output trivially wins cross-clip identity even when visually worse.
+
+Both are **long-video-specific failures** that wouldn't show up on the short 16-frame benchmarks VBench-2.0 was designed for.
+
+### Sub-finding: framerate metadata differs between methods
+
+Probed on server with cv2: both SR mp4s have **5000 frames** (same content count) but different fps tags — **MGLD 30 fps → 166.7 s; UAV 24 fps → 208.3 s**. The 2-sec slow-fast splitter at native fps therefore produces clips with **different frame counts** (MGLD 60 frames/clip → 83 clips; UAV 48 frames/clip → 104 clips). Implications:
+
+- Slow branch: per-clip face detection has slightly more frames per clip on MGLD (60 vs 48), but slow scores end up nearly equal anyway (0.703 vs 0.723), so this is a minor effect.
+- Fast branch: UAV has more first-frames concatenated (104 vs 83), so *more* cross-clip transitions where identity could fail. UAV still scores higher (0.778 vs 0.611) — strengthens the "smoother output is trivially more cross-clip consistent" interpretation.
+- Fair-comparison fix to consider: re-encode both to the same fps before evaluation, or split by frame-count instead of seconds. Worth doing if the framerate mismatch is suspected to bias other metrics too.
 
 ## Plan
 

@@ -93,6 +93,26 @@ Two patches applied to original VBench-2.0:
 
 A multi-person identity consistency metric would require an algorithm change (e.g., cluster-based identity tracking, score = fraction of faces matching any tracked cluster). Design spec: `docs/plans/2026-05-06-multiperson-identity-metric.md`.
 
+### Per-clip identity diagnostic on `KZ8p6b1zJ9U` (the UAV-wins video)
+
+Per-clip slow scores plus the fast cross-clip score, dumped via `human_identity_long.py --save_clip_detail`:
+
+| | MGLD | UAV |
+|---|---|---|
+| Total clips (2-sec splits) | 83 | 104 |
+| Clips with faces detected | 42 (51%) | 42 (40%) |
+| Slow (within-clip avg) | **0.7025** | **0.7233** |
+| Fast (cross-clip first-frames) | **0.6111** | **0.7778** |
+| Fused (50/50) | 0.6568 | 0.7505 |
+
+**Identity failure is localized, not uniform.** Within-clip slow scores are essentially tied; the gap is entirely in the fast (cross-clip) branch. Of 15 clips with faces in **both** methods, the wins are split (UAV 6, MGLD 5, tied 4) with mean per-clip delta ≈ +0.008. Top UAV-wins clips cluster at `t=56–72s`, top MGLD-wins clips at `t=18, 44, 50s` — different time windows.
+
+**Mechanism:** UAV's smoother SR (no diffusion) produces more consistent face appearance across clip boundaries, so ArcFace embeddings drift less in the fast branch. MGLD's diffusion adds chunk-dependent fine-grained variation that ArcFace reads as identity drift across boundaries — even when within each clip the same person is recognizable. So the UAV win on this video is a **cross-clip ArcFace-stability artefact**, not a perceptual identity advantage.
+
+Subtle methodological note: the two SR mp4s have the same **5000 frames** but different fps tags (MGLD 30 fps, UAV 24 fps). The 2-sec slow-fast splitter at native fps therefore produces clips of 60 vs 48 frames, and 83 vs 104 total clips. Fix to consider: re-encode to a common fps or split by frame count rather than seconds.
+
+Per-clip JSONs: `results/vbench2_anatomy/diagnostic_identity_KZ/{mgld,uav}_kz/`.
+
 ## VBench-2.0 Human_Identity — Slow-Fast Adapter (long-video extension)
 
 Implemented slow-fast adapter (`scripts/vbench2_long/human_identity_long.py`):
@@ -133,10 +153,14 @@ Anomaly-detector score (ViTDetector ensemble: human / face / hand) over all fram
 
 Per-video: **MGLD wins 4/5**. UAV wins only `KZ8p6b1zJ9U` — same outlier where UAV won on Human_Identity. The 0.144 score there drags MGLD's mean to a statistical tie even though it wins everywhere else. `KZ8p6b1zJ9U` is a single-person scene (not crowd), so the multi-person hypothesis from earlier reports does not apply.
 
-**Per-frame diagnostic on `KZ8p6b1zJ9U`:** MGLD is flagged abnormal in 84.8% of frames-with-people (median rate 1.0); UAV in 53.2%. All three detectors fire ~2× more on MGLD (human 2179 vs 858, face 2074 vs 973, hand 2714 vs 1520). Failure is uniform across the video — every 10-second window has MGLD's abnormal-rate above UAV's. The detector regime explains the per-video pattern: on the 4 MGLD-wins videos the detector is in a low-fire regime (both scores high) and MGLD's slightly cleaner output beats UAV by small margins; on `KZ8p6b1zJ9U` the detector is in a high-fire regime (both scores low) where MGLD's diffusion output asymmetrically over-triggers it. Diagnostic doc: `docs/plans/2026-05-07-metric-failure-diagnostic.md`.
+**Per-frame diagnostic on `KZ8p6b1zJ9U`** (high-fire regime): MGLD is flagged abnormal in 84.8% of frames-with-people (median rate 1.0); UAV in 53.2%. All three detectors fire ~2× more on MGLD (human 2179 vs 858, face 2074 vs 973, hand 2714 vs 1520). Failure is uniform across the video.
+
+**Per-frame diagnostic on `hhszUXL1Cu8`** (low-fire regime, MGLD wins 0.925 vs 0.878): median per-frame abnormal-rate is **0 for both methods**, MGLD has fewer hand triggers than UAV (242 vs 391), and human/face detectors barely fire (0/0 MGLD, 0/2 UAV). So the detector behaves as expected on this video — MGLD wins because its outputs are slightly cleaner.
+
+The two regimes confirm the metric's behaviour is not uniformly biased against diffusion-style SR. The high-fire regime on `KZ8p6b1zJ9U` is content-specific. Diagnostic doc with full numbers: `docs/plans/2026-05-07-metric-failure-diagnostic.md`.
 
 Raw eval JSONs: `results/vbench2_anatomy/{mgld,uav}_anatomy_eval_results.json`.
-Per-frame trace: `results/vbench2_anatomy/diagnostic_KZ8p6b1zJ9U/{mgld,uav}_KZ8p6b1zJ9U_per_frame.json`.
+Per-frame traces: `results/vbench2_anatomy/diagnostic_KZ8p6b1zJ9U/` (high-fire), `results/vbench2_anatomy/diagnostic_hhszUXL1Cu8/` (low-fire).
 Patches applied to upstream VBench-2.0 to make the run go through (CLIP-ViT-Base-Patch32 path, `VBENCH2_CACHE_DIR` env, anomaly-detector weight re-download): see `scripts/vbench2_long/README.md`.
 
 ## DOVER Video Quality (no-reference, per-video)
