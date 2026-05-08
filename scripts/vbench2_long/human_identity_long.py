@@ -39,10 +39,16 @@ from torch.utils import model_zoo
 from vbench2.third_party.arcface.models import resnet_face18  # noqa: F401
 
 
-def split_into_clips(video_path, output_dir, duration=2.0):
-    """Split a long video into N clips of ~duration seconds. Returns list of clip paths."""
+def split_into_clips(video_path, output_dir, duration=2.0, fps_override=None):
+    """Split a long video into N clips of ~duration seconds. Returns list of clip paths.
+
+    If fps_override is given, uses that as the framerate for clip-length calculation
+    and the written clip's tag instead of cv2.CAP_PROP_FPS. Useful when the source mp4
+    has a wrong fps tag (e.g., MGLD always writes 30, UAV always writes 24, but the LQ
+    source may be 29.97 or 23.98).
+    """
     cap = cv2.VideoCapture(video_path)
-    fps = cap.get(cv2.CAP_PROP_FPS) or 24.0
+    fps = fps_override if fps_override else (cap.get(cv2.CAP_PROP_FPS) or 24.0)
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -119,7 +125,21 @@ def main():
         action="store_true",
         help="persist per-clip and per-fast-frame raw scores under per_video[<v>].clip_detail / .fast_detail",
     )
+    ap.add_argument(
+        "--fps_overrides",
+        type=str,
+        default=None,
+        help="path to JSON mapping video basename (without extension) -> fps to use for clip splitting, "
+             "e.g. '{\"KZ8p6b1zJ9U\": 29.97, \"BrRLKMbBTYQ\": 24.0}'. Overrides cv2.CAP_PROP_FPS to fix "
+             "wrong fps tags written by SR pipelines.",
+    )
     args = ap.parse_args()
+
+    fps_overrides = {}
+    if args.fps_overrides:
+        with open(args.fps_overrides) as f:
+            fps_overrides = json.load(f)
+        print(f"Loaded fps overrides for {len(fps_overrides)} videos: {fps_overrides}")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     os.makedirs(args.output_path, exist_ok=True)
@@ -160,8 +180,10 @@ def main():
         # Split into clips
         clip_dir = os.path.join(work_dir, "clips", base)
         if not os.path.isdir(clip_dir) or len(os.listdir(clip_dir)) == 0:
-            print(f"Splitting into {args.clip_duration}s clips...")
-            split_into_clips(vpath, clip_dir, duration=args.clip_duration)
+            fps_override = fps_overrides.get(base)
+            override_msg = f" (fps override = {fps_override})" if fps_override else ""
+            print(f"Splitting into {args.clip_duration}s clips{override_msg}...")
+            split_into_clips(vpath, clip_dir, duration=args.clip_duration, fps_override=fps_override)
         clip_paths = sorted(
             os.path.join(clip_dir, f) for f in os.listdir(clip_dir) if f.endswith(".mp4")
         )
