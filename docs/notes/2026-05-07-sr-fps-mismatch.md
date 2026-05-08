@@ -84,4 +84,10 @@ What actually changed:
 
 **With fps-corrected splitting, MGLD wins Human_Identity on all 5/5 videos.**
 
-`Human_Anatomy` is fps-invariant (per-frame metric, no temporal windowing) so its results are unchanged. The KZ anatomy outlier (UAV 0.435 vs MGLD 0.144) still stands and remains a genuine metric-failure case (the regime-shift finding in `docs/plans/2026-05-07-metric-failure-diagnostic.md`). So the two metrics now disagree on KZ: identity says MGLD wins (matches perception), anatomy says UAV wins. Anatomy is the failing metric on KZ; identity, once fps is correct, agrees with perception.
+**On Anatomy and fps**: the upstream `Human_Anatomy` *as we ran it* (whole-video `custom_input` mode) is fps-invariant — it iterates frames independently, computes per-frame abnormality, and aggregates as `1 - sum_frames(abnormal) / sum_frames(people)`. No clip windowing, no fps used. So the existing whole-video Anatomy numbers (MGLD 0.600 vs UAV 0.605 mean, KZ MGLD 0.144 vs UAV 0.435) are unchanged by the fps fix.
+
+But this is asymmetric with how we evaluate Identity. Identity uses a slow-fast wrapper that *is* fps-dependent. The right symmetric setup is a **slow-fast Anatomy** wrapper too — split per-frame trace into 2-sec clips at LQ-fps, average per-clip abnormal-rate (slow), pool first-frames-of-clips and score them as one synthetic video (fast), fuse 50/50. That wrapper would be fps-dependent in the same way Identity is, and would be the apples-to-apples Anatomy comparison for long videos.
+
+We have per-frame Anatomy traces cached for KZ8p6b1zJ9U and hhszUXL1Cu8 already, so the slow-fast Anatomy aggregation on those two is a post-hoc Python compute (no GPU). For the other 3 videos we need to run `diagnose_anatomy_per_frame.py` first to get the per-frame trace.
+
+The KZ anatomy outlier (UAV 0.435 vs MGLD 0.144 in whole-video mode) still stands as a genuine metric-failure case at the **per-frame level** — the regime-shift finding in `docs/plans/2026-05-07-metric-failure-diagnostic.md` is independent of any windowing scheme. Whether slow-fast Anatomy on KZ also flips to UAV-wins (as identity did before fps fix) is what the new aggregator will tell us.
