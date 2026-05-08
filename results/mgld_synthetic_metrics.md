@@ -120,6 +120,8 @@ Implemented slow-fast adapter (`scripts/vbench2_long/human_identity_long.py`):
 - **Fast branch:** concatenate first frame of each clip into a "fast video", run identity on it (catches long-range identity drift)
 - **Fusion:** weighted average (default 50/50)
 
+### Original numbers (each method's mp4 fps tag — MGLD always 30, UAV always 24)
+
 | Video | MGLD slow | MGLD fast | MGLD fused | UAV slow | UAV fast | UAV fused |
 |-------|-----------|-----------|------------|----------|----------|-----------|
 | 7WHI2L_FDNg | 0.681 | 0.052 | 0.366 | 0.594 | 0.080 | 0.337 |
@@ -131,7 +133,22 @@ Implemented slow-fast adapter (`scripts/vbench2_long/human_identity_long.py`):
 
 ¹ fast=-1 means no faces detected in clip first-frames — falls back to slow only.
 
-**MGLD wins 4/5 videos on fused score and overall (+0.092).** UAV only wins on KZ8p6b1zJ9U.
+The pre-fix numbers showed MGLD winning 4/5 with UAV winning only on KZ8p6b1zJ9U. **This single UAV win was an fps-mismatch artefact** — see fps-corrected table below.
+
+### FPS-corrected (both methods use the LQ source's fps for clip splitting)
+
+The SR pipelines hard-code their output fps (MGLD 30, UAV 24) regardless of the LQ source (29.97 / 24 / 23.98 depending on video). The slow-fast adapter splits at "2 sec × native fps" so wrong fps tags = wrong clip boundaries, which biases the cross-clip fast branch. Re-run with `--fps_overrides` so the splitter uses the LQ source's fps for both methods (see `docs/notes/2026-05-07-sr-fps-mismatch.md`):
+
+| Video | MGLD slow | MGLD fast | MGLD fused | UAV slow | UAV fast | UAV fused |
+|-------|-----------|-----------|------------|----------|----------|-----------|
+| 7WHI2L_FDNg | 0.681 | 0.052 | 0.366 | 0.564 | 0.118 | 0.341 |
+| BrRLKMbBTYQ | 0.760 | -1.0 | 0.760 | 0.675 | 0.286 | 0.481 |
+| KZ8p6b1zJ9U | 0.703 | 0.611 | **0.657** | 0.679 | 0.579 | 0.629 |
+| hhszUXL1Cu8 | 0.757 | 0.553 | 0.655 | 0.674 | 0.447 | 0.561 |
+| mJog8DlRk_4 | 0.547 | 0.145 | 0.346 | 0.473 | 0.098 | 0.285 |
+| **Overall** | **0.689** | 0.351 | **0.557** | 0.613 | 0.306 | 0.459 |
+
+**Key change: MGLD now wins KZ8p6b1zJ9U** (0.657 vs UAV 0.629). UAV's pre-fix win on KZ was driven by its 24-fps tag producing 104 clips while MGLD got 83 — a stretched cross-clip fast branch artificially inflated UAV's fast score from 0.579 to 0.778. With both methods at 29.97 → 83 clips, the comparison is apples-to-apples and **MGLD wins all 5/5 videos on Human_Identity**, +0.097 overall. Per-clip JSONs: `results/vbench2_anatomy/identity_fps_overrides/`.
 
 The slow-fast adapter scores are much higher than the whole-video custom_input run (MGLD 0.555 vs 0.200) because:
 1. Per-clip evaluation avoids identity drift accumulating across the whole video

@@ -60,5 +60,28 @@ The `-r` before `-i` reinterprets the frame rate; `-c copy` preserves the encode
 
 ## Status
 
-- 2026-05-07: documented; re-muxing `KZ8p6b1zJ9U` (and the other 4) for both methods next, then re-running per-clip identity + Step 1.5 anatomy on the re-muxed files to determine whether the KZ score-flip survives the fps fix.
-- TBD: re-run the full whole-video Anatomy battery on re-muxed videos for apples-to-apples means.
+- 2026-05-07: documented.
+- 2026-05-07 evening: tried `ffmpeg -r N -i src -c copy dst` re-mux. **It silently failed** — `-r` before `-i` only sets input rate; with `-c copy` the output mp4 inherits the original fps tag from the bitstream's timing. Verified by re-probing the "fps_fixed" videos: MGLD still 30, UAV still 24. The identity slow-fast scores on the "fps_fixed" videos were unchanged (deltas ≈ 0).
+- 2026-05-08: switched to a code-level fix — added `--fps_overrides JSON` flag to `human_identity_long.py` so the splitter uses an overridden fps instead of `cv2.CAP_PROP_FPS`. Re-ran on the original videos with the LQ-derived fps per video.
+
+## Result of the fps-corrected re-eval
+
+**The KZ8p6b1zJ9U identity score-flip was an fps-mismatch artefact.** Old per-video pattern showed MGLD winning 4/5 and UAV winning only KZ. After fps fix:
+
+| Video | MGLD fused (old → new) | UAV fused (old → new) | Winner (old → new) |
+|-------|------------------------|------------------------|--------------------|
+| 7WHI2L_FDNg | 0.366 → 0.366 | 0.337 → 0.341 | MGLD → MGLD |
+| BrRLKMbBTYQ | 0.756 → 0.760 | 0.481 → 0.481 | MGLD → MGLD |
+| **KZ8p6b1zJ9U** | 0.657 → 0.657 | **0.751 → 0.629** | **UAV → MGLD** |
+| hhszUXL1Cu8 | 0.655 → 0.655 | 0.460 → 0.561 | MGLD → MGLD |
+| mJog8DlRk_4 | 0.341 → 0.346 | 0.285 → 0.285 | MGLD → MGLD |
+| Mean | 0.555 → 0.557 | 0.463 → 0.459 | MGLD +0.092 → MGLD +0.097 |
+
+What actually changed:
+- KZ UAV fast-branch score dropped from 0.778 → 0.579 because both methods now produce 83 clips (instead of MGLD 83 vs UAV 104), so UAV's fast branch sees fewer cross-clip transitions and ArcFace embedding drift is not artificially smoothed.
+- KZ MGLD essentially unchanged (its 30-fps tag was already close to LQ 29.97).
+- Other videos: small changes in the right direction (UAV gains slightly where its 24 was wrong, MGLD gains slightly where its 30 was wrong).
+
+**With fps-corrected splitting, MGLD wins Human_Identity on all 5/5 videos.**
+
+`Human_Anatomy` is fps-invariant (per-frame metric, no temporal windowing) so its results are unchanged. The KZ anatomy outlier (UAV 0.435 vs MGLD 0.144) still stands and remains a genuine metric-failure case (the regime-shift finding in `docs/plans/2026-05-07-metric-failure-diagnostic.md`). So the two metrics now disagree on KZ: identity says MGLD wins (matches perception), anatomy says UAV wins. Anatomy is the failing metric on KZ; identity, once fps is correct, agrees with perception.
