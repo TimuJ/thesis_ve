@@ -67,7 +67,12 @@ The thesis-relevant claim is therefore narrower but still strong: `Human_Anatomy
 
 What's distinctive about `KZ8p6b1zJ9U` is the next thing to check (close-up faces? specific lighting? motion-blurred hands?). The user has already looked and confirms it's a single-person scene without crowd, so the failure is not multi-person related.
 
-**ANSWERED 2026-05-13 → close-up body parts.** Bbox-area analysis on the cached per-frame traces (`docs/notes/2026-05-13-kz-regime-shift-trigger.md`): KZ has hand bbox p50 = 18% of frame vs ≤7% on all other videos (20× hhsz). Face bbox p50 = 9% vs ≤5% elsewhere. On KZ the anomaly detector's p_abnormal distribution shifts into a near-decision-boundary regime (median 0.32–0.42 across categories vs <0.11 on hhsz), where small SR-style differences (MGLD diffusion sharpening vs UAV smoothing) translate into large flip-rate gaps. The detector behaves correctly on typical mid-shot scales; it's miscalibrated on close-ups. Cross-video correlation confirmed: hand-bbox p50 inversely tracks MGLD-vs-UAV gap.
+**PARTIALLY ANSWERED 2026-05-13 → bbox-size correlates but isn't causal.** Bbox-area analysis on the cached per-frame traces (`docs/notes/2026-05-13-kz-regime-shift-trigger.md`): KZ has hand bbox p50 = 18% of frame vs ≤7% on all other videos. Across videos, hand-bbox p50 monotonically tracks the MGLD-vs-UAV anatomy gap. But two post-hoc fixes that should have rescued KZ if close-ups were the cause **don't fully work**:
+
+1. Drop frames with face / hand bbox ≥ 5% of frame (stable-regime filter), re-aggregate slow-fast: KZ gap *widens* from -0.339 to -0.437. MGLD's filtered KZ score *drops* to 0.076. Non-close-up KZ frames also flag MGLD aggressively.
+2. Continuous aggregation `1 - mean(p_abnormal)` instead of fraction-above-threshold: KZ gap halves (-0.291 → -0.136) but does not disappear. Threshold-near-boundary effect accounts for ~50%; the rest is real signal.
+
+So the bbox-size correlation is **predictive at the video level but not the proximate cause at the frame level**. There's a deeper content-specific bias in the detector against MGLD's KZ output. Candidates for the next experiment: scene genre (interview/talking-head), person appearance, camera motion. Would need a *second* close-up video to disambiguate (single-video confounder problem).
 
 ### Step 1.5 results — per-frame anatomy on hhszUXL1Cu8 (DONE 2026-05-07)
 

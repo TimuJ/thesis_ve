@@ -69,8 +69,64 @@ Hand bbox p50 (% of frame) sorted, with the per-video Human_Anatomy MGLD vs UAV 
 
 There's a clean monotonic correspondence: **larger hand bboxes → smaller MGLD-vs-UAV gap (or flip)**. KZ at 18% is the outlier; the next-largest (BrRLKMbBTYQ at 7%) is well within the stable-regime gap range.
 
-## Next steps
+## Follow-up experiments (run 2026-05-13) — close-up filter does NOT rescue KZ
 
-- **Filtered-regime experiment.** Re-aggregate the slow-fast Anatomy on KZ keeping only frames where face bbox < 5% AND hand bbox < 5%. If MGLD beats UAV on the filtered subset, this confirms the close-up regime is the failure cause and gives a usable workaround.
-- **Robust aggregation experiment.** Replace `1 - fraction_abnormal` with `1 - mean(p_abnormal)` (continuous version) and re-evaluate on all 5 videos. Compare per-video rankings — predict the rankings stabilize.
-- Both are post-hoc Python compute over the cached per-frame traces — no GPU, ~1 hour.
+Both post-hoc experiments produced clean per-video tables but show the KZ flip is **not just** a close-up-frame artefact. The bbox-size correlation is real at the per-video level but is not the proximate cause of the per-frame failure.
+
+### Experiment 1 — stable-regime filter
+
+Drop frames where any face OR hand bbox is ≥ 5% of frame area, re-aggregate slow-fast on the remainder.
+
+| Video | MGLD filt slow-fast | UAV filt slow-fast | MGLD kept % | UAV kept % | Winner |
+|-------|--------------------:|-------------------:|------------:|-----------:|:-------|
+| 7WHI2L_FDNg | **0.741** | 0.600 | 57.2% | 50.0% | MGLD |
+| BrRLKMbBTYQ | **0.648** | 0.489 | 23.7% | 18.5% | MGLD |
+| **KZ8p6b1zJ9U** | **0.076** | **0.513** | 26.3% | 31.0% | **UAV (gap +0.437 — wider than unfiltered)** |
+| hhszUXL1Cu8 | **0.859** | 0.725 | 42.8% | 42.0% | MGLD |
+| mJog8DlRk_4 | **0.586** | 0.431 | 54.3% | 52.4% | MGLD |
+
+**The KZ flip survives the filter and the gap actually widens** (from -0.339 unfiltered slow-fast to -0.437 filtered). MGLD's KZ score *drops* from 0.137 → 0.076 on the "stable-regime" subset, meaning even on the non-close-up frames of KZ the detector flags MGLD's content even more aggressively. The 26% of KZ frames we kept are not "stable" — they're just frames where no big face/hand happens to be present, but the underlying content still triggers heavy detector firing.
+
+So the bbox-size correlation is **predictive at the video level but not causal at the frame level**. There's a deeper confound in KZ's content beyond close-up body parts.
+
+### Experiment 2 — continuous aggregation (`1 - mean(p_abnormal)`)
+
+Replace the per-frame fraction-above-threshold with the continuous mean of `p_abnormal`, averaged per detector category and across categories.
+
+| Video | MGLD continuous | UAV continuous | Original whole-video MGLD | Original whole-video UAV | Continuous winner |
+|-------|----------------:|---------------:|--------------------------:|-------------------------:|:------------------|
+| 7WHI2L_FDNg | **0.879** | 0.812 | 0.832 | 0.735 | MGLD |
+| BrRLKMbBTYQ | **0.773** | 0.749 | 0.522 | 0.437 | MGLD |
+| **KZ8p6b1zJ9U** | 0.591 | **0.727** | 0.144 | 0.435 | **UAV (gap -0.136)** |
+| hhszUXL1Cu8 | **0.942** | 0.915 | 0.925 | 0.878 | MGLD |
+| mJog8DlRk_4 | **0.828** | 0.799 | 0.577 | 0.541 | MGLD |
+
+**Continuous aggregation halves the KZ gap** (whole-video gap was -0.291, continuous gap is -0.136) — meaning the threshold-near-boundary discontinuity (medians sitting on the threshold, as identified above) accounts for ~50% of KZ's flip but not all of it. The other 50% is real signal: MGLD's KZ output produces genuinely higher `p_abnormal` distributions than UAV's even on a continuous scale.
+
+Per-video rankings under continuous: 4/5 unchanged (MGLD wins), KZ still flips. Mean across 5 videos: MGLD 0.803, UAV 0.800 — still essentially a tie due to KZ.
+
+## Revised interpretation
+
+The bbox-size finding is real but a confounder, not the cause:
+
+- Across videos: hand-bbox p50 *does* monotonically track the MGLD-vs-UAV gap (KZ at 18% is the outlier). This is informative but indirect.
+- Within KZ: dropping close-up frames does *not* rescue MGLD. Frames flagged abnormal aren't preferentially the close-up ones — they're distributed across the whole video.
+
+What's actually happening on KZ is content-specific in a way bbox-size alone doesn't capture. Candidates worth checking next:
+
+1. **Scene content** — KZ may be a specific genre (interview, talking head, dance) where MGLD's diffusion prior pushes hand / face textures into a distribution the anomaly detectors learned to associate with "synthetic / abnormal". The detector wasn't trained on diffusion-SR outputs of long videos of this content type.
+2. **Person appearance** — clothing pattern, skin texture, hair style. Specific to the person on screen in KZ.
+3. **Camera / motion** — KZ may have static-camera or slow-camera shots where the same content is re-rendered many times with slightly different diffusion noise, building up consistent detector triggers.
+
+To distinguish (1) vs (2) vs (3) we'd need additional close-up videos of *different* people / scenes for comparison — currently we have one close-up video (KZ) and four mid-shot videos. The bbox-size correlation might dissolve if we had a second close-up video that doesn't flip.
+
+## Take-away for the thesis
+
+`Human_Anatomy` is unreliable on KZ-style content, but the failure is not cleanly localized by any simple per-frame predicate we've tested. Continuous aggregation reduces but does not eliminate the KZ flip; close-up filtering doesn't help. This is itself a meaningful negative result — **a single per-frame structural fix is insufficient**; the detector's miscalibration on diffusion-SR content runs deeper than a clean predicate captures.
+
+For the metric-effectiveness chapter:
+
+- Report per-video pattern (MGLD wins 4/5 across multiple aggregation schemes).
+- Report KZ as a content-specific failure case where the metric flips against perception under multiple aggregation schemes.
+- Frame the bbox-size correlation as a *signal that the metric is unreliable on this content*, not as a proximate cause.
+- Recommendation for SR practitioners: never report Anatomy as a single mean over heterogeneous long-video content — always per-video, and flag any video with median anomaly-probability above ~0.2 as a potential metric-failure case.
