@@ -67,6 +67,8 @@ The thesis-relevant claim is therefore narrower but still strong: `Human_Anatomy
 
 What's distinctive about `KZ8p6b1zJ9U` is the next thing to check (close-up faces? specific lighting? motion-blurred hands?). The user has already looked and confirms it's a single-person scene without crowd, so the failure is not multi-person related.
 
+**ANSWERED 2026-05-13 → close-up body parts.** Bbox-area analysis on the cached per-frame traces (`docs/notes/2026-05-13-kz-regime-shift-trigger.md`): KZ has hand bbox p50 = 18% of frame vs ≤7% on all other videos (20× hhsz). Face bbox p50 = 9% vs ≤5% elsewhere. On KZ the anomaly detector's p_abnormal distribution shifts into a near-decision-boundary regime (median 0.32–0.42 across categories vs <0.11 on hhsz), where small SR-style differences (MGLD diffusion sharpening vs UAV smoothing) translate into large flip-rate gaps. The detector behaves correctly on typical mid-shot scales; it's miscalibrated on close-ups. Cross-video correlation confirmed: hand-bbox p50 inversely tracks MGLD-vs-UAV gap.
+
 ### Step 1.5 results — per-frame anatomy on hhszUXL1Cu8 (DONE 2026-05-07)
 
 | | MGLD | UAV |
