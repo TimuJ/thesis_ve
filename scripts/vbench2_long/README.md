@@ -19,15 +19,18 @@ pip install -r requirements.txt
 
 ```
 vbench2_long/
-├── README.md                      # this file
-├── human_identity_long.py         # our slow-fast adapter (long-video extension)
-├── run_vbench2_anatomy.sh         # launch script we used (server paths — adjust)
-├── evaluate.py                    # upstream entry point (mirrored unchanged)
-└── vbench2/                       # mirrored upstream sources, source-only
-    ├── human_identity.py          # PATCHED (3 changes — diff vs .bak below)
-    ├── human_identity.py.bak      # upstream original (kept for diff)
-    ├── human_anatomy.py           # used as-is
-    ├── third_party/YOLO-World/    # PATCHED config — text encoder path (see below)
+├── README.md                          # this file
+├── requirements.txt                   # upstream VBench-2.0 pinned deps
+├── human_identity_long.py             # our slow-fast adapter for Human_Identity
+├── diagnose_anatomy_per_frame.py      # persists per-frame Anatomy trace (upstream drops it)
+├── aggregate_slow_fast_anatomy.py     # slow-fast aggregator over per-frame Anatomy trace
+├── run_vbench2_anatomy.sh             # launch script we used (server paths — adjust)
+├── evaluate.py                        # upstream entry point (mirrored unchanged)
+└── vbench2/                           # mirrored upstream sources, source-only
+    ├── human_identity.py              # PATCHED (3 changes — diff vs .bak below)
+    ├── human_identity.py.bak          # upstream original (kept for diff)
+    ├── human_anatomy.py               # used as-is
+    ├── third_party/YOLO-World/        # PATCHED config — text encoder path (see below)
     └── ...                        # other VBench-2.0 metric modules
 ```
 
