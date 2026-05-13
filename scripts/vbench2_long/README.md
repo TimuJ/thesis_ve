@@ -15,15 +15,80 @@ pip install -r requirements.txt
 
 `requirements.txt` is the upstream VBench-2.0 pinned set. Note `mmdet`, `mmengine`, `mmyolo`, `timm`, `decord`, and the upstream-cloned `YOLO-World` and `Instance_detector` repos are required by `Human_Anatomy`. `arcface` and `retinaface` are required by `Human_Identity`.
 
+## Usage
+
+Slow-fast is the default mode for long-video SR evaluation. Both dimensions split the source video into 2-second clips at native fps; the slow branch averages within-clip scores, the fast branch concatenates clip-first-frames and scores cross-clip drift, and the two fuse 50/50. The upstream `custom_input` whole-video mode is also available as a fallback (see "Whole-video fallback" below) but on long videos it collapses (identity drift accumulates) or behaves asymmetrically (anatomy regime shifts on certain content).
+
+Common env setup (server paths — adjust):
+
+```bash
+export VBENCH2_CACHE_DIR=/path/to/vbench2_cache
+export PYTHONPATH="$PWD:/path/to/YOLO-World:${PYTHONPATH:-}"
+```
+
+### Human_Identity — slow-fast adapter
+
+`human_identity_long.py` wraps the patched `Human_Identity`:
+
+- **Slow branch:** split video into 2-sec clips at native fps, run identity per clip, average across clips with a face detected.
+- **Fast branch:** concatenate the first frame of each clip into a synthetic "fast" video, run identity on it (catches long-range identity drift across minutes).
+- **Fusion:** `w_slow * slow + w_fast * fast`, default 50/50.
+
+```bash
+python human_identity_long.py \
+    --videos_path /path/to/mp4_videos \
+    --output_path /path/to/output \
+    [--w_slow 0.5] [--w_fast 0.5] [--clip_duration 2] \
+    [--fps_overrides fps_map.json] [--save_clip_detail]
+```
+
+`--fps_overrides` takes a JSON map of `{video_basename: fps}` to override the (often wrong) fps tag written by SR pipelines — pass the LQ-source fps for an apples-to-apples comparison. `--save_clip_detail` persists per-clip scores.
+
+Runtime: ~3 hours for 5 ×3-min videos on a single A100, dominated by RetinaFace per-frame.
+
+### Human_Anatomy — slow-fast adapter
+
+`human_anatomy_long.py` runs the ViTDetector ensemble per frame and aggregates into slow-fast, matching the Identity adapter shape:
+
+```bash
+python human_anatomy_long.py \
+    --videos_path /path/to/mp4_videos \
+    --output_path /path/to/output \
+    [--w_slow 0.5] [--w_fast 0.5] [--clip_duration 2] \
+    [--fps_overrides fps_map.json] [--save_per_frame] [--save_clip_detail]
+```
+
+Output JSON shape mirrors `human_identity_long.py` — `per_video[<v>] = {slow, fast, fused, whole_video, ...}` and `overall_{slow, fast, fused, whole_video}`. The `whole_video` field is the upstream's frame-pooled score for sanity-checking against the original `custom_input` mode.
+
+For diagnostic / debugging, the two underlying steps are also exposed separately:
+
+- `diagnose_anatomy_per_frame.py --video V --output OUT.json` — just the per-frame trace (the upstream's `compute_abnormality` computes then discards `frame_results`).
+- `aggregate_slow_fast_anatomy.py --per-frame OUT.json --fps F --output SF.json` — post-hoc slow-fast aggregation over an existing per-frame trace.
+
+### Whole-video fallback (upstream `custom_input` mode)
+
+Use this only when slow-fast windowing isn't applicable (very short videos, sanity-checking against upstream numbers).
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python evaluate.py \
+    --videos_path /path/to/mp4_videos \
+    --dimension Human_Anatomy \
+    --mode custom_input \
+    --output_path /path/to/output
+```
+
+`run_vbench2_anatomy.sh` runs MGLD then UAV sequentially in this whole-video mode.
+
 ## Layout
 
 ```
 vbench2_long/
 ├── README.md                          # this file
 ├── requirements.txt                   # upstream VBench-2.0 pinned deps
-├── human_identity_long.py             # our slow-fast adapter for Human_Identity
-├── diagnose_anatomy_per_frame.py      # persists per-frame Anatomy trace (upstream drops it)
-├── aggregate_slow_fast_anatomy.py     # slow-fast aggregator over per-frame Anatomy trace
+├── human_identity_long.py             # slow-fast adapter for Human_Identity
+├── human_anatomy_long.py              # slow-fast adapter for Human_Anatomy (end-to-end)
+├── diagnose_anatomy_per_frame.py      # diagnostic — per-frame Anatomy trace only
+├── aggregate_slow_fast_anatomy.py     # diagnostic — slow-fast over an existing per-frame trace
 ├── run_vbench2_anatomy.sh             # launch script we used (server paths — adjust)
 ├── evaluate.py                        # upstream entry point (mirrored unchanged)
 └── vbench2/                           # mirrored upstream sources, source-only
@@ -81,40 +146,6 @@ Two pre-existing upstream gotchas to watch for:
 
 - The `anomaly_detector/{human,hand}.pth` files served by upstream's `gdown` URLs were **truncated** (92 MB / 167 MB; they should be 347 MB). Verify with `python -c "import torch; torch.load('human.pth')"` — if it raises `PytorchStreamReader`, re-download.
 - `VBENCH2_CACHE_DIR` must be exported before running, otherwise the loader silently falls back to `~/.cache/vbench2/` and may load partial files.
-
-## Usage
-
-### Standard VBench-2.0 dimensions (e.g., Human_Anatomy)
-
-```bash
-# from the VBench-2.0 repo root
-export VBENCH2_CACHE_DIR=/path/to/vbench2_cache
-export PYTHONPATH="$PWD:/path/to/YOLO-World:${PYTHONPATH:-}"
-CUDA_VISIBLE_DEVICES=0 python evaluate.py \
-    --videos_path /path/to/mp4_videos \
-    --dimension Human_Anatomy \
-    --mode custom_input \
-    --output_path /path/to/output
-```
-
-`run_vbench2_anatomy.sh` runs MGLD then UAV sequentially. Edit the paths near the top for your machine.
-
-### Long-video Human_Identity (slow-fast adapter)
-
-`human_identity_long.py` wraps the patched `Human_Identity` for videos >1 min:
-
-- **Slow branch:** split video into 2-sec clips at native fps, run identity per clip, average across clips with a face detected.
-- **Fast branch:** concatenate the first frame of each clip into a synthetic "fast" video, run identity on it (catches long-range identity drift across minutes).
-- **Fusion:** `w_slow * slow + w_fast * fast`, default 50/50.
-
-```bash
-python human_identity_long.py \
-    --videos_path /path/to/mp4_videos \
-    --output_path /path/to/output \
-    [--w_slow 0.5] [--w_fast 0.5] [--clip_duration 2]
-```
-
-Expected runtime: ~3 hours for 5 ×3-min videos on a single A100, dominated by RetinaFace per-frame.
 
 ## Results we observed (5 synthetic SR videos, MGLD vs UAV)
 
