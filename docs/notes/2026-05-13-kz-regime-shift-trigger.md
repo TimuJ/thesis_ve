@@ -93,17 +93,26 @@ So the bbox-size correlation is **predictive at the video level but not causal a
 
 Replace the per-frame fraction-above-threshold with the continuous mean of `p_abnormal`, averaged per detector category and across categories.
 
-| Video | MGLD continuous | UAV continuous | Original whole-video MGLD | Original whole-video UAV | Continuous winner |
-|-------|----------------:|---------------:|--------------------------:|-------------------------:|:------------------|
-| 7WHI2L_FDNg | **0.879** | 0.812 | 0.832 | 0.735 | MGLD |
-| BrRLKMbBTYQ | **0.773** | 0.749 | 0.522 | 0.437 | MGLD |
-| **KZ8p6b1zJ9U** | 0.591 | **0.727** | 0.144 | 0.435 | **UAV (gap -0.136)** |
-| hhszUXL1Cu8 | **0.942** | 0.915 | 0.925 | 0.878 | MGLD |
-| mJog8DlRk_4 | **0.828** | 0.799 | 0.577 | 0.541 | MGLD |
+**Implemented as `--continuous` flag in `aggregate_slow_fast_anatomy.py` and `human_anatomy_long.py`.** Default behaviour matches upstream (threshold) for reproducibility; `--continuous` is the opt-in tweak.
 
-**Continuous aggregation halves the KZ gap** (whole-video gap was -0.291, continuous gap is -0.136) — meaning the threshold-near-boundary discontinuity (medians sitting on the threshold, as identified above) accounts for ~50% of KZ's flip but not all of it. The other 50% is real signal: MGLD's KZ output produces genuinely higher `p_abnormal` distributions than UAV's even on a continuous scale.
+**Slow-fast results across all 5 videos × 2 methods** (default threshold vs `--continuous`):
 
-Per-video rankings under continuous: 4/5 unchanged (MGLD wins), KZ still flips. Mean across 5 videos: MGLD 0.803, UAV 0.800 — still essentially a tie due to KZ.
+| Video | MGLD threshold | MGLD continuous | UAV threshold | UAV continuous | Δ_threshold | Δ_continuous |
+|-------|---------------:|----------------:|--------------:|---------------:|------------:|-------------:|
+| 7WHI2L_FDNg | **0.840** | **0.887** | 0.774 | 0.828 | +0.066 | +0.059 |
+| BrRLKMbBTYQ | **0.472** | **0.770** | 0.410 | 0.745 | +0.062 | +0.025 |
+| **KZ8p6b1zJ9U** | 0.137 | 0.591 | **0.476** | **0.739** | **−0.339** | **−0.148** |
+| hhszUXL1Cu8 | **0.969** | **0.950** | 0.896 | 0.921 | +0.073 | +0.029 |
+| mJog8DlRk_4 | **0.622** | **0.832** | 0.531 | 0.803 | +0.091 | +0.029 |
+| **Mean** | 0.608 | 0.806 | 0.618 | 0.807 | **−0.010** | **−0.001** |
+
+**Continuous aggregation halves the KZ gap** (slow-fast threshold gap was -0.339; continuous gap is -0.148) — meaning the threshold-near-boundary discontinuity accounts for ~50% of KZ's flip but not all of it. The other 50% is real signal: MGLD's KZ output produces genuinely higher `p_abnormal` distributions than UAV's even on a continuous scale.
+
+**Per-video rankings under continuous: 4/5 unchanged (MGLD wins), KZ still flips.** Mean across 5 videos is still a statistical tie.
+
+**Trade-off worth flagging:** continuous lifts everyone's absolute scores (most detections have low `p_abnormal`, so `1 − mean` is closer to 1 than `1 − fraction_above_threshold` on the same data), which **compresses inter-method gaps on the 4 MGLD-wins videos** (range +0.025 to +0.059 under continuous vs +0.062 to +0.091 under threshold). Continuous is more *robust* to threshold-boundary content but less *discriminating* in the typical regime. Reporting both is the right thing to do.
+
+Per-video outputs cached at `results/vbench2_anatomy/anatomy_slow_fast_continuous/`.
 
 ## Revised interpretation
 

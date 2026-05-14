@@ -79,6 +79,12 @@ def main() -> None:
         action="store_true",
         help="persist per-clip aggregator output under per_video[v].clip_detail",
     )
+    ap.add_argument(
+        "--continuous",
+        action="store_true",
+        help="our tweak: use 1 - mean(p_abnormal) instead of upstream's "
+             "1 - fraction_above_threshold. Default is upstream's threshold formula.",
+    )
     ap.add_argument("--device", default="cuda")
     args = ap.parse_args()
 
@@ -150,7 +156,8 @@ def main() -> None:
         else:
             print(f"  fps (override): {fps}")
 
-        sf = aggregate_slow_fast(per_frame, fps, args.clip_duration, args.w_slow, args.w_fast)
+        sf = aggregate_slow_fast(per_frame, fps, args.clip_duration, args.w_slow, args.w_fast,
+                                 continuous=args.continuous)
         per_video = {
             "slow": sf["slow"],
             "fast": sf["fast"],
