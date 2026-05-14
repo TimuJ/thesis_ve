@@ -171,7 +171,6 @@ So the failure is robust to two natural fixes — meaning the metric's miscalibr
 2. **Continuous-aggregation Anatomy as default.** Add a `--continuous` flag to `human_anatomy_long.py` and rerun the per-method table. Predict: per-video winners stay the same, KZ gap halves but persists, other 4 gaps slightly widen (more headroom now that score isn't capped at 1).
 3. **VBench effectiveness validation** — start with 2 of the 5 parameterized synthetic test datasets from `docs/plans/2026-04-28-metrics-and-vbench-validation.md`: suggest *color drift* and *chunk-boundary jumps* as the two most SR-relevant. Generate on M1, run VBench-1 + VBench-2 + DOVER + E\*warp on each, see which dimensions actually move.
 4. **Long-range tOF + tLP** added to the evaluation pipeline (`k = [1, 5, 10, 30, 60, 120]`). Tests whether long-range temporal optical-flow consistency agrees with Anatomy on KZ (predicting: tOF favours MGLD, supporting the perception side).
-5. **Thesis writing in parallel** — Introduction + Literature Review chapters.
 
 Done this period: per-frame anatomy diagnostic on all 5 videos; KZ characterization (bbox correlation + close-up filter + continuous aggregation); fps-mismatch fix in the slow-fast adapter; slow-fast Anatomy adapter end-to-end; results file `results/uav_mgld_evaluation_metrics.md` for sharing with the colleague.
 
