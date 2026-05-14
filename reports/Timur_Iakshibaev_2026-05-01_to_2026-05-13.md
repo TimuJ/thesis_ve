@@ -165,16 +165,6 @@ So the failure is robust to two natural fixes — meaning the metric's miscalibr
 - *Medium.* Use LQ as a reference — compare per-frame `p_abnormal` distributions LQ vs SR.
 - *Expensive but principled.* Fine-tune the three anomaly classifiers on a diffusion-SR labelled set; or design a new long-video-SR-specific anatomy metric (thesis contribution candidate).
 
-## Network — Slow Transfer Diagnosis
-
-CLIP-ViT-Base-Patch32 weights (605 MB) needed for VBench-2.0 Human_Anatomy (YOLO-World text encoder). Trans-Pacific SCP from local Mac to lab server is dog-slow:
-
-- **Ping RTT:** 540 ms (trans-Pacific link)
-- **Bandwidth-Delay Product math:** with default 64 KB TCP window and 540 ms RTT, single-stream throughput cap is ~119 KB/s
-- **Measured:** 10 MB transfer took 14:46 → ~11 KB/s (10× slower than the BDP cap → suggests ISP/server-side rate-limiting on long flows)
-- **Workaround that didn't work:** parallel SCP with 6 concurrent streams.
-- **Workaround that did work:** a HuggingFace dataset relay via `hf-mirror.com` (Google Drive and `huggingface.co` are both blocked from the lab server, but `hf-mirror.com` reaches it at ~9 MB/s). Used to route CLIP-ViT-Base-Patch32 (605 MB) **and** re-download the corrupt anomaly-detector `.pth` files.
-
 ## Next Steps (May 14 – May 21)
 
 1. **Implement multi-person Human_Identity** per `docs/plans/2026-05-06-multiperson-identity-metric.md`. Per-clip cluster purity (self-consistency) + LQ-reference IoU-matched-pair variant. Re-run on all 5 videos.
