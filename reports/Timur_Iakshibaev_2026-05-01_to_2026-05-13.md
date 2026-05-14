@@ -185,13 +185,12 @@ CLIP-ViT-Base-Patch32 weights (605 MB) needed for VBench-2.0 Human_Anatomy (YOLO
 
 Done this period: per-frame anatomy diagnostic on all 5 videos; KZ characterization (bbox correlation + close-up filter + continuous aggregation); fps-mismatch fix in the slow-fast adapter; slow-fast Anatomy adapter end-to-end; results file `results/uav_mgld_evaluation_metrics.md` for sharing with the colleague.
 
-## Group Meeting (moved Thursday May 7 → Thursday May 14)
+## Group Meeting (Thursday May 14)
 
 ### Talking points (3-min recap)
 
 1. **Headline.** MGLD-SR beats UAV by **+0.092 on Human_Identity (slow-fast fused)** (0.555 vs 0.463), wins 4/5 videos. The slow-fast adapter fixed the whole-video collapse (0.20 → 0.55) by per-2sec-clip evaluation.
 2. **Anatomy is a tie at the mean (0.600 vs 0.605) but MGLD wins 4/5 per-video.** UAV's win on `KZ8p6b1zJ9U` (0.435 vs 0.144) drags MGLD to break-even. Same outlier video as identity, single-person scene — and **visual inspection clearly favors MGLD on this video**, so both metrics fail together against perception. Per-frame/per-clip diagnostic planned to localize the failure: `docs/plans/2026-05-07-metric-failure-diagnostic.md`.
-3. **Transport breakthrough.** Trans-Pacific SCP capped at 11 KB/s (server-side rate-limited on long flows). Pivoted to a HuggingFace dataset relay via `hf-mirror.com` — works from the lab server (Google Drive and `huggingface.co` are blocked) at ~9 MB/s. Used it to route CLIP-ViT-Base-Patch32 (605 MB) *and* re-download two corrupt VBench-2.0 anomaly-detector `.pth` files (their `gdown` paths were truncated).
 4. **Anatomy unblocked.** Fixed three pre-existing issues (YOLO-World config hard-coded HF path; missing `VBENCH2_CACHE_DIR` env var; corrupt analyzer weights).
 5. **Multi-person metric design committed.** Per-clip cluster-purity (self-consistency) + LQ-reference IoU-matched-pair variant, both running through the existing slow-fast scaffold. Ablation plan defined for thesis evidence: τ sensitivity, slow/fast weight sweep, self-vs-LQ-ref correlation, single-vs-multi discrimination test. Spec: `docs/plans/2026-05-06-multiperson-identity-metric.md`.
 6. **VBench-2.0 code shared.** Mirrored to `scripts/vbench2_long/` (renamed the prior dir to `scripts/vbench1_long/` since it was actually VBench 1.x). All three patches and the slow-fast adapter visible in the repo.

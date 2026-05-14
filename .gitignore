@@ -42,3 +42,4 @@ results/uav_synthetic_mp4/*
 
 # Local mirror of server result JSONs/CSVs (read-only reference, not source-of-truth)
 results/_server_mirror/
+results/vbench2_anatomy/*
