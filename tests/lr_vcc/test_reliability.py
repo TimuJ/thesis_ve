@@ -1,4 +1,3 @@
-import math
 from scripts.lr_vcc.reliability import below_threshold_penalty, above_threshold_penalty
 
 
