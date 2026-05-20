@@ -1,0 +1,51 @@
+{
+  "video": "7WHI2L_FDNg",
+  "lr_vcc": 0.68938467994911,
+  "weights_used": [
+    0.1895499329717292,
+    0.6702745555133713,
+    0.14017551151489954
+  ],
+  "low_confidence": false,
+  "sub_metrics": {
+    "appearance": {
+      "score": 0.41524256342381294,
+      "reliability": 0.6609254792019126,
+      "details": {
+        "mean_quality": 0.4586136226952076,
+        "std_quality": 0.08674211854278935,
+        "drift_penalty": 0.3390745207980874,
+        "saturation_penalty": 0.005411171651563095
+      }
+    },
+    "temporal": {
+      "score": 0.9081441782876919,
+      "reliability": 0.9135324640919643,
+      "details": {
+        "used_ks": [
+          "1",
+          "5",
+          "10",
+          "30",
+          "60",
+          "120"
+        ],
+        "weighted_mean_tof": 0.09185582171230815,
+        "mean_mask_coverage_over_all_k": 0.5510929994020807
+      }
+    },
+    "identity": {
+      "score": 0.36629369945795587,
+      "reliability": 0.6005740397569413,
+      "details": {
+        "face_rate": 0.963855421686747,
+        "face_penalty": 0.00048129237461022134,
+        "closeup_bbox_p50": 0.009093679948474794,
+        "closeup_penalty": 0.3991367693519641
+      }
+    }
+  },
+  "diagnostics": {
+    "closeup_bbox_p50": 0.009093679948474794
+  }
+}

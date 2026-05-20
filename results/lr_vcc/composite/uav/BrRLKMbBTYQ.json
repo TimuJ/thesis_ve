@@ -1,0 +1,50 @@
+{
+  "video": "BrRLKMbBTYQ",
+  "lr_vcc": 0.7037473217756196,
+  "weights_used": [
+    0.38142478024301196,
+    0.5944109296814293,
+    0.024164290075558707
+  ],
+  "low_confidence": false,
+  "sub_metrics": {
+    "appearance": {
+      "score": 0.4954042965339134,
+      "reliability": 0.6703114528263003,
+      "details": {
+        "mean_quality": 0.5408839988827705,
+        "std_quality": 0.09095940469771419,
+        "drift_penalty": 0.3296885471736996,
+        "saturation_penalty": 0.012234807931409322
+      }
+    },
+    "temporal": {
+      "score": 0.8953265307042744,
+      "reliability": 0.7590428964537939,
+      "details": {
+        "used_ks": [
+          "1",
+          "5",
+          "10",
+          "30",
+          "60"
+        ],
+        "weighted_mean_tof": 0.10467346929572566,
+        "mean_mask_coverage_over_all_k": 0.4052544368121611
+      }
+    },
+    "identity": {
+      "score": 0.48051902614275815,
+      "reliability": 0.11850390558707022,
+      "details": {
+        "face_rate": 0.09615384615384616,
+        "face_penalty": 0.7385530498311335,
+        "closeup_bbox_p50": 0.06875003427109921,
+        "closeup_penalty": 0.5467382369137239
+      }
+    }
+  },
+  "diagnostics": {
+    "closeup_bbox_p50": 0.06875003427109921
+  }
+}
