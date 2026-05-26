@@ -18,6 +18,7 @@ sys.path.insert(0, str(REPO))
 
 from scripts.synthetic_artefacts.color_drift import apply_color_drift
 from scripts.synthetic_artefacts.chunk_boundary import apply_chunk_boundary_jumps
+from scripts.synthetic_artefacts.flicker import apply_periodic_flicker
 
 
 BASE_VIDEOS = ["hhszUXL1Cu8", "7WHI2L_FDNg"]
@@ -25,6 +26,7 @@ SEVERITIES = [0.02, 0.05, 0.10, 0.20, 0.40]
 SRC_DIR = REPO / "results" / "mgld_synthetic_mp4"
 OUT_DIR = REPO / "results" / "synthetic_artefacts"
 CHUNK_FRAMES = 60  # 2 sec at 30 fps
+FLICKER_PERIOD = 15  # 0.5 sec at 30 fps
 
 
 def process_one(src_path: Path, out_path: Path, artefact: str, severity: float):
@@ -48,6 +50,8 @@ def process_one(src_path: Path, out_path: Path, artefact: str, severity: float):
             out = apply_color_drift(fr, idx, n_frames, severity)
         elif artefact == "chunk_boundary":
             out = apply_chunk_boundary_jumps(fr, idx, CHUNK_FRAMES, severity)
+        elif artefact == "flicker":
+            out = apply_periodic_flicker(fr, idx, FLICKER_PERIOD, severity)
         else:
             raise ValueError("unknown artefact: " + artefact)
         writer.write(out)
@@ -58,7 +62,7 @@ def process_one(src_path: Path, out_path: Path, artefact: str, severity: float):
 
 
 def main():
-    for artefact in ["color_drift", "chunk_boundary"]:
+    for artefact in ["color_drift", "chunk_boundary", "flicker"]:
         for base in BASE_VIDEOS:
             src = SRC_DIR / (base + ".mp4")
             if not src.is_file():
