@@ -21,10 +21,12 @@ from .appearance import appearance_score
 from .temporal import temporal_score
 from .identity import identity_score
 from .composite import compose_score
+from .color_stability import color_stability_score
 
 
 def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
                        closeup_bbox_p50=None,
+                       color_hist_path=None,
                        temperature=0.2, low_confidence_floor=0.2):
     clip_iqa = json.load(open(clip_iqa_path))
     tof_payload = json.load(open(tof_path))
@@ -37,22 +39,34 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
     t = temporal_score(tof_payload)
     i = identity_score(id_pv, closeup_bbox_p50=closeup_bbox_p50)
 
-    comp = compose_score([a["score"], t["score"], i["score"]],
-                         [a["reliability"], t["reliability"], i["reliability"]],
+    # Sub-metric D: color-histogram temporal stability (optional).
+    c = None
+    if color_hist_path is not None and os.path.isfile(str(color_hist_path)):
+        raw = json.load(open(color_hist_path))
+        c = color_stability_score(raw)
+
+    scores = [a["score"], t["score"], i["score"]]
+    rels = [a["reliability"], t["reliability"], i["reliability"]]
+    sub_metrics = {"appearance": a, "temporal": t, "identity": i}
+
+    if c is not None:
+        scores.append(c["score"])
+        rels.append(c["reliability"])
+        sub_metrics["color_stability"] = c
+
+    comp = compose_score(scores, rels,
                          temperature=temperature,
                          low_confidence_floor=low_confidence_floor)
+
     return {
         "video": video_id,
         "lr_vcc": comp["score"],
         "weights_used": comp["weights"],
         "low_confidence": comp["low_confidence"],
-        "sub_metrics": {
-            "appearance": a,
-            "temporal": t,
-            "identity": i,
-        },
+        "sub_metrics": sub_metrics,
         "diagnostics": {
             "closeup_bbox_p50": closeup_bbox_p50,
+            "color_hist_used": color_hist_path is not None,
         },
     }
 
@@ -68,6 +82,8 @@ def main():
                     help="single JSON from human_identity_long.py with per_video[<v>]")
     ap.add_argument("--closeup_p50_map", default=None,
                     help="optional JSON {video_id: face_or_hand_bbox_p50}")
+    ap.add_argument("--color_hist_dir", default=None,
+                    help="optional dir of <basename>_color_hist.json files (sub-metric D)")
     ap.add_argument("--output_path", required=True)
     ap.add_argument("--temperature", type=float, default=0.2)
     ap.add_argument("--low_confidence_floor", type=float, default=0.2)
@@ -90,6 +106,9 @@ def main():
         if not os.path.isfile(ft):
             print("[skip] no tof for " + base)
             continue
+        color_hist_path = None
+        if args.color_hist_dir:
+            color_hist_path = os.path.join(args.color_hist_dir, base + "_color_hist.json")
         try:
             out = evaluate_one_video(
                 video_id=base,
@@ -97,6 +116,7 @@ def main():
                 tof_path=ft,
                 identity_results_path=args.identity_results,
                 closeup_bbox_p50=closeup_map.get(base),
+                color_hist_path=color_hist_path,
                 temperature=args.temperature,
                 low_confidence_floor=args.low_confidence_floor,
             )
