@@ -1,76 +1,131 @@
-% Introduction and Background of the Study
-\section{Introduction and Background of the Study}
+% Section 1: Background and Motivation
+\section{Background and Motivation}
 
-\subsection{The Evolution of Video Understanding: From Perception to Reasoning}
+\subsection{Video Super-Resolution for Long Videos}
 
-The field of Computer Vision has witnessed a metamorphic transformation over the past decade. Historically,
-the discipline was concerned with Perception—the ability of a machine to recognize distinct visual patterns,
-such as edges, textures, and specific object classes (e.g., "car," "pedestrian"). Early methodologies relied
-on handcrafted features and heuristic algorithms, which were severely limited by their inability to generalize
-to unseen environments. The advent of Deep Convolutional Neural Networks \cite[CNNs]{krizhevsky_imagenet_2017}
-in the early 2010s marked the
-first major paradigm shift, enabling robust object detection and semantic segmentation based on visual taxonomy.
+Video super-resolution (VSR) has advanced rapidly with the adoption of diffusion-based and transformer-based
+architectures. Where earlier CNN-based methods upscaled fixed short clips (typically 7--32 frames), modern
+methods such as MGLD-VSR \cite{he_mgld_2024} and Upscale-A-Video \cite{zhou_upscale_2024} can process
+substantially longer sequences in latent or sliding-window fashion, enabling deployment on real-world footage
+that runs into minutes rather than seconds.
 
-However, the current decade has ushered in a second, more profound paradigm shift: the transition from
-Perception to Reasoning. In complex, real-world environments, identifying an object by its class is often
-insufficient. For instance, in an autonomous driving scenario, a system must distinguish between
-"the pedestrian waiting on the curb" and "the pedestrian about to cross against the light." Visually,
-they may look identical; the distinction lies in the temporal context and implicit intent. This necessity
-has gave rise to the field of Reasoning Video Segmentation (RVS).
+This shift toward long-video SR introduces an evaluation gap. The standard VSR benchmarks --- REDS (100-frame
+clips at $720\!\times\!1280$), Vimeo-90K (7-frame septuplets), Vid4, UDM10, and SPMCS --- were designed
+for short-clip evaluation and report full-reference metrics (PSNR, SSIM, LPIPS) against paired HR ground
+truth. When applied to long videos in the wild, three fundamental limitations emerge:
 
-Unlike traditional Video Object Segmentation (VOS), which typically relies on an initial mask provided
-by a human user (semi-supervised) or simple category labels (unsupervised), RVS integrates Multimodal
-Large Language Models (MLLMs) into the visual pipeline. Systems such as \cite[LISA]{lai_lisa_2024} (Reasoning Segmentation
-via Large Language Model) and its video successors, \cite[VideoLISA]{bai_one_2024} and \cite[ViLLa]{zheng_villa_2025},
-allow users to query video
-data using complex, natural language expressions that require logical deduction, spatial awareness, and causal reasoning.
-For example, a query might be: "Segment the vehicle that caused the traffic jam." To execute this, the
-model must not only recognize vehicles but also understand the concept of a "traffic jam," identify the causal
-agent, and track that specific agent across time.
+\begin{itemize}
+    \item \textbf{No HR ground truth.} Real deployment videos have no paired high-resolution reference,
+          making full-reference metrics (PSNR, SSIM, LPIPS, DISTS) inapplicable.
+    \item \textbf{Adjacent-frame temporal metrics miss long-range artefacts.} Existing temporal metrics
+          --- tOF and tLP from TecoGAN \cite{chu_tecogan_2020}, and E*warp from DOVE \cite{yang_dove_2024}
+          --- are computed at a single adjacent-frame gap ($k{=}1$). A method that is locally smooth
+          but drifts globally over minutes is undetectable by these measures.
+    \item \textbf{Smoother-output bias in learned representations.} DINOv2-based consistency metrics and
+          LPIPS favour methods whose outputs change less in feature space between frames. Diffusion-based
+          methods produce detail-rich outputs that score worse on these metrics despite being visually
+          superior, a structural bias that misrepresents quality for modern SR architectures.
+\end{itemize}
 
-\subsection{The Technological Backbone: Multimodal LLMs and Vision Transformers}
+This thesis addresses the evaluation gap: long-video SR (videos longer than one minute) requires
+no-reference metrics that capture temporal consistency across multiple time scales and are robust to
+the smoother-output bias of learned representations.
 
-The current state-of-the-art in RVS is built upon massive Foundation Models. Typically, these architectures
-follow a tripartite structure:
+\subsection{Existing Metric Landscape}
+
+The existing metric ecosystem can be organised into four families:
 
 \begin{enumerate}
-    \item The Visual Encoder: Utilizing architectures like \cite[CLIP]{radford_learning_2021} or
-          the \cite[SAM 2]{ravi_sam_2024} (Segment Anything Model 2)
-          image encoder to compress high-resolution video frames into abstract visual embeddings.
-    \item The Reasoning Core: A Large Language Model (e.g., \cite[LLaVA]{li_llava-onevision_2024} or
-          \cite[Vicuna]{zheng_judging_2023}) that processes the user's textual query and attends to the visual
-          embeddings to "reason" about which object matches the description.
-    \item The Mask Decoder: A specialized module that translates the LLM’s decision into a binary pixel mask.
+    \item \textbf{Full-reference pixel/perceptual} (PSNR, SSIM, LPIPS, DISTS) --- require HR ground truth;
+          inapplicable to deployment-time long-video evaluation.
+    \item \textbf{No-reference single-aspect} (CLIP-IQA \cite{wang_clipiqa_2023}, MUSIQ \cite{ke_musiq_2021},
+          NIQE, BRISQUE) --- measure per-frame quality; no temporal dimension.
+    \item \textbf{Temporal pixel-level} (tOF, tLP from TecoGAN; E*warp from DOVE) --- adjacent-frame
+          ($k{=}1$) optical-flow consistency; systematically miss long-range temporal structure.
+    \item \textbf{Semantic video quality} (VBench \cite{huang_vbench_2024}, VBench-2.0
+          \cite{huang_vbench2_2025}) --- multi-aspect benchmarks covering subject consistency,
+          Human\_Identity, Human\_Anatomy, and others. Designed for text-to-video generation;
+          content-dependent failure modes documented in Section~\ref{sec:preliminary}.
 \end{enumerate}
 
-As of late 2025, \cite[SAM 2]{ravi_sam_2024} represents the pinnacle of this technology.
-It introduced a "streaming memory" architecture allowing the model to store information about an
-object in a memory bank, theoretically enabling it to handle occlusions and re-appearances.
-These advancements have pushed the semantic accuracy of video segmentation to unprecedented levels,
-allowing machines to understand nuanced human instructions.
+The thesis problem is that no existing metric satisfies all four desiderata simultaneously:
+(1)~no-reference, (2)~multi-time-scale temporal coverage, (3)~robust to smoother-output bias from
+learned representations, and (4)~reliable across diverse long-video content including close-up scenes.
 
-\subsection{The Theoretical Conflict: Stochastic Deep Learning vs. Deterministic Kinematics}
+% Section 2: Literature Review
+\section{Literature Review}
+\label{sec:litreview}
 
-Despite these advances, a fundamental theoretical conflict remains at the heart of modern video segmentation.
-Deep Learning models are inherently stochastic and data-driven. They treat every video frame as a new statistical
-puzzle to be solved. While attention mechanisms provide some temporal context, the model effectively "re-imagines"
-the object in every frame based on learned feature correlations.
-In contrast, the physical world is deterministic and kinematic. Objects in motion follow the laws of physics—momentum,
-inertia, and continuous trajectories. A car cannot teleport five meters to the left between Frame $t$ and Frame $t + 1$
-However, purely Deep Learning-based models often produce outputs that violate these physical laws, resulting in
-"temporal jitter" (flickering masks) or "hallucinations" (masks appearing in empty space).
+\subsection{Video Super-Resolution Methods}
 
-This thesis posits that the reliance on purely Deep Learning approaches for tracking is fundamentally inefficient.
-While Deep Learning is essential for the semantic reasoning (knowing "what" to track), Classical Mechanics and
-Geostatistics are far better suited for the spatial tracking (knowing "where" it will go). This study explores
-the intersection of these two fields, proposing that Spatio-Temporal Interpolation (specifically Kriging and
-Radial Basis Functions) and Trajectory Forecasting (\cite[LSTM]{hochreiter_long_1997}/ \cite[N-BEATS]{oreshkin_n-beats_2020})
-can stabilize the stochastic outputs of modern AI.
+The two primary VSR methods evaluated throughout this thesis represent the two dominant stylistic
+families in modern SR:
 
-\subsection{The Resource Crisis in Edge Computing}
+\textbf{MGLD-VSR} \cite{he_mgld_2024} (ECCV 2024) applies masked guided latent diffusion to
+progressively refine super-resolved frames. It is characterised by sharp, detail-preserving
+output and exact reproduction of published DOVE benchmark numbers on UDM10 (PSNR 24.23, SSIM
+and LPIPS to four decimal places), providing a reliable evaluation baseline.
 
-The background of this study is also defined by a hardware crisis. The computational cost of running models like
-\cite[VideoLISA]{bai_one_2024} or \cite[SAM 2]{ravi_sam_2024} s immense. A standard inference pass requires calculating
-attention matrices that scale quadratically with sequence length $(O(N^2))$. For a drone or an autonomous robot
-operating on battery power with limited thermal headroom, running a billion-parameter model at 30 Frames Per
-Second (FPS) is physically impossible.
+\textbf{Upscale-A-Video (UAV)} \cite{zhou_upscale_2024} (CVPR 2024) uses a text-conditioned
+temporal diffusion model, inspired by text-to-video generation. It produces smoother,
+perceptually cleaner output at the cost of some high-frequency detail. UAV reproduces DOVE
+UDM10 results within a consistent +1.33~dB PSNR offset attributable to a minor degradation
+pipeline configuration difference, confirming the evaluation setup is correct.
+
+\textbf{DOVE} \cite{yang_dove_2024} (CVPR 2024) is the current VSR benchmark suite, combining
+the UDM10 and SPMCS test sets with a multi-metric evaluation framework that includes E*warp
+for temporal consistency. DOVE does not address long-video evaluation or multi-scale temporal metrics.
+
+A promising emerging direction is the fusion of state-space models (SSMs) with diffusion priors
+for long-context consistency. Po~et~al.\ \cite{po_longcontext_2025} demonstrate that SSM-based
+world models can maintain coherent scene structure over thousands of frames, suggesting that
+future SR architectures may require correspondingly long-range evaluation metrics.
+
+\subsection{Temporal Consistency Metrics}
+
+\textbf{tOF and tLP} (TecoGAN, Chu et~al.\ \cite{chu_tecogan_2020}) measure per-frame optical-flow
+consistency (tOF) and LPIPS-based perceptual warping error (tLP). Both are defined at a single
+adjacent-frame gap ($k{=}1$). Our preliminary work (Section~\ref{sec:preliminary}) demonstrates
+that tOF ordering inverts between $k{=}1$ and $k{\geq}10$: the smoother method (UAV) wins at
+$k{=}1$ but loses to the detail-preserving method (MGLD) at long range.
+
+\textbf{E*warp} (DOVE \cite{yang_dove_2024}) extends warp-based error evaluation; it remains
+a $k{=}1$-dominant metric and shares the adjacent-frame limitation of tOF.
+
+\textbf{VBench} \cite{huang_vbench_2024} and \textbf{VBench-2.0} \cite{huang_vbench2_2025}
+provide multi-aspect evaluation of generated video, including \texttt{subject\_consistency} and
+\texttt{background\_consistency} (DINOv2 cosine similarity between adjacent frames),
+\texttt{Human\_Identity} (slow-fast ArcFace clip adapter), and \texttt{Human\_Anatomy}
+(anomaly ViT). Our preliminary work documents applicability gaps for SR evaluation:
+DINOv2-based consistency metrics exhibit smoother-output bias; Human\_Anatomy has content-dependent
+calibration failure on close-up footage.
+
+\subsection{No-Reference Perceptual Metrics}
+
+\textbf{CLIP-IQA} \cite{wang_clipiqa_2023} evaluates per-frame image quality using CLIP
+embeddings trained on diverse natural content. Unlike LPIPS or DINOv2, CLIP-IQA does not
+systematically penalise high-frequency detail in diffusion-style SR outputs, making it a
+suitable component of a no-reference composite for SR evaluation.
+
+\textbf{MUSIQ} \cite{ke_musiq_2021} uses multi-scale image quality transformers. MGLD scores
+higher than UAV on MUSIQ across all test videos.
+
+\textbf{DOVER} \cite{wu_dover_2023} combines technical and aesthetic video quality dimensions.
+MGLD leads UAV by +8.75 DOVER points on the mean over 5 test videos.
+
+\subsection{Identified Literature Gap}
+
+Three properties are needed for rigorous long-video SR evaluation but absent from any
+single published metric:
+
+\begin{enumerate}
+    \item \textbf{No-reference} --- HR ground truth is unavailable in deployment.
+    \item \textbf{Multi-time-scale} --- adjacent-frame metrics miss the tOF crossover at
+          $k{=}5$--$10$ frames documented in preliminary work.
+    \item \textbf{Bias-calibrated} --- three independent learned-representation metrics
+          (DINOv2, anomaly ViT, LPIPS) share a structural smoother-output bias; a
+          principled aggregation must account for this.
+\end{enumerate}
+
+The proposed Long-Range Video Consistency Composite (LR-VCC) metric, described in
+Section~\ref{sec:method}, is designed to satisfy all three.

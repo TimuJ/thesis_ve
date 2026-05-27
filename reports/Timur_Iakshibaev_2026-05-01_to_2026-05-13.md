@@ -168,7 +168,8 @@ So the failure is robust to two natural fixes — meaning the metric's miscalibr
 ## Next Steps (May 14 – May 21)
 
 1. **Implement multi-person Human_Identity** per `docs/plans/2026-05-06-multiperson-identity-metric.md`. Per-clip cluster purity (self-consistency) + LQ-reference IoU-matched-pair variant. Re-run on all 5 videos.
-2. **Continuous-aggregation Anatomy as default.** Add a `--continuous` flag to `human_anatomy_long.py` and rerun the per-method table. Predict: per-video winners stay the same, KZ gap halves but persists, other 4 gaps slightly widen (more headroom now that score isn't capped at 1).
+
+ Add a `--continuous` flag to `human_anatomy_long.py` and rerun the per-method table. Predict: per-video winners stay the same, KZ gap halves but persists, other 4 gaps slightly widen (more headroom now that score isn't capped at 1).
 3. **VBench effectiveness validation** — start with 2 of the 5 parameterized synthetic test datasets from `docs/plans/2026-04-28-metrics-and-vbench-validation.md`: suggest *color drift* and *chunk-boundary jumps* as the two most SR-relevant. Generate on M1, run VBench-1 + VBench-2 + DOVER + E\*warp on each, see which dimensions actually move.
 4. **Long-range tOF + tLP** added to the evaluation pipeline (`k = [1, 5, 10, 30, 60, 120]`). Tests whether long-range temporal optical-flow consistency agrees with Anatomy on KZ (predicting: tOF favours MGLD, supporting the perception side).
 

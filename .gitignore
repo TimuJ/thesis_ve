@@ -45,4 +45,5 @@ results/_server_mirror/
 results/vbench2_anatomy/*
 results/long_range_temporal/*
 results/synthetic_artefacts/
-results/lr_vcc/composite_artefacts/
+results/lr_vcc/*
+results/synthetic_artefacts_eval/*
