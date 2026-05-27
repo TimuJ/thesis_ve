@@ -1,7 +1,7 @@
 # Metric-Failure Diagnostic on KZ8p6b1zJ9U
 
 **Date:** 2026-05-07
-**Status:** Plan — pending implementation
+**Status (updated 2026-05-27):** **EXECUTED.** Per-frame anatomy + identity diagnostics produced. Root cause identified as the **close-up regime shift** (close-up faces/hands trigger the anomaly classifier's high-fire regime). Findings live in `docs/notes/2026-05-13-kz-regime-shift-trigger.md`. Outcome motivated LR-VCC's **closeup-p50 reliability gate** (`scripts/lr_vcc/identity.py` + `closeup_map_artefacts/*.json`), which now down-weights Identity sub-metric when close-up content dominates. The KZ flip is preserved under LR-VCC: MGLD wins 5/5 (Layer 1+2 validation, see `docs/notes/2026-05-21-lr-vcc-validation.md`).
 **Goal:** Localize where VBench-2.0 metrics disagree with human visual judgment, on the one video where both `Human_Identity` and `Human_Anatomy` rank UAV above MGLD despite UAV being visually worse.
 
 ## Motivating finding

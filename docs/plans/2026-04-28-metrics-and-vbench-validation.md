@@ -3,6 +3,12 @@
 **Date:** 2026-04-28
 **Context:** Colleague requested (1) missing DOVE metrics: E\*warp, DOVER, FasterVQA, (2) analysis of VBench effectiveness for long-term consistency in SR, (3) test dataset designs to validate metrics.
 
+> **STATUS (2026-05-27):** Partially executed.
+> - Part 1: E\*warp, long-range tOF, tLP **DONE** and folded into LR-VCC (sub-metric T). DOVER + FasterVQA deprioritised (LR-VCC's CLIP-IQA + Identity cover the same ground).
+> - Part 3: Of 5 proposed test datasets, **3 implemented and validated** (`color_drift`, `chunk_boundary`, `flicker`); **4th underway** (`identity_degradation`). `bg_change` deferred to thesis future work.
+> - Part 4: Long-range tOF **DONE** (`scripts/long_range_temporal/`), CLIP-IQA trajectory **DONE** (folded into LR-VCC sub-metric A).
+> Outcomes live in `reports/Timur_Iakshibaev_2026-05-{14-21,22-27}.md` and `docs/notes/2026-05-{14,21}-...md`. Original plan kept for historical reference.
+
 ---
 
 ## Part 1: Missing DOVE Metrics

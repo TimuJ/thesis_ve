@@ -3,6 +3,8 @@
 **Date:** 2026-04-30
 **Source:** `VBench/VBench-2.0/vbench2/` — 18 dimensions across 5 categories.
 
+> **STATUS (2026-05-27):** Survey phase executed. Of the SR-applicable dimensions, **Human_Anatomy** and **Human_Identity** are now in production via slow-fast adapters (`scripts/vbench2_long/`) and integrated into LR-VCC (Identity = sub-metric I; Anatomy gated via closeup-p50 map and replaced by reliability-weighted Identity after the KZ regime-shift finding — see `docs/notes/2026-05-13-kz-regime-shift-trigger.md`). The applicability findings below remain accurate as a one-time survey; production behaviour now superseded by the notes and by `docs/plans/2026-05-21-lr-vcc-design.md`.
+
 VBench-2.0 evaluates **intrinsic faithfulness** of generated videos: physics correctness, common sense, human anatomy, motion order. Most dimensions assume the video was generated from a text prompt and use VLMs (LLaVA-Video, Qwen) or auxiliary metadata to compare against the prompt's intent.
 
 For SR evaluation, only dimensions that don't require text prompts can be repurposed.

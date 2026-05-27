@@ -1,7 +1,7 @@
 # Multi-Person Identity Metric for VBench-2.0 (Long-Video SR)
 
 **Date:** 2026-05-06
-**Status:** Design — pending user approval, then writing-plans
+**Status (updated 2026-05-27):** **Deferred to thesis future work.** Designed but NOT implemented for the May 31 proposal. LR-VCC v3+slope uses single-identity slow-fast (sub-metric I) — sufficient for the 5 SR videos + 4 artefact families validated for the proposal. Re-open this plan post-proposal when scaling to crowd/multi-person scenes for the final thesis evaluation.
 **Goal:** Extend VBench-2.0 `Human_Identity` to handle multi-person long videos for VSR evaluation. Headline use is the MGLD-vs-UAV synthetic comparison; broader use is thesis-grade evidence on whether identity metrics are effective for long-video SR.
 
 ## Context
