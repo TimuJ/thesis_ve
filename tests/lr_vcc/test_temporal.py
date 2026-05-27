@@ -37,3 +37,21 @@ def test_low_mask_coverage_drops_reliability():
     cov = {1: 0.05, 5: 0.04, 10: 0.03, 30: 0.02, 60: 0.01, 120: 0.005}  # all below 0.10 floor
     out = temporal_score(_fixture_tof_payload(tof, cov))
     assert out["reliability"] < 0.4
+
+
+def test_uniform_weighting_emphasizes_k1():
+    # Make tOF spike at k=1 only (flicker-like)
+    tof = {1: 0.30, 5: 0.05, 10: 0.05, 30: 0.05, 60: 0.05, 120: 0.05}
+    cov = {1: 0.9, 5: 0.7, 10: 0.5, 30: 0.4, 60: 0.3, 120: 0.2}
+    log_out = temporal_score(_fixture_tof_payload(tof, cov), weight_fn="log")
+    uni_out = temporal_score(_fixture_tof_payload(tof, cov), weight_fn="uniform")
+    # uniform should give HIGHER weighted_mean_tof (k=1 spike not downweighted)
+    assert uni_out["details"]["weighted_mean_tof"] > log_out["details"]["weighted_mean_tof"]
+
+
+def test_log_weighting_default_unchanged():
+    tof = {1: 0.01, 5: 0.02, 10: 0.03, 30: 0.04, 60: 0.05, 120: 0.06}
+    cov = {1: 0.9, 5: 0.7, 10: 0.5, 30: 0.4, 60: 0.3, 120: 0.2}
+    old_out = temporal_score(_fixture_tof_payload(tof, cov))  # no kwarg = default = log
+    log_out = temporal_score(_fixture_tof_payload(tof, cov), weight_fn="log")
+    assert abs(old_out["score"] - log_out["score"]) < 1e-9

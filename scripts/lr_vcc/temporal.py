@@ -11,18 +11,28 @@ from .reliability import below_threshold_penalty
 _DEFAULT_MASK_COV_FLOOR = 0.10
 
 
-def _weight_fn(k: int) -> float:
-    """log(1+k) — weights long-k more than adjacent k."""
-    return math.log(1 + k)
+_WEIGHT_FNS = {
+    "log": lambda k: math.log(1 + k),
+    "uniform": lambda k: 1.0,
+    "sqrt": lambda k: math.sqrt(k),
+}
 
 
 def temporal_score(tof_payload: dict,
-                   mask_cov_floor: float = _DEFAULT_MASK_COV_FLOOR) -> dict:
+                   mask_cov_floor: float = _DEFAULT_MASK_COV_FLOOR,
+                   weight_fn: str = "log") -> dict:
     """Returns {"score", "reliability", "details": {...}}.
 
     score = 1 - weighted_mean(tof_k) over k with mask_coverage[k] >= floor.
     reliability = mean over k of (1 - below_threshold_penalty(coverage[k], floor)).
+
+    Args:
+        tof_payload: dict with "tof" and "mean_mask_coverage" keys.
+        mask_cov_floor: minimum mask coverage to include a k value.
+        weight_fn: weighting scheme for tOF across k: "log" (default), "uniform", or "sqrt".
     """
+    weight_func = _WEIGHT_FNS.get(weight_fn, _WEIGHT_FNS["log"])
+
     tofs = tof_payload["tof"]
     covs = tof_payload["mean_mask_coverage"]
     k_strs = list(tofs.keys())
@@ -37,7 +47,7 @@ def temporal_score(tof_payload: dict,
         if cov < mask_cov_floor:
             continue
         k = int(k_str)
-        w = _weight_fn(k)
+        w = weight_func(k)
         weighted_sum += w * float(tofs[k_str])
         weight_total += w
         used_ks.append(k_str)

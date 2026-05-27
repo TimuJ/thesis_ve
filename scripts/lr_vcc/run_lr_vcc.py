@@ -27,7 +27,8 @@ from .color_stability import color_stability_score
 def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
                        closeup_bbox_p50=None,
                        color_hist_path=None,
-                       temperature=0.2, low_confidence_floor=0.2):
+                       temperature=0.2, low_confidence_floor=0.2,
+                       temporal_weight="log"):
     clip_iqa = json.load(open(clip_iqa_path))
     tof_payload = json.load(open(tof_path))
     id_full = json.load(open(identity_results_path))
@@ -36,7 +37,7 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
         raise ValueError("video_id '" + video_id + "' not in identity results")
 
     a = appearance_score(clip_iqa)
-    t = temporal_score(tof_payload)
+    t = temporal_score(tof_payload, weight_fn=temporal_weight)
     i = identity_score(id_pv, closeup_bbox_p50=closeup_bbox_p50)
 
     # Sub-metric D: color-histogram temporal stability (optional).
@@ -84,6 +85,8 @@ def main():
                     help="optional JSON {video_id: face_or_hand_bbox_p50}")
     ap.add_argument("--color_hist_dir", default=None,
                     help="optional dir of <basename>_color_hist.json files (sub-metric D)")
+    ap.add_argument("--temporal_weight", choices=["log", "uniform", "sqrt"], default="log",
+                    help="tOF weighting scheme: log (default), uniform, or sqrt")
     ap.add_argument("--output_path", required=True)
     ap.add_argument("--temperature", type=float, default=0.2)
     ap.add_argument("--low_confidence_floor", type=float, default=0.2)
@@ -119,6 +122,7 @@ def main():
                 color_hist_path=color_hist_path,
                 temperature=args.temperature,
                 low_confidence_floor=args.low_confidence_floor,
+                temporal_weight=args.temporal_weight,
             )
         except Exception as e:
             print("[error] " + base + ": " + str(e))
