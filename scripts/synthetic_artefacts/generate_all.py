@@ -19,6 +19,7 @@ sys.path.insert(0, str(REPO))
 from scripts.synthetic_artefacts.color_drift import apply_color_drift
 from scripts.synthetic_artefacts.chunk_boundary import apply_chunk_boundary_jumps
 from scripts.synthetic_artefacts.flicker import apply_periodic_flicker
+from scripts.synthetic_artefacts.identity_degradation import apply_identity_degradation
 
 
 BASE_VIDEOS = ["hhszUXL1Cu8", "7WHI2L_FDNg"]
@@ -52,6 +53,8 @@ def process_one(src_path: Path, out_path: Path, artefact: str, severity: float):
             out = apply_chunk_boundary_jumps(fr, idx, CHUNK_FRAMES, severity)
         elif artefact == "flicker":
             out = apply_periodic_flicker(fr, idx, FLICKER_PERIOD, severity)
+        elif artefact == "identity_degradation":
+            out = apply_identity_degradation(fr, idx, severity)
         else:
             raise ValueError("unknown artefact: " + artefact)
         writer.write(out)
@@ -62,7 +65,7 @@ def process_one(src_path: Path, out_path: Path, artefact: str, severity: float):
 
 
 def main():
-    for artefact in ["color_drift", "chunk_boundary", "flicker"]:
+    for artefact in ["color_drift", "chunk_boundary", "flicker", "identity_degradation"]:
         for base in BASE_VIDEOS:
             src = SRC_DIR / (base + ".mp4")
             if not src.is_file():
@@ -71,6 +74,9 @@ def main():
             for sev in SEVERITIES:
                 out_name = base + "_sev" + format(sev, ".2f").replace(".", "p") + ".mp4"
                 out = OUT_DIR / artefact / out_name
+                if out.is_file() and out.stat().st_size > 0:
+                    print(artefact + " sev=" + str(sev) + " on " + base + ": SKIP (exists)")
+                    continue
                 print(artefact + " sev=" + str(sev) + " on " + base + ":")
                 process_one(src, out, artefact, sev)
 
