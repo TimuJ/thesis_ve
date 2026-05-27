@@ -28,6 +28,7 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
                        closeup_bbox_p50=None,
                        color_hist_path=None,
                        color_hist_alpha=None,
+                       color_slope_path=None,
                        temperature=0.2, low_confidence_floor=0.2,
                        temporal_weight="log"):
     clip_iqa = json.load(open(clip_iqa_path))
@@ -47,6 +48,17 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
         raw = json.load(open(color_hist_path))
         c = color_stability_score(raw, alpha=color_hist_alpha)
 
+    # Sub-metric E: color-slope drift detector (optional).
+    e = None
+    if color_slope_path is not None and os.path.isfile(str(color_slope_path)):
+        raw_e = json.load(open(color_slope_path))
+        # The compute_color_slope.py payload already has {score, reliability, details}.
+        e = {
+            "score": float(raw_e.get("score", 0.0)),
+            "reliability": float(raw_e.get("reliability", 0.0)),
+            "details": raw_e.get("details", {}),
+        }
+
     scores = [a["score"], t["score"], i["score"]]
     rels = [a["reliability"], t["reliability"], i["reliability"]]
     sub_metrics = {"appearance": a, "temporal": t, "identity": i}
@@ -55,6 +67,11 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
         scores.append(c["score"])
         rels.append(c["reliability"])
         sub_metrics["color_stability"] = c
+
+    if e is not None:
+        scores.append(e["score"])
+        rels.append(e["reliability"])
+        sub_metrics["color_slope"] = e
 
     comp = compose_score(scores, rels,
                          temperature=temperature,
@@ -69,6 +86,7 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
         "diagnostics": {
             "closeup_bbox_p50": closeup_bbox_p50,
             "color_hist_used": color_hist_path is not None,
+            "color_slope_used": color_slope_path is not None,
         },
     }
 
@@ -90,6 +108,9 @@ def main():
                     help="optional override of sub-metric D's alpha for "
                          "score = exp(-alpha * mean_hist_dist). Default None "
                          "uses the JSON's stored alpha (backwards compatible).")
+    ap.add_argument("--color_slope_dir", default=None,
+                    help="optional dir of <basename>_color_slope.json files "
+                         "(sub-metric E — linear-regression color drift detector)")
     ap.add_argument("--temporal_weight", choices=["log", "uniform", "sqrt"], default="log",
                     help="tOF weighting scheme: log (default), uniform, or sqrt")
     ap.add_argument("--output_path", required=True)
@@ -117,6 +138,9 @@ def main():
         color_hist_path = None
         if args.color_hist_dir:
             color_hist_path = os.path.join(args.color_hist_dir, base + "_color_hist.json")
+        color_slope_path = None
+        if args.color_slope_dir:
+            color_slope_path = os.path.join(args.color_slope_dir, base + "_color_slope.json")
         try:
             out = evaluate_one_video(
                 video_id=base,
@@ -126,6 +150,7 @@ def main():
                 closeup_bbox_p50=closeup_map.get(base),
                 color_hist_path=color_hist_path,
                 color_hist_alpha=args.color_hist_alpha,
+                color_slope_path=color_slope_path,
                 temperature=args.temperature,
                 low_confidence_floor=args.low_confidence_floor,
                 temporal_weight=args.temporal_weight,
