@@ -29,6 +29,7 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
                        color_hist_path=None,
                        color_hist_alpha=None,
                        color_slope_path=None,
+                       color_slope_beta=None,
                        temperature=0.2, low_confidence_floor=0.2,
                        temporal_weight="log"):
     clip_iqa = json.load(open(clip_iqa_path))
@@ -53,11 +54,27 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
     if color_slope_path is not None and os.path.isfile(str(color_slope_path)):
         raw_e = json.load(open(color_slope_path))
         # The compute_color_slope.py payload already has {score, reliability, details}.
-        e = {
-            "score": float(raw_e.get("score", 0.0)),
-            "reliability": float(raw_e.get("reliability", 0.0)),
-            "details": raw_e.get("details", {}),
-        }
+        # If color_slope_beta is supplied, re-derive score = exp(-beta * max_abs_slope)
+        # using the stored raw slope — avoids re-scanning videos when retuning beta.
+        details_e = raw_e.get("details", {}) or {}
+        if color_slope_beta is not None and "max_abs_slope" in details_e:
+            import math as _math
+            new_score = _math.exp(-float(color_slope_beta) * float(details_e["max_abs_slope"]))
+            new_score = max(0.0, min(1.0, new_score))
+            new_details = dict(details_e)
+            new_details["beta"] = float(color_slope_beta)
+            new_details["beta_override"] = True
+            e = {
+                "score": new_score,
+                "reliability": float(raw_e.get("reliability", 0.0)),
+                "details": new_details,
+            }
+        else:
+            e = {
+                "score": float(raw_e.get("score", 0.0)),
+                "reliability": float(raw_e.get("reliability", 0.0)),
+                "details": details_e,
+            }
 
     scores = [a["score"], t["score"], i["score"]]
     rels = [a["reliability"], t["reliability"], i["reliability"]]
@@ -111,6 +128,10 @@ def main():
     ap.add_argument("--color_slope_dir", default=None,
                     help="optional dir of <basename>_color_slope.json files "
                          "(sub-metric E — linear-regression color drift detector)")
+    ap.add_argument("--color_slope_beta", type=float, default=None,
+                    help="optional override of sub-metric E's beta for "
+                         "score = exp(-beta * max_abs_slope). Default None uses "
+                         "the JSON's stored score (re-derive without re-scanning).")
     ap.add_argument("--temporal_weight", choices=["log", "uniform", "sqrt"], default="log",
                     help="tOF weighting scheme: log (default), uniform, or sqrt")
     ap.add_argument("--output_path", required=True)
@@ -151,6 +172,7 @@ def main():
                 color_hist_path=color_hist_path,
                 color_hist_alpha=args.color_hist_alpha,
                 color_slope_path=color_slope_path,
+                color_slope_beta=args.color_slope_beta,
                 temperature=args.temperature,
                 low_confidence_floor=args.low_confidence_floor,
                 temporal_weight=args.temporal_weight,
