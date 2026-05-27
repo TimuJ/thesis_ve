@@ -2,12 +2,14 @@
 
 Reads:
     results/lr_vcc/composite_artefacts_v3_slope_b200/identity_degradation/*.json
+    (preferred) OR falls back to the raw per-sub-metric JSONs.
 Writes:
     stdout: markdown tables per base video showing each sub-metric's score vs
     severity, plus the composite LR-VCC and the softmax weight that sub-metric
     I received.
 """
 import json
+import math
 import sys
 from pathlib import Path
 from statistics import mean
@@ -15,11 +17,85 @@ from statistics import mean
 
 HERE = Path(__file__).resolve().parents[2]
 COMP_DIR = HERE / "results" / "lr_vcc" / "composite_artefacts_v3_slope_b200" / "identity_degradation"
+RAW_BASE = HERE / "results"
 BASES = ["hhszUXL1Cu8", "7WHI2L_FDNg"]
 SEVS = ["0p02", "0p05", "0p10", "0p20", "0p40"]
 SUB_ORDER = ["appearance", "temporal", "identity", "color_stability", "color_slope"]
 SUB_SHORT = {"appearance": "A", "temporal": "T", "identity": "I",
              "color_stability": "D", "color_slope": "E"}
+
+
+def _maybe_load(p):
+    if not Path(p).is_file():
+        return None
+    return json.load(open(p))
+
+
+def _raw_sub_scores(base, sev):
+    """If composite not built yet, derive sub-metric scores from raw JSONs.
+
+    Returns dict {sub: score_or_None}. Identity comes from the bulk JSON; it
+    needs the closeup_p50 map and proper aggregation, so we approximate by
+    reading raw .fused if present.
+    """
+    vid = base + "_sev" + sev
+    out = {}
+
+    # Appearance: from clip_iqa raw
+    clip_path = RAW_BASE / "synthetic_artefacts_eval" / "clip_iqa" / "identity_degradation" / (vid + "_clip_iqa.json")
+    raw = _maybe_load(clip_path)
+    if raw is not None:
+        # Use appearance_score from the module if reachable; otherwise inline
+        try:
+            from scripts.lr_vcc.appearance import appearance_score
+            a = appearance_score(raw)
+            out["appearance"] = a["score"]
+        except Exception:
+            out["appearance"] = None
+
+    # Temporal: from tof_tlp raw
+    tof_path = RAW_BASE / "synthetic_artefacts_eval" / "tof_tlp" / "identity_degradation" / (vid + "_tof_tlp.json")
+    raw = _maybe_load(tof_path)
+    if raw is not None:
+        try:
+            from scripts.lr_vcc.temporal import temporal_score
+            t = temporal_score(raw, weight_fn="uniform")
+            out["temporal"] = t["score"]
+        except Exception:
+            out["temporal"] = None
+
+    # Color stability (D)
+    ch_path = RAW_BASE / "lr_vcc" / "color_histogram" / "identity_degradation" / (vid + "_color_hist.json")
+    raw = _maybe_load(ch_path)
+    if raw is not None:
+        try:
+            from scripts.lr_vcc.color_stability import color_stability_score
+            d = color_stability_score(raw, alpha=0.394)
+            out["color_stability"] = d["score"]
+        except Exception:
+            out["color_stability"] = None
+
+    # Color slope (E): re-derive with beta=200
+    cs_path = RAW_BASE / "lr_vcc" / "color_slope" / "identity_degradation" / (vid + "_color_slope.json")
+    raw = _maybe_load(cs_path)
+    if raw is not None:
+        m = raw.get("details", {}).get("max_abs_slope")
+        if m is not None:
+            score = max(0.0, min(1.0, math.exp(-200.0 * float(m))))
+            out["color_slope"] = score
+
+    # Identity (I): from bulk JSON
+    id_dir = RAW_BASE / "synthetic_artefacts_eval" / "identity" / "identity_degradation"
+    if id_dir.is_dir():
+        bulk = list(id_dir.glob("*.json"))
+        if bulk:
+            payload = json.load(open(bulk[0]))
+            pv = payload.get("per_video", {}).get(vid)
+            if pv is not None:
+                out["identity_fused"] = pv.get("fused")
+                out["identity_face_rate"] = (pv.get("n_clips_with_faces", 0)
+                                             / max(1, pv.get("n_clips", 1)))
+    return out
 
 
 def fmt(x, w=6, p=3):
@@ -36,8 +112,22 @@ def load_one(base, sev):
 
 
 def main():
-    if not COMP_DIR.is_dir():
-        sys.exit("[error] missing composite dir: " + str(COMP_DIR))
+    use_composite = COMP_DIR.is_dir() and any(COMP_DIR.glob("*.json"))
+    if not use_composite:
+        print("# Partial summary (composite not built yet); using raw per-metric JSONs\n")
+        for base in BASES:
+            print("\n## Base = " + base + "\n")
+            header = "| sev  | A     | T     | I_fused | D     | E     | face_rate |"
+            sep = "|------|-------|-------|---------|-------|-------|-----------|"
+            print(header)
+            print(sep)
+            for sev in SEVS:
+                s = _raw_sub_scores(base, sev)
+                a = s.get("appearance"); t = s.get("temporal"); i = s.get("identity_fused")
+                d = s.get("color_stability"); e = s.get("color_slope"); fr = s.get("identity_face_rate")
+                print("| " + sev + " | " + fmt(a) + " | " + fmt(t) + " | "
+                      + fmt(i) + " | " + fmt(d) + " | " + fmt(e) + " | " + fmt(fr) + " |")
+        return
 
     # Per-base table.
     for base in BASES:
