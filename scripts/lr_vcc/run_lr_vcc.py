@@ -27,6 +27,7 @@ from .color_stability import color_stability_score
 def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
                        closeup_bbox_p50=None,
                        color_hist_path=None,
+                       color_hist_alpha=None,
                        temperature=0.2, low_confidence_floor=0.2,
                        temporal_weight="log"):
     clip_iqa = json.load(open(clip_iqa_path))
@@ -44,7 +45,7 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
     c = None
     if color_hist_path is not None and os.path.isfile(str(color_hist_path)):
         raw = json.load(open(color_hist_path))
-        c = color_stability_score(raw)
+        c = color_stability_score(raw, alpha=color_hist_alpha)
 
     scores = [a["score"], t["score"], i["score"]]
     rels = [a["reliability"], t["reliability"], i["reliability"]]
@@ -85,6 +86,10 @@ def main():
                     help="optional JSON {video_id: face_or_hand_bbox_p50}")
     ap.add_argument("--color_hist_dir", default=None,
                     help="optional dir of <basename>_color_hist.json files (sub-metric D)")
+    ap.add_argument("--color_hist_alpha", type=float, default=None,
+                    help="optional override of sub-metric D's alpha for "
+                         "score = exp(-alpha * mean_hist_dist). Default None "
+                         "uses the JSON's stored alpha (backwards compatible).")
     ap.add_argument("--temporal_weight", choices=["log", "uniform", "sqrt"], default="log",
                     help="tOF weighting scheme: log (default), uniform, or sqrt")
     ap.add_argument("--output_path", required=True)
@@ -120,6 +125,7 @@ def main():
                 identity_results_path=args.identity_results,
                 closeup_bbox_p50=closeup_map.get(base),
                 color_hist_path=color_hist_path,
+                color_hist_alpha=args.color_hist_alpha,
                 temperature=args.temperature,
                 low_confidence_floor=args.low_confidence_floor,
                 temporal_weight=args.temporal_weight,
