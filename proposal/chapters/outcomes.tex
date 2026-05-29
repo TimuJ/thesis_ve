@@ -66,26 +66,4 @@ composition time without recomputing the underlying optical flow. This enables p
 hyperparameter sweeps over the temporal-scale axis that produced the crossover finding of
 Section~\ref{sec:problem:tof}.
 
-\textbf{Severity-response-driven metric design protocol.} The iterative history of
-Section~\ref{sec:method:iteration} is itself a methodological contribution. Each version
-of the composite added one element after a specific failure mode was characterised on the
-synthetic test set; the next version addresses the next failure surfaced by the updated
-composite. The protocol --- characterise the failure mode, add one element, verify on the
-same test set without regression on previous failure modes --- is reusable beyond the
-present metric for any composite no-reference metric whose failure modes can be
-parameterised.
 
-\subsection{Path to Thesis}
-
-The thesis extends the proposal in four directions. First, the literature review is
-expanded to cover the full landscape of no-reference video quality assessment, paying
-particular attention to recent neural quality predictors and to the long-video extensions
-of perceptual benchmarks. Second, each sub-metric's design history is documented in detail
-together with the failure characterisations that motivated it. Third, the planned future
-work --- a multi-person Identity sub-metric, a real-video baseline confirmation, a
-fast-varying brightness sub-metric to close the flicker gap, and an extension of validation
-to a broader set of recent super-resolution methods --- is carried out during the thesis
-horizon and incorporated into the validation chapters. Fourth, the reliability-weighted
-composition pattern is discussed in a broader methodological chapter that argues for its
-generalisation to other no-reference video quality assessment problems beyond
-super-resolution.

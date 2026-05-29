@@ -33,7 +33,7 @@ the smoother-output bias of learned representations.
 
 \subsection{Existing Metric Landscape}
 
-The existing metric ecosystem can be organised into four families:
+The existing metric ecosystem can be organised into five families:
 
 \begin{enumerate}
     \item \textbf{Full-reference pixel/perceptual} (PSNR, SSIM, LPIPS, DISTS) --- require HR ground truth;
@@ -111,13 +111,12 @@ super-resolution practitioner.
           adjacent-frame limitation of tOF.
     \item \textbf{VBench} \cite{huang_vbench_2024} and \textbf{VBench-2.0}
           \cite{huang_vbench2_2025} provide multi-aspect evaluation of generated video,
-          including \texttt{subject\_consistency} and \texttt{background\_consistency}
-          (DINOv2 cosine similarity between adjacent frames), \texttt{Human\_Identity}
-          (slow-fast ArcFace clip adapter), and \texttt{Human\_Anatomy} (anomaly ViT). The
-          preliminary work documents applicability gaps for super-resolution evaluation:
-          DINOv2-based consistency metrics exhibit smoother-output bias and
-          \texttt{Human\_Anatomy} has content-dependent calibration failure on close-up
-          footage.
+          including subject and background consistency (DINOv2 cosine similarity between
+          adjacent frames), Human Identity (slow-fast ArcFace clip adapter), and Human
+          Anatomy (anomaly ViT). The preliminary work documents applicability gaps for
+          super-resolution evaluation: DINOv2-based consistency metrics exhibit
+          smoother-output bias and the Human Anatomy dimension has content-dependent
+          calibration failure on close-up footage.
 \end{itemize}
 
 \subsection{No-Reference Perceptual Metrics}
