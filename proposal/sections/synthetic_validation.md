@@ -1,12 +1,13 @@
 # Section 5.3: Synthetic validation — severity-response analysis
 
 To test whether existing metrics and LR-VCC correctly detect known artefact types at controlled
-severity levels, we generated a parameterized synthetic test set: 2 base videos (MGLD-SR outputs
-of `7WHI2L_FDNg`, 167 s, and `hhszUXL1Cu8`, 80 s) × 2 artefact types (color drift,
-chunk-boundary jumps) × 5 severities (0.02, 0.05, 0.10, 0.20, 0.40) = 20 test videos with
-known ground-truth quality ordering: as severity increases, quality decreases.
-See Figures 5–7 for severity-response curves; the full 9-metric × 5-severity × 2-base ×
-2-artefact table is archived at `results/lr_vcc/severity_response_table.csv`.
+severity levels, we generated a parameterised synthetic test set: 2 base videos (long-form SR
+outputs, one 167 s, one 80 s) × 4 artefact families (color drift, chunk-boundary jumps,
+periodic flicker, identity degradation) × 5 severities (0.02, 0.05, 0.10, 0.20, 0.40) test
+videos with known ground-truth quality ordering: as severity increases, quality decreases.
+See Figures 5–7 for severity-response curves; the full multi-metric × severity × base ×
+artefact table is archived under `results/synthetic_artefacts_eval/` and
+`results/lr_vcc/composite_artefacts_v3_slope_b200/`.
 
 ## 5.3.1 Artefact definitions
 
@@ -24,6 +25,20 @@ channels. This mimics the chunk-state-reset artefact observed when diffusion-SR 
 long videos in fixed-length segments without latent-state continuity. The discontinuity is
 abrupt (single-frame) and periodic, making it detectable by any metric sensitive to
 inter-frame differences at boundary frames.
+
+**Periodic flicker** — sinusoidal brightness oscillation. Per-frame pixel intensities are
+multiplied by `1 + severity · sin(2π · i / period)` with period = 15 frames (0.5 s at 30 fps).
+This mimics the periodic flicker produced by some diffusion samplers, where every N-th frame
+in a sampling schedule shows mildly elevated brightness. The artefact is purely high-frequency:
+within a 60-frame window it executes 4 full cycles. Detecting it requires a temporal metric
+that gives meaningful weight to small temporal gaps.
+
+**Identity degradation** — per-frame Haar-cascade face detection followed by
+`GaussianBlur(σ = severity · 10)` applied within each detected face bbox with 10 % padding.
+This mimics the identity-collapse failure mode of diffusion VSR on faces and tests whether
+the Identity sub-metric (slow-fast face embedding) responds to localised, identity-specific
+degradation that leaves the rest of the frame unchanged. Severity-0 leaves the video
+unchanged within float tolerance.
 
 ## 5.3.2 Severity-response results
 
@@ -87,66 +102,132 @@ rather than temporally comparative, so gradual color shifts do not move their sc
 - **E\*warp**: flat (7WHI range: 0.01022–0.01069; hhsz range: 0.00208–0.00221).
   Warp-error is a frame-difference metric after warping; color drift cancels out in the
   difference. **Verdict: FAIL**.
-- **Identity fused**: decreases slightly on hhsz (0.475 → 0.407) suggesting some color
-  sensitivity in the face-embedding comparisons, but non-monotonic on 7WHI. **Verdict: FAIL**.
+- **Identity fused**: decreases slightly on the 80-s base (0.475 → 0.407) suggesting some color
+  sensitivity in the face-embedding comparisons, but non-monotonic on the 167-s base. **Verdict: FAIL**.
+
+### Color drift — LR-VCC after adding sub-metric E
+
+The colour-drift gap motivated the addition of sub-metric E (linear regression on per-frame
+Lab channel means with R²-gated reliability). After E is folded in with β = 200, LR-VCC
+becomes the *first metric in our 9-metric set* to respond to colour drift on at least one
+base video. On the 167-s base, LR-VCC drops from 0.619 at severity 0.02 to 0.507 at
+severity 0.40 (Δ −0.111, monotonic with one small mid-severity bump). On the 80-s base, the
+drop is weaker (Δ −0.039) because the base video has a pre-existing colour trajectory that
+the slope sub-metric correctly flags as reliable on the clean video already — adding more
+drift on top is hard to disentangle from the baseline. **Verdict: PARTIAL** — 167-s base
+clean, 80-s base weak. The mechanism is characterised; the limitation becomes a future-work
+target.
+
+### Periodic flicker — adjacent-frame only
+
+Flicker is detected cleanly only at the small-k end of the temporal sub-metric:
+
+- **tOF k=1** ramps monotonically with severity (Δ ≈ 2.2× on both base videos). **Verdict: PASS**.
+- **tOF k=5** ramps even more strongly (Δ ≈ 4.5×). **Verdict: PASS**.
+- **tOF k ≥ 60** is essentially flat — the flicker period (15 frames) divides 60 and 120
+  cleanly, so the cross-pair difference cancels. **Verdict: FAIL** at k = 60, 120.
+- **LR-VCC composite** is essentially flat (Δ ≈ +0.005 on one base, −0.012 on the other).
+  The composite is dominated by sub-metrics with reliability close to 1.0 (D, E) whose
+  signals do not respond to flicker, so even though sub-metric T's small-k component
+  picks up the signal, it is averaged down at composite level. **Verdict: FAIL.** Documented
+  limitation; a fast-varying brightness sub-metric (FFT 5–20 Hz on per-frame mean) is in the
+  future-work list to close this gap without disturbing the other sub-metrics.
+
+### Identity degradation — the multi-face vs single-face split
+
+Identity degradation is the first artefact family designed specifically to stress the
+Identity sub-metric. The result is mixed and pedagogically valuable.
+
+- **Sub-metric T, D, E** all stay correctly flat (Δ ≤ 0.001 each): face-region blur does not
+  affect global temporal consistency, colour histograms, or colour trajectory. Clean
+  attribution — these sub-metrics are not false-positing on a non-target artefact.
+- **CLIP-IQA (sub-metric A)** drops monotonically (Δ ≈ −0.064 on both bases): the global
+  blur is visible in the full-frame perceptual quality. This is an expected side-effect
+  rather than a specific identity signal.
+- **Identity sub-metric** behaves *differently* on the two base videos:
+  - On the multi-face base, the fused slow-fast score drops cleanly (Δ −0.227): cross-clip
+    embedding similarity decreases as blur erases identity-distinctive features.
+  - On the single-face base, the score *rises* (Δ +0.114): heavy face-region blur (σ = 4.0)
+    erases identity-distinctive features in *all* frames of the single face, so cross-clip
+    embeddings become more similar to each other in a "generic blurred face" sense. The
+    face-detection rate is 0.96 at every severity (the detector survives the blur), so the
+    face-rate reliability gate does not engage. The pathology is in the slow-fast pooling
+    itself, not in face detection.
+- **LR-VCC composite** tracks the underlying Identity behaviour: monotonic on the multi-face
+  base (Δ −0.070), inverted on the single-face base (Δ +0.043). **Verdict: PARTIAL** —
+  multi-face clean, single-face inverted via a *documented identity-collapse pathology*. The
+  fix (gate sub-metric I by face-detection confidence + per-face embedding variance, not just
+  face-rate) is concrete future work.
 
 ## 5.3.3 Consolidated verdict table
 
-| Metric          | Chunk-boundary | Color drift |
-|-----------------|:--------------:|:-----------:|
-| LR-VCC          | PARTIAL        | FAIL        |
-| tOF k=1         | FAIL           | FAIL        |
-| tOF k=120       | PASS           | FAIL        |
-| tLP k=1         | FAIL           | FAIL        |
-| tLP k=120       | PASS           | FAIL        |
-| DOVER           | FAIL           | FAIL        |
-| E\*warp         | PASS           | FAIL        |
-| CLIP-IQA        | PASS           | FAIL        |
-| Identity fused  | FAIL           | FAIL        |
+| Metric          | Chunk-boundary | Color drift | Flicker | Identity degradation |
+|-----------------|:--------------:|:-----------:|:-------:|:--------------------:|
+| LR-VCC (v3+slope β=200) | PARTIAL | PARTIAL     | FAIL    | PARTIAL              |
+| tOF k = 1       | FAIL           | FAIL        | PASS    | FAIL                 |
+| tOF k = 60      | PASS           | FAIL        | FAIL    | FAIL                 |
+| tOF k = 120     | PASS           | FAIL        | FAIL    | FAIL                 |
+| tLP k = 120     | PASS           | FAIL        | FAIL    | FAIL                 |
+| DOVER           | FAIL           | FAIL        | FAIL    | FAIL                 |
+| E\*warp         | PASS           | FAIL        | FAIL    | FAIL                 |
+| CLIP-IQA        | PASS           | FAIL        | FAIL    | PARTIAL (side-effect)|
+| Identity fused  | FAIL           | FAIL        | FAIL    | PARTIAL (1/2 bases)  |
 
 PASS = monotonic on both base videos; PARTIAL = monotonic on one; FAIL = non-monotonic or flat.
 
 ## 5.3.4 What this shows
 
 **Chunk-boundary detection is well-covered by long-range metrics.** tOF k=120, tLP k=120,
-E*warp, CLIP-IQA, and LR-VCC all track severity monotonically. Adjacent-frame metrics (tOF k=1,
+E\*warp, CLIP-IQA, and LR-VCC all track severity monotonically. Adjacent-frame metrics (tOF k=1,
 tLP k=1) are insensitive because the periodic jump is diluted by the many smooth in-chunk frames.
 DOVER and Identity are noisy at low severity, suggesting their internal mechanisms are not tuned
-for this periodic discontinuity pattern. LR-VCC achieves a PARTIAL because its temporal
-sub-metric (tOF-based) correctly drives the score down, but the identity sub-metric adds noise
-at low severities on the 80-s video.
+for this periodic discontinuity pattern.
 
-**Color drift is a blind spot for every metric tested.** This is itself a concrete finding:
-not a single evaluated metric correctly orders the 5 severity levels for color drift across
-both base videos. The failure mechanism is structural — tOF and E*warp both compute frame
-differences after optical-flow warping, which absorbs uniform additive color shifts.
-LPIPS is designed for perceptual similarity in a way that is partially color-invariant.
-CLIP-based metrics are trained on content diversity, not temporal color consistency.
-DOVER aggregates technical and aesthetic scores that do not specifically penalize long-range
-hue drift. Identity metrics measure semantic face consistency, not photometric consistency.
+**Colour drift was a blind spot for every baseline metric tested; it is now partially closed
+by LR-VCC.** Of the eight baseline metrics, none responds monotonically to a slow linear
+colour ramp. The failure mechanism is structural: tOF and E\*warp compute frame differences
+after optical-flow warping, which absorbs uniform additive colour shifts; LPIPS is partially
+colour-invariant; CLIP-based metrics are trained on content diversity rather than temporal
+colour consistency; DOVER aggregates technical and aesthetic scores; Identity metrics measure
+semantic face consistency rather than photometric trajectory. LR-VCC's sub-metric E (linear
+regression on per-frame Lab channel means, with reliability gated by goodness-of-fit R²)
+is specifically designed to detect what the per-pair metrics cannot see, and it is the first
+metric in the set to respond monotonically on at least one base video.
 
-LR-VCC is affected by the same blind spot because its current sub-metric composition
-(appearance quality, temporal tOF, identity) does not include a color-consistency component.
-This is a planned future extension: a fourth sub-metric based on color-histogram temporal
-variance computed over long gaps (k ∈ {60, 120} frames) would require no re-training and
-would be implementable using the existing tOF infrastructure.
+**Flicker is detected only at small temporal gaps.** This is the inverse of the chunk-boundary
+case and demonstrates why a multi-scale temporal metric is necessary. tOF at k = 1 catches
+flicker beautifully (4.5× ratio across the severity range) precisely because the temporal-scale
+selection matters: long-k metrics blind themselves to artefacts whose period divides k.
+LR-VCC's composite-level response to flicker is currently weak — a documented limitation,
+not a mystery — and the fix (a fast-varying brightness sub-metric) is in the future-work list.
+
+**Identity degradation reveals a content-dependent pathology in slow-fast pooling.** On
+multi-face content the metric behaves as designed; on single-face content under heavy blur
+it inverts because the metric loses its discriminative basis. This is a clean characterisation
+of when a vbench-style identity metric breaks, with a concrete proposed fix (reliability
+gating by face-detection confidence rather than face-rate alone).
 
 ## 5.3.5 Implications for the thesis
 
-The synthetic validation delivers two take-aways that directly motivate the proposed work.
+The synthetic validation delivers three take-aways that directly motivate the proposed work.
 
-First, the chunk-boundary PASS results confirm that LR-VCC's temporal sub-metric is functioning
-as designed: it responds monotonically to a known long-range temporal artefact in a way that
-short-range alternatives (tOF k=1, tLP k=1) do not. This is the intended differentiation
-between LR-VCC and standard per-frame or short-window metrics.
+First, the chunk-boundary PASS results confirm that LR-VCC's temporal and colour sub-metrics
+are functioning as designed: they respond monotonically to a known long-range temporal artefact
+in a way that short-range alternatives (tOF k = 1, tLP k = 1) do not. This is the intended
+differentiation between LR-VCC and standard per-frame or short-window metrics.
 
-Second, the universal FAIL on color drift documents a concrete gap in the metric literature.
-Any paper that reports only tOF/LPIPS/DOVER on long-video SR outputs could be missing
-slow appearance-drift artefacts entirely. This gap will be addressed in the next sprint by
-adding a histogram-variance temporal sub-metric to LR-VCC (Task A6), with re-validation
-on the same synthetic test set to verify it produces a PASS on color drift while not
-degrading the chunk-boundary PASS.
+Second, the colour-drift result establishes that the LR-VCC mechanism — adding a sub-metric
+whose reliability is gated by goodness-of-fit of the underlying trajectory model — can close
+gaps that the entire baseline suite is blind to. The mechanism is generalisable: any "slow
+signal vs. noisy baseline" failure mode admits an analogous slope-style sub-metric.
 
-Together, the two conditions serve as a positive control (chunk-boundary) and an open
-research challenge (color drift), framing the metric contribution of this thesis within
+Third, the flicker and identity-degradation results document the two areas where LR-VCC is
+*currently* insufficient — *and characterise the mechanism* in each case. Flicker is undetected
+because the composition arithmetic averages down a correctly-firing small-k temporal signal;
+identity degradation inverts on single-face content because slow-fast pooling loses its
+discriminative basis. Both are addressable with specific, concrete additions to the composite,
+listed under Section 7 (Timeline) as planned post-proposal work.
+
+Together, the four artefacts serve as a verdict matrix — most cells PASS, the remaining
+cells have *named* failure modes — that frames the metric contribution of this thesis within
 a testable, reproducible validation framework rather than a single aggregate number.

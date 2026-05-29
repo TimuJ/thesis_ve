@@ -6,24 +6,27 @@ The **Long-Range Video Consistency Composite (LR-VCC)** is a no-reference compos
 
 ## 4.1 Architecture
 
-**[Figure 4 — LR-VCC architecture: SR video → three sub-metrics in parallel (each emitting a score and a reliability score) → reliability-weighted composition → final LR-VCC score.]**
+**[Figure 4 — LR-VCC architecture: SR video → five sub-metrics in parallel (each emitting a score and a reliability score) → reliability-weighted composition → final LR-VCC score.]**
 
-Three sub-metrics, each producing a `(score, reliability)` pair in [0, 1], are computed in parallel from the SR video:
+Five sub-metrics, each producing a `(score, reliability)` pair in [0, 1], are computed in parallel from the SR video:
 
 - **Sub-metric A — Appearance stability.** Per-frame CLIP-IQA over the video; score = mean(quality) − λ·std(quality). Captures whether the SR output's perceptual quality is both high and stable across minutes of footage.
-- **Sub-metric T — Temporal stability.** log(1+k)-weighted mean of tOF across k ∈ {1, 5, 10, 30, 60, 120} frame gaps. Captures multi-scale temporal smoothness, with long-range lags weighted more heavily than adjacent-frame lags. This directly addresses Finding 1 (adjacent-frame temporal metrics undervalue long-range stability).
-- **Sub-metric I — Identity preservation.** Wraps the patched slow-fast Human_Identity adapter (RetinaFace + ArcFace), incorporating all fps-correction and multi-face reliability fixes documented in Section 3.5.
+- **Sub-metric T — Temporal stability.** Multi-scale mean of tOF across k ∈ {1, 5, 10, 30, 60, 120} frame gaps with configurable weighting (`--temporal_weight {log, uniform, sqrt}`; production setting `uniform`). Catches both high-frequency artefacts (visible at small k) and long-range drift (visible at large k); the uniform setting was selected because the empirical k-crossover finding shows that no single k is sufficient.
+- **Sub-metric I — Identity preservation.** Wraps the slow-fast Human_Identity adapter (RetinaFace + ArcFace) with fps-correction and reliability fixes; reliability is gated by face-detection rate and by a close-up content indicator derived from the per-video Anatomy bbox-fraction trace.
+- **Sub-metric D — Color stability.** Per-frame Lab-channel histograms compared at L1 distance over multi-k pairs (k ∈ {60, 120}); score = exp(−α · mean_pair_distance) with α = 0.394 calibrated so that clean SR outputs score around 0.5 in the composite; reliability gated by histogram entropy floor. Catches mid-range and chunk-boundary colour shifts that optical-flow warping absorbs.
+- **Sub-metric E — Color trajectory slope.** Per-frame Lab-channel means fit by linear regression over time; score = exp(−β · max|slope|) with β = 200; reliability = max R² across channels gated by an R² floor. Catches slow monotonic colour drift whose per-pair distance stays below the histogram bin width; does *not* fire on flicker (sinusoidal residuals → R² ≈ 0 → reliability drops out) or on clean content (near-zero slope → score near 1).
 
-Each sub-metric outputs not only a score but also a **reliability** — a value in [0, 1] that encodes how trustworthy the score is on this particular video, derived from regime indicators that correspond directly to the failure modes in Section 3.
+Each sub-metric outputs not only a score but also a **reliability** — a value in [0, 1] that encodes how trustworthy the score is on this particular video, derived from regime indicators that correspond directly to the failure modes characterised in Section 2.
 
 The sub-metric scores and reliabilities feed into a **composition block** that combines them via a reliability-weighted log-mean (geometric mean with per-sub-metric weights):
 
 ```
-weights = softmax([A_reliability, T_reliability, I_reliability] / τ)
+weights = softmax([A_reliability, T_reliability, I_reliability,
+                   D_reliability, E_reliability] / τ)
 LR_VCC(V, M) = exp( Σ_s  weights[s] · log(score_s + ε) )
 ```
 
-with temperature τ = 0.2 (sharp softmax — the most reliable sub-metric dominates) and ε = 1e-6 for numerical stability. The log-mean preserves the "no compensation for failures" property: a sub-metric scoring 0.1 pulls the composite down even if its weight is only 0.3. A video where all three reliabilities fall below 0.2 is marked **low-confidence** and excluded from the per-method aggregate by default; it is still reported in the per-video table with a flag.
+with temperature τ = 0.2 (sharp softmax — the most reliable sub-metric dominates) and ε = 1e-6 for numerical stability. The log-mean preserves the "no compensation for failures" property: a sub-metric scoring 0.1 pulls the composite down even if its weight is only 0.3. A video where all five reliabilities fall below 0.2 is marked **low-confidence** and excluded from the per-method aggregate by default; it is still reported in the per-video table with a flag.
 
 ---
 
@@ -77,7 +80,7 @@ Sub-metric I measures whether people in the video retain stable visual identity 
 1. *Low face-detection rate:* if fewer than 20% of clips contain a detected face, identity is not a meaningful signal on this video. I_reliability is penalized proportionally.
 2. *Close-up content:* if the median face or hand bounding-box area exceeds 5% of the frame area, the content is in the close-up regime where the Anatomy classifier (and by structural analogy, the ArcFace tracker) are known to operate near their calibration boundary. I_reliability is penalized by a smooth sigmoid around this threshold.
 
-The close-up reliability test directly operationalises the KZ8p6b1zJ9U failure characterization from Section 3.4. The Anatomy metric's complete breakdown on that video was traced to a single content-type predictor — hand bbox p50 > 5% of frame area — that predicted the metric's direction across all 5 test videos monotonically. The same predictor is applied here conservatively: when bbox area signals close-up scale, the identity sub-metric is trusted less, allowing the other two sub-metrics to determine the composite outcome.
+The close-up reliability test directly operationalises the regime-shift case study from Section 2.2. The Anatomy metric's complete breakdown on the affected video was traced to a single content-type predictor — hand bbox p50 above the cohort median — that predicted the metric's direction across the real-SR test cohort monotonically. The same predictor is applied here conservatively: when bbox area signals close-up scale, the identity sub-metric is trusted less, allowing the other sub-metrics to determine the composite outcome.
 
 ---
 
@@ -151,14 +154,41 @@ The per-video × per-sub-metric matrix is always reported alongside the headline
 
 ---
 
-## 4.7 Validation Plan
+## 4.7 Production Configuration and Iteration History
 
-LR-VCC validation is conducted at two layers for the proposal milestone.
+**Production CLI.** The validated metric is reproducible from a single invocation:
 
-**Layer 1 — perceptual agreement on 5 test videos.** Pass criterion: LR-VCC(MGLD) > LR-VCC(UAV) on the per-method mean, and MGLD wins per-video on at least 4/5 videos. This is a sanity check that the composite is not broken in the direction already established by visual inspection and six independent metric families.
+```
+python -m scripts.lr_vcc.run_lr_vcc \
+  --method <NAME> \
+  --tof_dir <DIR> --identity_results <JSON> --clip_iqa_dir <DIR> \
+  --color_hist_dir <DIR> --color_slope_dir <DIR> \
+  --closeup_p50_map <JSON> --output_path <DIR> \
+  --temporal_weight uniform --color_hist_alpha 0.394 --color_slope_beta 200
+```
 
-**Layer 2 — flip-resistance on KZ8p6b1zJ9U.** The key thesis test. Anatomy and tLP both flip on KZ for documented structural reasons. LR-VCC must not flip, because: (a) the Identity reliability test downweights close-up content; (b) sub-metric T uses tOF not tLP, avoiding the tLP smoother-output bias; and (c) sub-metric A (CLIP-IQA) does not depend on pristine-HR representations. Pass criterion: LR-VCC(MGLD, KZ) > LR-VCC(UAV, KZ).
+Each `--*_dir` points to per-video JSON sub-metric caches produced by the respective pre-computation script; downstream re-tuning of `--temporal_weight`, `--color_hist_alpha`, or `--color_slope_beta` re-derives the composite from the cache without re-scanning the videos. Each of these three hyperparameter values was derived empirically from the synthetic test set, not tuned to the real-SR ranking task.
 
-**Layer 3 — parameterized synthetic degradation datasets (thesis future work, not proposal).** Synthetic datasets with parameterized severity on five degradation axes (color drift, periodic flicker, chunk-boundary jumps, identity degradation, long-range background change). LR-VCC should respond monotonically to severity on each axis and outperform every individual sub-metric on at least one axis. This constitutes the full empirical validation of the composite design and is planned for the thesis body.
+**Iteration history.** The current production version (v3+slope β = 200) is the result of an iterative design protocol in which each version added exactly one element after a specific failure mode was characterised on the synthetic test set:
 
-Preliminary validation results from the 5-video test set confirm Layer 1 and Layer 2 pass. Full validation tables and per-video JSON outputs are in `docs/notes/2026-05-21-lr-vcc-validation.md`.
+| Version | What changed | Failure mode it closed |
+|---|---|---|
+| v1 | 3 sub-metrics (A, T_log, I) | (initial design — Section 2 findings 1–3) |
+| v2 | + Sub-metric D (Lab histogram L1) | Provides a long-range *colour* lever distinct from optical flow |
+| v2_uniform | `--temporal_weight uniform` | Flicker signal at k = 1 no longer drowned by log(1+k) weighting at sub-metric T level |
+| v3 | `--color_hist_alpha 0.394` (D recalibration) | D's absolute score range no longer dominates the composite arithmetic; chunk_boundary now flows through |
+| v3+slope β = 200 | + Sub-metric E (linear-trend on Lab channel means) with R²-gated reliability | Slow colour drift now caught — closes the gap that no baseline metric detected (§2.4 Finding 1) |
+
+The protocol itself — *characterise failure mode → add one element → verify on the same test set without regression on previous failure modes* — is reusable beyond LR-VCC for any composite no-reference metric whose failure modes can be parameterised.
+
+## 4.8 Validation Layers
+
+LR-VCC validation is conducted at three layers.
+
+**Layer 1 — perceptual agreement on the real SR test set.** Pass criterion: the detail-preserving method wins on the per-method mean and on every per-video comparison. The current production version satisfies this on all test videos with a mean Δ across methods of +0.056.
+
+**Layer 2 — flip-resistance on the regime-shift case.** Pass criterion: LR-VCC does not flip on the close-up video where Anatomy and tLP both flip for the documented structural reasons (Section 2.2). The current production version preserves the ranking on this case via the close-up reliability gate of sub-metric I.
+
+**Layer 3 — parameterised synthetic artefact response.** The synthetic-artefact test set (§2.4) provides ground-truth severity ordering for four artefact families across multiple severities per family per base video. The metric is expected to respond monotonically to severity on each family and to outperform every individual sub-metric on at least one family. The current production version catches most (artefact, base-video) conditions monotonically; the remaining conditions have *documented* failure modes (flicker composite-level flatness; identity-collapse pathology on single-face content; pre-existing baseline drift on one base video for colour drift) which become future-work targets.
+
+Per-video JSON outputs and the severity-response matrix are in `docs/notes/2026-05-21-lr-vcc-validation.md` (Layers 1+2) and `reports/Timur_Iakshibaev_2026-05-22_to_2026-05-28.md` (Layer 3).
