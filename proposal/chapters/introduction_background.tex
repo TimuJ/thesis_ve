@@ -69,60 +69,80 @@ learned representations, and (4)~reliable across diverse long-video content incl
 
 \subsection{Video Super-Resolution Methods}
 
-The two primary VSR methods evaluated throughout this thesis represent the two dominant stylistic
-families in modern SR:
+The two primary VSR methods evaluated throughout this thesis proposal represent the two
+dominant stylistic families in modern super-resolution:
 
-\textbf{MGLD-VSR} \cite{he_mgld_2024} (ECCV 2024) applies masked guided latent diffusion to
-progressively refine super-resolved frames. It is characterised by sharp, detail-preserving
-output and exact reproduction of published DOVE benchmark numbers on UDM10 (PSNR 24.23, SSIM
-and LPIPS to four decimal places), providing a reliable evaluation baseline.
+\begin{itemize}
+    \item \textbf{MGLD-VSR} \cite{he_mgld_2024} (ECCV 2024) applies masked guided latent
+          diffusion to progressively refine super-resolved frames. It is characterised by
+          sharp, detail-preserving output and exact reproduction of published DOVE benchmark
+          numbers on UDM10 (PSNR 24.23, SSIM and LPIPS to four decimal places), providing
+          a reliable evaluation baseline.
+    \item \textbf{Upscale-A-Video (UAV)} \cite{zhou_upscale_2024} (CVPR 2024) uses a
+          text-conditioned temporal diffusion model inspired by text-to-video generation.
+          It produces smoother, perceptually cleaner output at the cost of some
+          high-frequency detail. UAV reproduces DOVE UDM10 results within a consistent
+          $+1.33$~dB PSNR offset attributable to a minor degradation pipeline
+          configuration difference, confirming the evaluation setup is correct.
+\end{itemize}
 
-\textbf{Upscale-A-Video (UAV)} \cite{zhou_upscale_2024} (CVPR 2024) uses a text-conditioned
-temporal diffusion model, inspired by text-to-video generation. It produces smoother,
-perceptually cleaner output at the cost of some high-frequency detail. UAV reproduces DOVE
-UDM10 results within a consistent +1.33~dB PSNR offset attributable to a minor degradation
-pipeline configuration difference, confirming the evaluation setup is correct.
-
-\textbf{DOVE} \cite{yang_dove_2024} (CVPR 2024) is the current VSR benchmark suite, combining
-the UDM10 and SPMCS test sets with a multi-metric evaluation framework that includes E*warp
-for temporal consistency. DOVE does not address long-video evaluation or multi-scale temporal metrics.
-
-A promising emerging direction is the fusion of state-space models (SSMs) with diffusion priors
-for long-context consistency. Po~et~al.\ \cite{po_longcontext_2025} demonstrate that SSM-based
-world models can maintain coherent scene structure over thousands of frames, suggesting that
-future SR architectures may require correspondingly long-range evaluation metrics.
+The associated evaluation framework is provided by \textbf{DOVE} \cite{yang_dove_2024}
+(NeurIPS 2025), the current VSR benchmark suite. DOVE combines the UDM10 and SPMCS test sets
+with a multi-metric evaluation framework that includes E*warp for temporal consistency. DOVE
+does not address long-video evaluation or multi-scale temporal metrics, and is therefore used
+in this proposal as a baseline framework rather than as a long-video evaluation target.
 
 \subsection{Temporal Consistency Metrics}
 
-\textbf{tOF and tLP} (TecoGAN, Chu et~al.\ \cite{chu_tecogan_2020}) measure per-frame optical-flow
-consistency (tOF) and LPIPS-based perceptual warping error (tLP). Both are defined at a single
-adjacent-frame gap ($k{=}1$). Our preliminary work (Section~\ref{sec:preliminary}) demonstrates
-that tOF ordering inverts between $k{=}1$ and $k{\geq}10$: the smoother method (UAV) wins at
-$k{=}1$ but loses to the detail-preserving method (MGLD) at long range.
+Three families of temporal consistency metrics have been used in the video super-resolution
+and video generation literature. Each was originally designed for a different evaluation
+target; together they form the temporal-evaluation toolkit currently available to a
+super-resolution practitioner.
 
-\textbf{E*warp} (DOVE \cite{yang_dove_2024}) extends warp-based error evaluation; it remains
-a $k{=}1$-dominant metric and shares the adjacent-frame limitation of tOF.
-
-\textbf{VBench} \cite{huang_vbench_2024} and \textbf{VBench-2.0} \cite{huang_vbench2_2025}
-provide multi-aspect evaluation of generated video, including \texttt{subject\_consistency} and
-\texttt{background\_consistency} (DINOv2 cosine similarity between adjacent frames),
-\texttt{Human\_Identity} (slow-fast ArcFace clip adapter), and \texttt{Human\_Anatomy}
-(anomaly ViT). Our preliminary work documents applicability gaps for SR evaluation:
-DINOv2-based consistency metrics exhibit smoother-output bias; Human\_Anatomy has content-dependent
-calibration failure on close-up footage.
+\begin{itemize}
+    \item \textbf{tOF and tLP} (TecoGAN, Chu et al.\ \cite{chu_tecogan_2020}) measure
+          per-frame optical-flow consistency (tOF) and LPIPS-based perceptual warping error
+          (tLP). Both are defined at a single adjacent-frame gap ($k{=}1$). The preliminary
+          work in Section~\ref{sec:preliminary} demonstrates that tOF ordering inverts
+          between $k{=}1$ and $k{\geq}10$: the smoother method (UAV) wins at $k{=}1$ but
+          loses to the detail-preserving method (MGLD-VSR) at long range.
+    \item \textbf{E*warp} \cite{yang_dove_2024} extends warp-based error evaluation as part
+          of the DOVE benchmark; it remains a $k{=}1$-dominant metric and shares the
+          adjacent-frame limitation of tOF.
+    \item \textbf{VBench} \cite{huang_vbench_2024} and \textbf{VBench-2.0}
+          \cite{huang_vbench2_2025} provide multi-aspect evaluation of generated video,
+          including \texttt{subject\_consistency} and \texttt{background\_consistency}
+          (DINOv2 cosine similarity between adjacent frames), \texttt{Human\_Identity}
+          (slow-fast ArcFace clip adapter), and \texttt{Human\_Anatomy} (anomaly ViT). The
+          preliminary work documents applicability gaps for super-resolution evaluation:
+          DINOv2-based consistency metrics exhibit smoother-output bias and
+          \texttt{Human\_Anatomy} has content-dependent calibration failure on close-up
+          footage.
+\end{itemize}
 
 \subsection{No-Reference Perceptual Metrics}
 
-\textbf{CLIP-IQA} \cite{wang_clipiqa_2023} evaluates per-frame image quality using CLIP
-embeddings trained on diverse natural content. Unlike LPIPS or DINOv2, CLIP-IQA does not
-systematically penalise high-frequency detail in diffusion-style SR outputs, making it a
-suitable component of a no-reference composite for SR evaluation.
+Three no-reference perceptual metrics are commonly applied to super-resolution outputs when
+high-resolution ground truth is unavailable. Each is single-frame or per-clip in scope and
+none specifically targets long-range cross-frame consistency, but together they form the
+no-reference perceptual evaluation toolkit relevant to deployment-time super-resolution
+assessment.
 
-\textbf{MUSIQ} \cite{ke_musiq_2021} uses multi-scale image quality transformers. MGLD scores
-higher than UAV on MUSIQ across all test videos.
-
-\textbf{DOVER} \cite{wu_dover_2023} combines technical and aesthetic video quality dimensions.
-MGLD leads UAV by +8.75 DOVER points on the mean over 5 test videos.
+\begin{itemize}
+    \item \textbf{CLIP-IQA} \cite{wang_clipiqa_2023} evaluates per-frame image quality using
+          CLIP embeddings trained on diverse natural content. Unlike LPIPS or DINOv2,
+          CLIP-IQA does not systematically penalise high-frequency detail in
+          diffusion-style super-resolution outputs, making it a suitable component of a
+          no-reference composite for super-resolution evaluation.
+    \item \textbf{MUSIQ} \cite{ke_musiq_2021} uses a multi-scale image quality transformer.
+          The detail-preserving baseline scores higher than the text-conditioned smoother
+          baseline on MUSIQ across all test videos in our preliminary work.
+    \item \textbf{DOVER} \cite{wu_dover_2023} combines technical and aesthetic video quality
+          dimensions through two disentangled convolutional branches whose outputs are
+          combined into a single video-level score. The detail-preserving baseline leads
+          the text-conditioned smoother by approximately $+8.75$ DOVER points on the
+          per-method mean over the real-SR test set.
+\end{itemize}
 
 \subsection{Identified Literature Gap}
 

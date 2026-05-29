@@ -12,8 +12,9 @@ whose face identity degrades from minute one to minute two, scores identically t
 colour-stable, seam-free, identity-preserving video provided each individual frame is
 locally crisp.
 
-Second, \textbf{short-range temporal metrics} (E*warp from DOVE, tOF and tLP at adjacent
-frame lag $k=1$ from TecoGAN \cite{chu_tecogan_2020}) are scale-blind in the opposite
+Second, \textbf{short-range temporal metrics} (E*warp from DOVE \cite{yang_dove_2024}, tOF and
+tLP at adjacent frame lag $k=1$ from TecoGAN \cite{chu_tecogan_2020}) are scale-blind in the
+opposite
 direction. They measure adjacent-frame smoothness but cannot see consistency across the
 longer time horizons where the most damaging long-video failures actually occur. They
 also suffer from a systematic \emph{smoother-output bias}: a spatially smoother output has
