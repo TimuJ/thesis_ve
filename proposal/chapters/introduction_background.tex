@@ -44,8 +44,19 @@ The existing metric ecosystem can be organised into four families:
           ($k{=}1$) optical-flow consistency; systematically miss long-range temporal structure.
     \item \textbf{Semantic video quality} (VBench \cite{huang_vbench_2024}, VBench-2.0
           \cite{huang_vbench2_2025}) --- multi-aspect benchmarks covering subject consistency,
-          Human\_Identity, Human\_Anatomy, and others. Designed for text-to-video generation;
-          content-dependent failure modes documented in Section~\ref{sec:preliminary}.
+          Human\_Identity, Human\_Anatomy, and others. These benchmarks were designed for
+          text-to-video generation evaluation; thirteen of VBench-2.0's eighteen dimensions
+          require text prompts and are therefore inapplicable to super-resolution, while the
+          remaining prompt-independent dimensions operate at clip level and average per-clip
+          scores up to a single video number, removing the cross-clip drift signal that
+          long-video consistency assessment requires. Content-dependent failure modes are
+          documented in Section~\ref{sec:preliminary}.
+    \item \textbf{Disentangled aesthetic-technical NR} (DOVER \cite{wu_dover_2023}) ---
+          a learned video quality predictor whose final score is a combination of two
+          disentangled convolutional branches: an aesthetic branch trained on perception-driven
+          labels and a technical branch trained on distortion-driven labels. DOVER is per-video
+          and produces a single aggregate; it does not specifically model cross-frame
+          temporal drift.
 \end{enumerate}
 
 The thesis problem is that no existing metric satisfies all four desiderata simultaneously:

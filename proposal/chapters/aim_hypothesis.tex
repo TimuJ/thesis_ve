@@ -1,45 +1,83 @@
 % Research Aim and Hypothesis
 \section{Research Aim and Hypothesis}
+\label{sec:aim}
 
 \subsection{Research Aim}
 
-The overarching aim of this research is to develop, implement, and validate a Hybrid Sparse-Sampling
-Architecture for Reasoning Video Segmentation. This architecture seeks to decouple the heavy semantic
-processing from the spatial tracking task.
+The aim of this research is to develop and validate a no-reference long-range video
+consistency metric for long-form video super-resolution that satisfies three properties.
+First, the metric catches the long-range failure modes documented in
+Section~\ref{sec:problem} to which existing metrics are demonstrably blind: slow colour
+drift, chunk-boundary jumps from tile-based diffusion, periodic flicker from sampler
+artefacts, and identity collapse on recurring faces. Second, the metric preserves correct
+per-video method rankings on real super-resolved outputs, including in the regime-shift
+case (Section~\ref{sec:problem:regime}) where two VBench-2.0 metrics flip rankings in
+disagreement with human visual judgement. Third, the metric is reproducible, modular, and
+extensible, so that additional sub-metrics can be added as failure modes are characterised
+without disturbing the existing composition.
 
-Specifically, the aim is to create a system that utilizes Deep Learning
-(\cite[VideoLISA]{bai_one_2024}/\cite[SAM 2]{ravi_sam_2024})
-only on sparse keyframes to establish semantic understanding, while employing lightweight Classical
-Interpolation (Kriging) and Trajectory Forecasting (\cite[LSTM]{hochreiter_long_1997}) to reconstruct
-the intermediate frames.
-By doing so, the research aims to prove that it is possible to achieve State-of-the-Art (SOTA)
-accuracy and stability on resource-constrained hardware, effectively solving the "Stability-Efficiency Trade-off."
+The metric introduced for this purpose is the \textbf{Long-Range Video Consistency
+Composite (LR-VCC)}. Its specification and design rationale are given in
+Section~\ref{sec:method}; its validation strategy is given in Section~\ref{sec:method}
+together with the method.
 
-\subsection{Research Hypothesis}
+\subsection{Research Hypotheses}
 
-The study is guided by the following core hypothesis and sub-hypotheses:
+The research is organised around three falsifiable hypotheses. Each is testable against the
+synthetic artefact set introduced in Section~\ref{sec:problem:battery} and against the real
+super-resolution test set.
 
-\textbf{Core Hypothesis:}
+\textbf{Hypothesis H1 (Composition).}
+\textit{Reliability-weighted softmax-log-mean composition of independent sub-metrics catches
+failure modes that no single constituent sub-metric catches.}
 
-\textit{It is hypothesized that a hybrid segmentation framework, which combines sparse semantic
-    keyframe extraction with geostatistical interpolation and LSTM-based trajectory forecasting, will achieve
-    higher temporal stability and computational efficiency than a purely deep-learning-based dense sampling approach,
-    without a statistically significant reduction in semantic accuracy.}
+For each artefact family, the per-video severity-response of each sub-metric individually
+and of the composite is computed. The hypothesis is supported if the composite catches at
+least one artefact family whose detection requires sub-metric combination --- specifically,
+a family where the colour and temporal sub-metrics provide independent and complementary
+evidence and where neither alone produces a monotonic severity-response.
 
-\textbf{Sub-Hypothesis 1 (Efficiency):}
+\textbf{Hypothesis H2 (Multi-scale temporal).}
+\textit{Aggregating temporal warping error over multiple frame gaps catches both
+high-frequency and long-range temporal failure modes that fixed-scale temporal metrics
+miss.}
 
-\textit{By reducing the frequency of deep learning inference to 20\% of the video frames (Sparse Sampling)
-    and utilizing interpolation for the remaining 80\%, the system will achieve a processing speed increase of at
-    least 200\% (3x speedup) compared to the baseline \cite[VideoLISA]{bai_one_2024} model.}
+The same artefact set, restricted to flicker (high-frequency) and chunk-boundary
+(mid-range), is used to compare fixed-scale tOF at $k=1$ against the proposed multi-scale
+aggregation under different weighting choices over $k \in \{1, 5, 10, 30, 60, 120\}$. The
+hypothesis is supported if the multi-scale aggregation catches both artefact families at
+the temporal sub-metric level (the corresponding composite-level behaviour is studied
+separately, since composite-level behaviour depends additionally on the reliability gates of
+the other sub-metrics).
 
-\textbf{Sub-Hypothesis 2 (Stability):}
+\textbf{Hypothesis H3 (Reliability gating against content-dependent flips).}
+\textit{Per-sub-metric reliability gates derived from interpretable signals (face-detection
+rate, close-up content indicator, regression goodness-of-fit, histogram entropy, and
+optical-flow mask coverage) reduce content-dependent ranking flips of the type observed in
+the regime-shift case study.}
 
-\textit{The application of Geostatistical Interpolation (Universal Kriging) on mask contours will result in
-    a lower "Flow-Warping Error" (a metric of temporal jitter) compared to masks generated independently by neural
-    networks, due to the variance-minimizing properties of the Kriging estimator.}
+The composite is evaluated on the real super-resolution test set, including the
+regime-shift video. The hypothesis is supported if the composite preserves a consistent
+ranking across all test videos with a per-video difference between the two methods that
+remains positive on every video and is substantially above the noise floor of the
+constituent sub-metrics in expectation.
 
-\textbf{Sub-Hypothesis 3 (Occlusion):}
+\subsection{Success Criteria}
 
-\textit{An LSTM-based motion predictor, trained on object centroid trajectories, will maintain higher
-    Intersection-over-Union (IoU) scores during periods of full occlusion (5+ frames) compared to the standard
-    visual attention mechanisms of Transformers, as the LSTM explicitly models momentum and velocity.}
+The research objectives are met if the following measurable outcomes are achieved over the
+proposal-to-thesis horizon.
+
+\begin{itemize}
+    \item The composite catches a majority of (artefact family, base video) conditions
+          monotonically. The remaining conditions are characterised with identified failure
+          mechanisms that become future-work targets, not unexplained anomalies.
+    \item The composite preserves correct per-video method rankings on every video of the
+          real super-resolution test set, including the regime-shift case.
+    \item Every sub-metric is reliability-gated by an interpretable, decomposable signal,
+          not a black-box weighting.
+    \item Every iteration of the composite closes a specific failure mode characterised on
+          the validation set, not an unmotivated parameter tweak.
+    \item The metric is reproducible from a single canonical configuration, with cached
+          per-video sub-metric values so that hyperparameter studies do not require
+          rescanning videos.
+\end{itemize}

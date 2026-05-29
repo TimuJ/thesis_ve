@@ -1,0 +1,203 @@
+% Methodology / Technical Route
+\section{Methodology and Technical Route}
+\label{sec:method}
+
+This section specifies the proposed Long-Range Video Consistency Composite (LR-VCC) metric,
+its design rationale, and the iterative protocol under which the current production version
+was derived. The metric is constructed directly from the four failure modes characterised
+in Section~\ref{sec:problem}; each sub-metric closes a specific gap, and the composition
+layer downweights any sub-metric whose calibration assumptions are violated on the video
+under evaluation.
+
+\subsection{Architecture}
+
+\textbf{[Figure 4: LR-VCC architecture --- super-resolved video as input; five sub-metrics
+computed in parallel, each emitting a $(\text{score}, \text{reliability})$ pair in
+$[0, 1] \times [0, 1]$; a reliability-weighted softmax-log-mean composition produces the
+final LR-VCC score in $[0, 1]$.]}
+
+Five sub-metrics, indexed by $s \in \{A, T, I, D, E\}$, are computed in parallel from a
+super-resolved video $V$:
+
+\begin{itemize}
+    \item \textbf{Sub-metric A --- Appearance stability.} Per-frame CLIP-IQA
+          \cite{wang_clipiqa_2023} is computed over the video. The score is the mean
+          per-frame quality minus a small multiple of its standard deviation across frames,
+          rewarding outputs that are not only high-quality on average but consistently so
+          across minutes of footage. The mean term rewards perceptual quality; the standard
+          deviation term penalises temporal instability of perceptual quality.
+
+    \item \textbf{Sub-metric T --- Temporal stability.} Optical-flow warping error (tOF
+          \cite{chu_tecogan_2020}) is computed at multiple temporal lags
+          $k \in \{1, 5, 10, 30, 60, 120\}$ using RAFT-based optical flow with
+          forward-backward consistency masking. The aggregate is a weighted mean over $k$,
+          with the choice of weighting (logarithmic, uniform, or square-root) configurable;
+          uniform weighting is adopted as the production setting because the empirical
+          temporal-scale crossover characterised in Section~\ref{sec:problem:tof} shows
+          that no single $k$ is sufficient. The score is one minus the (normalised)
+          weighted mean warping error.
+
+    \item \textbf{Sub-metric I --- Identity preservation.} The slow-fast Human\_Identity
+          adapter (RetinaFace + ArcFace face embedding stability across $2$-second clips
+          with both within-clip and cross-clip first-frame components) provides the score,
+          with reliability gated by the face-detection rate (a video with few detected
+          faces does not carry an identity signal) and by a close-up content indicator
+          (the same trigger identified in Section~\ref{sec:problem:regime}) that
+          downweights the sub-metric on videos in the regime where the underlying anomaly
+          classifiers exhibit content-dependent calibration shifts.
+
+    \item \textbf{Sub-metric D --- Colour stability.} Per-frame Lab-channel histograms are
+          compared at L1 distance over multi-scale frame pairs $k \in \{60, 120\}$. The
+          score is an exponential decay in the mean pair-distance, with the decay constant
+          calibrated empirically so that clean super-resolved outputs score in the middle
+          of the dynamic range. Reliability is gated by histogram entropy --- a video
+          whose histogram is too flat carries no discriminative colour information.
+
+    \item \textbf{Sub-metric E --- Colour trajectory slope.} Per-frame Lab-channel means
+          are fit by linear regression as a function of frame index. The score is an
+          exponential decay in the maximum absolute slope across channels. Reliability is
+          the maximum coefficient of determination ($R^2$) across the three channels, gated
+          by an $R^2$ floor. A drifting video has high $R^2$ (the slope is real, so the
+          metric speaks confidently); a flickering video has $R^2$ near zero (sinusoidal
+          residuals dominate, so the metric correctly abstains); a clean video has
+          near-zero slope (the score is near one regardless of reliability).
+\end{itemize}
+
+Each sub-metric outputs a score $s_i \in [0, 1]$ and a reliability $r_i \in [0, 1]$. The
+composition is a reliability-weighted log-mean:
+\begin{align}
+    w_i &= \frac{\exp(r_i / \tau)}{\sum_j \exp(r_j / \tau)}, \\
+    \text{LR-VCC}(V) &= \exp\!\left(\sum_{i} w_i \log(s_i + \varepsilon)\right),
+\end{align}
+with temperature $\tau = 0.2$ (a sharp softmax: the most reliable sub-metric dominates) and
+$\varepsilon = 10^{-6}$ for numerical stability. A video for which all five reliabilities
+fall below a low-confidence threshold is flagged in the output and excluded from
+per-method aggregates by default.
+
+The log-mean composition preserves the no-compensation property across sub-metrics: a
+sub-metric scoring near zero pulls the composite down unless the other sub-metrics carry
+overwhelming weight, which in turn requires the failing sub-metric's reliability to be near
+zero. A weighted arithmetic mean would not have this property: a single sub-metric failure
+could be diluted away by averaging.
+
+\subsection{Reliability Gating as the Core Design Pattern}
+
+The central design hypothesis is that every existing learned-representation video metric is
+reliable on some content and unreliable on other content; rather than discard failed
+metrics or attempt to train new bias-free metrics, the composition uses existing metrics
+honestly and controls their influence per video through reliability scores derived from
+the regime indicators that predict their failure mechanisms.
+
+Each per-sub-metric reliability is computed from regime indicators using smooth sigmoid
+penalties (sharpness fixed at $10$, producing smooth transitions rather than sharp threshold
+cliffs). The thresholds were selected from the regime characterisations in
+Section~\ref{sec:problem}; they are not tuned to the validation set used in
+Section~\ref{sec:method:iteration}.
+
+A sharp softmax over reliabilities ensures that when one sub-metric is substantially more
+trustworthy than the others on a given video, that sub-metric clearly dominates the
+composition. This is the mechanism that makes the composite resistant to the
+content-dependent ranking flips of Section~\ref{sec:problem:regime}: on a video in the
+close-up regime, where the Identity-pathway anomaly classifier is known to misbehave, the
+Identity sub-metric's reliability is downweighted by the close-up gate, allowing the other
+four sub-metrics to determine the composite outcome.
+
+\subsection{Validation Strategy}
+
+The composite is validated at three layers, as introduced in
+Section~\ref{sec:obj:validate}.
+
+\textbf{Layer~1 --- perceptual agreement on the real-SR test set.} The composite is
+evaluated on the five-video test set comprising both super-resolution baselines. The pass
+criterion is that the detail-preserving baseline wins on the per-method mean and on every
+per-video comparison. The current production version meets this criterion: the per-video
+comparison is consistent across all test videos including the regime-shift case, with a
+mean difference between the two methods of approximately $+0.06$ in favour of the
+detail-preserving baseline.
+
+\textbf{Layer~2 --- flip-resistance on the regime-shift case.} The composite must not flip
+on the close-up video where Human\_Anatomy and Human\_Identity both flip. The criterion is
+met by the design: sub-metric I's reliability gate engages on close-up content, sub-metric
+T uses warping error directly (not LPIPS-based tLP, which exhibits the smoother-output bias
+of its underlying perceptual representation), and sub-metric A is built on CLIP-IQA, which
+does not depend on a pristine-HR-trained representation.
+
+\textbf{Layer~3 --- severity-response on the synthetic artefact set.} For each of the four
+artefact families, the composite is expected to respond monotonically to severity on at
+least one base video. The current production version catches the majority of (artefact
+family, base video) cells monotonically. The remaining cells have characterised failure
+modes:
+\begin{itemize}
+    \item On the single-face base video, identity degradation triggers the
+          identity-collapse pathology of Section~\ref{sec:problem:battery} Finding~4. The
+          face-detection rate remains high, so the existing face-rate reliability gate does
+          not engage; the pathology lies in the slow-fast pooling itself. A reliability
+          gate that operates on per-face embedding variance is identified as the natural
+          fix (Section~\ref{sec:outcomes}).
+    \item Flicker is correctly detected by sub-metric T at small $k$, but the composite is
+          dominated by the colour and identity sub-metrics whose reliabilities are near
+          one and whose scores do not respond to high-frequency luminance modulation; the
+          composite is therefore approximately flat across flicker severities. A
+          fast-varying brightness sub-metric is the natural addition.
+    \item One of the two base videos for colour drift exhibits a pre-existing slow colour
+          trajectory in the underlying super-resolved output. The slope-style sub-metric
+          correctly assigns high reliability to that pre-existing trajectory, leaving
+          little additional dynamic range to register the injected drift. The case is
+          informative rather than spurious.
+\end{itemize}
+
+The full verdict matrix and per-sub-metric severity-response curves are presented in
+Figures~5--7.
+
+\subsection{Iterative Design Protocol}
+\label{sec:method:iteration}
+
+The current production version of the composite is the result of an iterative protocol in
+which each version added exactly one element after a specific failure mode was characterised
+on the synthetic test set. The history is summarised in
+Table~\ref{tab:method:iterations}.
+
+\begin{table}[h]
+\centering
+\caption{Iterative design history of the composite. Each row introduces one element after a
+specific failure mode was characterised on the synthetic artefact set; the next row
+addresses the next failure surfaced by the updated composite.}
+\label{tab:method:iterations}
+\small
+\begin{tabular}{p{2.8cm}p{5.5cm}p{6.0cm}}
+\hline
+\textbf{Version} & \textbf{New element} & \textbf{Failure mode closed} \\
+\hline
+v1 & Three sub-metrics: Appearance, Temporal (logarithmic-weighted), Identity & Initial design responsive to the regime-shift case and the temporal-scale crossover \\
+v2 & Add Colour Stability sub-metric (Lab histogram L1 over multi-scale pairs) & Provides a long-range colour lever distinct from optical-flow-based metrics \\
+v2-uniform & Change temporal weighting to uniform & The high-frequency component at small $k$ is no longer drowned out at the sub-metric T level \\
+v3 & Recalibrate Colour Stability decay constant & The colour sub-metric's absolute score range no longer dominates the composite arithmetic; chunk-boundary signal flows through to the composite \\
+v3-slope & Add Colour Trajectory Slope sub-metric with goodness-of-fit-gated reliability & Slow colour drift is detected (Section~\ref{sec:problem:battery} Finding~1) on at least one base video \\
+\hline
+\end{tabular}
+\end{table}
+
+The protocol itself --- characterise the failure mode, add one element, verify on the same
+test set without regression on previous failure modes --- is reusable beyond the present
+metric. Any composite no-reference metric whose failure modes can be parameterised as
+controlled synthetic artefacts admits an analogous iteration, with the goodness-of-fit-gated
+reliability pattern of sub-metric E reusable for any ``slow signal versus noisy baseline''
+detection problem in video evaluation.
+
+\subsection{Reproducibility and Decomposability}
+
+The metric is fully decomposable. Each sub-metric is computed independently, and the result
+is cached per video. Hyperparameter studies and re-tuning of the per-sub-metric decay
+constants and weighting choices do not require re-scanning videos; the cached per-video
+values are re-aggregated through the composition layer in seconds. This property is
+essential to the iterative protocol of
+Section~\ref{sec:method:iteration}: each version can be tested against the same cache
+without paying the cost of recomputing the sub-metrics.
+
+The output of the composite on a given video is the LR-VCC score, the per-sub-metric
+$(\text{score}, \text{reliability})$ pairs, the softmax-derived sub-metric weights, the
+low-confidence flag, and a set of per-sub-metric diagnostic indicators (closeup indicator,
+face-detection rate, mean mask coverage at long temporal lags, regression $R^2$, histogram
+entropy). The per-video per-sub-metric matrix is always reported alongside the headline
+composite, so a reviewer can see where the composite is driven from on each video. There is
+no black-box aggregation.

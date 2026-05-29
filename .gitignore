@@ -47,3 +47,14 @@ results/long_range_temporal/*
 results/synthetic_artefacts/
 results/lr_vcc/*
 results/synthetic_artefacts_eval/*
+
+# LaTeX build artefacts (proposal)
+proposal/thesis_proposal.aux
+proposal/thesis_proposal.bbl
+proposal/thesis_proposal.blg
+proposal/thesis_proposal.fdb_latexmk
+proposal/thesis_proposal.fls
+proposal/thesis_proposal.log
+proposal/thesis_proposal.out
+proposal/thesis_proposal.toc
+proposal/thesis_proposal.synctex.gz

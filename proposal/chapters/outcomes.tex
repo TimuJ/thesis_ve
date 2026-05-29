@@ -1,0 +1,91 @@
+% Expected Outcomes and Innovations
+\section{Expected Outcomes and Innovations}
+\label{sec:outcomes}
+
+This research is expected to deliver three artefacts and four scientific contributions, each
+described in turn.
+
+\subsection{Primary Deliverables}
+
+The first deliverable is the proposed metric itself: a no-reference long-range video
+consistency composite for super-resolution evaluation, with five reliability-gated
+sub-metrics covering appearance, multi-scale temporal consistency, identity preservation,
+colour-distribution stability, and colour-trajectory drift. The composite is decomposable:
+the per-sub-metric scores and reliabilities are reported alongside the composite so that
+each video's evaluation is traceable to the sub-metric driving it. The composite is fully
+specified by a small set of canonical hyperparameters; alternative hyperparameter choices
+can be explored through cached per-video sub-metric values without rescanning videos.
+
+The second deliverable is a parameterised synthetic test set for long-video super-resolution
+consistency assessment, covering four artefact families --- slow colour drift,
+chunk-boundary jumps, periodic flicker, and identity degradation --- across multiple
+severity levels per base video. Each generator is verified to produce zero output at zero
+severity (identity within floating-point tolerance), monotonic per-frame statistics under
+severity sweep, and seed-reproducible construction. The synthetic test set is the first
+publicly characterised consistency benchmark targeting long-video super-resolution
+specifically; existing video super-resolution benchmarks (REDS, Vimeo-90K, Vid4, UDM10,
+SPMCS) target per-frame fidelity on short clips. The test set is extensible: additional
+base videos, finer severity grids, and new artefact families can be added without
+disturbing the existing infrastructure.
+
+The third deliverable is the empirical-characterisation contribution of
+Section~\ref{sec:problem}. The four findings --- the regime-shift case, the temporal-scale
+crossover, the colour-drift blind spot of the baseline metric suite, and the
+identity-collapse pathology of slow-fast pooling under heavy degradation --- are
+documented, each with an identified root mechanism. To our knowledge these characterisations
+have not previously been compiled into a single systematic study of long-video
+super-resolution evaluation.
+
+\subsection{Scientific Innovations}
+
+The research introduces four innovations.
+
+\textbf{Reliability-weighted softmax-log-mean composition as a design pattern for
+no-reference long-video metrics.} The composition assigns weights through a sharp softmax
+over per-sub-metric reliabilities, then computes a geometric mean of scores under those
+weights. Sub-metrics whose reliability gates engage on a given video are downweighted
+automatically, without per-sub-metric threshold-based hard exclusion. The composition is
+sub-metric-agnostic: additional sub-metrics can be added as new failure modes are
+characterised without disturbing the existing composition. To our knowledge this is the
+first long-video super-resolution consistency metric of this form.
+
+\textbf{Goodness-of-fit-gated reliability for trajectory-style sub-metrics.} Sub-metric E
+addresses the colour-drift blind spot by fitting a linear regression to per-frame
+Lab-channel means over the whole video, scoring an exponential decay in the maximum
+absolute slope, and gating reliability by the maximum coefficient of determination across
+the three channels. A drifting video produces a high $R^2$ (the slope is real, so the
+metric speaks confidently); a flickering video produces $R^2$ near zero (sinusoidal
+residuals dominate, so the metric correctly abstains). The pattern --- gate reliability by
+goodness-of-fit, not by score magnitude --- is reusable for any slow-signal-versus-noisy-baseline
+detection problem in video evaluation.
+
+\textbf{Multi-scale temporal aggregation with configurable weighting.} The proposed
+sub-metric T aggregates tOF over $k \in \{1, 5, 10, 30, 60, 120\}$; the per-video per-$k$
+warping errors are cached so that alternative aggregation weightings can be applied at
+composition time without recomputing the underlying optical flow. This enables principled
+hyperparameter sweeps over the temporal-scale axis that produced the crossover finding of
+Section~\ref{sec:problem:tof}.
+
+\textbf{Severity-response-driven metric design protocol.} The iterative history of
+Section~\ref{sec:method:iteration} is itself a methodological contribution. Each version
+of the composite added one element after a specific failure mode was characterised on the
+synthetic test set; the next version addresses the next failure surfaced by the updated
+composite. The protocol --- characterise the failure mode, add one element, verify on the
+same test set without regression on previous failure modes --- is reusable beyond the
+present metric for any composite no-reference metric whose failure modes can be
+parameterised.
+
+\subsection{Path to Thesis}
+
+The thesis extends the proposal in four directions. First, the literature review is
+expanded to cover the full landscape of no-reference video quality assessment, paying
+particular attention to recent neural quality predictors and to the long-video extensions
+of perceptual benchmarks. Second, each sub-metric's design history is documented in detail
+together with the failure characterisations that motivated it. Third, the planned future
+work --- a multi-person Identity sub-metric, a real-video baseline confirmation, a
+fast-varying brightness sub-metric to close the flicker gap, and an extension of validation
+to a broader set of recent super-resolution methods --- is carried out during the thesis
+horizon and incorporated into the validation chapters. Fourth, the reliability-weighted
+composition pattern is discussed in a broader methodological chapter that argues for its
+generalisation to other no-reference video quality assessment problems beyond
+super-resolution.
