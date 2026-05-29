@@ -78,6 +78,19 @@ The proposed metric (Section~\ref{sec:method}) addresses this by introducing per
 \emph{reliability gates} that downweight any sub-metric whose calibration assumptions are
 violated on the video at hand.
 
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/fig2_handbbox_vs_anatomy_gap.png}
+\caption{Anatomy metric difference between the detail-preserving and the text-conditioned
+smoother baselines, plotted against per-video median hand-bounding-box fraction. Four videos
+cluster in the upper-left at low close-up fraction, with the detail-preserving baseline
+correctly winning. The regime-shift video sits alone in the lower-right at approximately
+$18\%$ hand-bbox fraction --- well above the cohort median of $2\text{--}3\%$ --- with the
+metric inverted by approximately $-0.29$. The pattern is consistent with a content-dependent
+calibration shift triggered by close-up scale.}
+\label{fig:problem:regime}
+\end{figure}
+
 \subsection{The tOF Temporal-Scale Crossover}
 \label{sec:problem:tof}
 
@@ -108,6 +121,17 @@ on the standard benchmark by lowering tOF at $k=1$ may lose to its competitor at
 Neither metric is correct in isolation; the picture only resolves when $k$ is varied. The
 proposed metric (Section~\ref{sec:method}) aggregates tOF across $k \in \{1, 5, 10, 30, 60,
 120\}$ with a weighting that gives meaningful representation to every temporal scale.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/fig3_tof_per_k_curves.png}
+\caption{Mean tOF as a function of frame gap $k$ for the two super-resolution baselines.
+At $k=1$ the text-conditioned smoother baseline (orange) scores lower, consistent with the
+smoother-output bias of adjacent-frame temporal metrics. At $k \geq 30$ the detail-preserving
+baseline (blue) scores lower, registering the smoother baseline's cumulative long-range
+drift. The crossover region (shaded) lies at $k = 5\text{--}10$.}
+\label{fig:problem:tof-crossover}
+\end{figure}
 
 \subsection{A Synthetic Artefact Battery Exposes Categorical Blind Spots}
 \label{sec:problem:battery}
@@ -173,6 +197,21 @@ Identity (fused)  & FAIL & FAIL & FAIL & PARTIAL \\
 \hline
 \end{tabular}
 \end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{figures/fig7_severity_summary_grid.png}
+\caption{Severity response across the four artefact families and three representative metrics
+from the baseline suite: adjacent-frame temporal (tOF at $k=1$), long-range temporal (tOF at
+$k=120$), and the proposed composite (LR-VCC v3 + slope). Each panel plots metric value
+against artefact severity on the two base videos. Green panels denote monotonic
+severity-response on both videos; amber panels denote monotonic on one video; red panels
+denote flat or non-monotonic response on both. The pattern of colour shows that no single
+baseline metric catches every artefact family, while the composite catches the artefact
+families whose mechanisms are addressed by its constituent sub-metrics and degrades
+gracefully on the others.}
+\label{fig:problem:severity-grid}
+\end{figure}
 
 Four headline findings follow from this matrix.
 
