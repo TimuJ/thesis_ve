@@ -11,6 +11,10 @@ This bi-weekly period converted the LR-VCC composite from the Layer 1+2 prototyp
 3. **Sub-metric D (color stability via Lab histogram L1) and sub-metric E (color-slope linear regression on per-frame Lab channel means)** were designed, implemented (with full test suites — 39/39 LR-VCC tests pass), validated, and committed. Composite metric grew from 3 sub-metrics to 5 with full reliability gating.
 4. **Identity-collapse pathology characterised** on the single-face base video under heavy face-region blur: the Identity sub-metric's fast component inverts because heavy blur erases identity-distinctive features and cross-clip first-frame embeddings appear generically similar. Mechanism documented; fix (gate by face-detection confidence rather than face-rate alone) noted as future work.
 
+![LR-VCC architecture: five reliability-gated sub-metrics (Appearance, Temporal, Identity, Colour Stability, Colour Slope), each paired with an interpretable reliability gate; composition via softmax-log-mean of reliabilities at τ = 0.2.](../proposal/figures/fig4_lr_vcc_architecture.png)
+
+*LR-VCC architecture as of this period. Five sub-metrics in parallel; each emits a (score, reliability) pair; softmax-log-mean composition produces the final score in [0, 1].*
+
 ---
 
 ## Synthetic Validation Pipeline — Four Artefact Families Generated
@@ -121,6 +125,10 @@ Flicker δ is small and slightly noisy — flicker is currently the artefact LR-
 
 Adding sub-metric E with β=200 lowers absolute scores (because the new sub-metric is a "punish for any color drift" gate, and most SR videos have some baseline color trajectory), but the **per-video ordering is preserved on all 5 videos** and the inter-method gap is essentially unchanged (+0.060 v3 → +0.056 v3+slope). Layer 1 PASS preserved.
 
+![Hand bounding-box size correlates with MGLD-vs-UAV anatomy gap. Four videos cluster at low close-up fraction (top-left, MGLD wins); KZ alone sits at 18% close-up fraction with the gap inverted to −0.29.](../proposal/figures/fig2_handbbox_vs_anatomy_gap.png)
+
+*The empirical motivation for the close-up reliability gate that sub-metric I uses. KZ is the regime-shift case: the close-up content triggers the Anatomy classifier's high-fire regime, inverting the per-method ranking. LR-VCC's close-up reliability gate downweights Identity on KZ, letting Appearance, Temporal, Colour Stability, and Colour Slope determine the composite — which preserves the correct MGLD > UAV ranking.*
+
 BrRLKMbBTYQ shows the largest drop: that is because UAV's output on this video has a real linear color trajectory (slope ≈ 0.017, R² ≈ 0.35) that E now correctly penalises — visible in `--color_slope_dir` raw output. This is a genuine UAV failure mode, not a false positive.
 
 ---
@@ -214,6 +222,10 @@ Future work: gate sub-metric I by face-detection *confidence* (mean detection sc
 | identity_degradation | −0.070 | +0.043 | hhsz clean, 7WHI inverted (identity-collapse); PARTIAL |
 
 **LR-VCC catches 5/8 conditions cleanly; the remaining 3 each have a documented mechanism that becomes future-work scope.** This is a richer story than a binary "works/doesn't" — the failure modes are *characterised*, not mysterious.
+
+![Severity-response across four artefact families (colour drift, chunk-boundary jumps, periodic flicker, identity degradation) and three key metrics (tOF k=1, tOF k=120, LR-VCC v3+slope β=200). Green panels: monotonic on both base videos. Amber: monotonic on one. Red: flat / non-monotonic on both.](../proposal/figures/fig7_severity_summary_grid.png)
+
+*4-artefact × 3-metric verdict grid. The bottom row (LR-VCC composite) shows PASS on colour drift and chunk_boundary, PARTIAL on identity_degradation, FAIL on flicker — matching the consolidated verdict table above. Visualises the gap that the composite closes relative to the baseline metrics in the top two rows.*
 
 ---
 
