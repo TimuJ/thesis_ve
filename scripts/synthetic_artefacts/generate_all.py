@@ -21,6 +21,7 @@ from scripts.synthetic_artefacts.chunk_boundary import apply_chunk_boundary_jump
 from scripts.synthetic_artefacts.flicker import apply_periodic_flicker
 from scripts.synthetic_artefacts.identity_degradation import apply_identity_degradation
 from scripts.synthetic_artefacts.identity_drift import apply_identity_drift
+from scripts.synthetic_artefacts.background_drift import apply_background_drift, load_packed_masks
 
 
 BASE_VIDEOS = ["hhszUXL1Cu8", "7WHI2L_FDNg"]
@@ -39,6 +40,22 @@ REFERENCE_FACES = {
 }
 _REF_CACHE = {}
 
+# Reference background images for background_drift. Same per-base pattern.
+REFERENCE_BGS = {
+    "hhszUXL1Cu8":  REPO / "results" / "synthetic_artefacts" / "_references" / "ref_bg_for_hhsz.png",
+    "7WHI2L_FDNg":  REPO / "results" / "synthetic_artefacts" / "_references" / "ref_bg_for_7WHI.png",
+}
+_BG_CACHE = {}
+
+# Per-base human silhouette masks (.npz) precomputed by
+# `precompute_human_masks.py`. Shared across all severity levels of the same
+# base video — masks only depend on the source frames.
+HUMAN_MASKS = {
+    "hhszUXL1Cu8":  REPO / "results" / "synthetic_artefacts" / "_human_masks" / "hhszUXL1Cu8.npz",
+    "7WHI2L_FDNg":  REPO / "results" / "synthetic_artefacts" / "_human_masks" / "7WHI2L_FDNg.npz",
+}
+_MASK_CACHE = {}
+
 
 def _load_reference_face(base: str):
     if base in _REF_CACHE:
@@ -56,6 +73,38 @@ def _load_reference_face(base: str):
     return img
 
 
+def _load_reference_bg(base: str):
+    if base in _BG_CACHE:
+        return _BG_CACHE[base]
+    path = REFERENCE_BGS.get(base)
+    if path is None or not path.is_file():
+        raise FileNotFoundError(
+            f"Missing reference background for base={base}. Expected at {path}. "
+            f"Generate it first with scripts/synthetic_artefacts/extract_reference_background.py."
+        )
+    img = cv2.imread(str(path))
+    if img is None:
+        raise RuntimeError(f"Failed to read reference background image at {path}")
+    _BG_CACHE[base] = img
+    return img
+
+
+def _load_human_masks(base: str):
+    """Return a (n_frames, H, W) bool array of per-frame human silhouette masks
+    for the named base video. Cached across artefact / severity combinations."""
+    if base in _MASK_CACHE:
+        return _MASK_CACHE[base]
+    path = HUMAN_MASKS.get(base)
+    if path is None or not path.is_file():
+        raise FileNotFoundError(
+            f"Missing human masks for base={base}. Expected at {path}. "
+            f"Generate them with scripts/synthetic_artefacts/precompute_human_masks.py."
+        )
+    masks = load_packed_masks(str(path))
+    _MASK_CACHE[base] = masks
+    return masks
+
+
 def process_one(src_path: Path, out_path: Path, artefact: str, severity: float, base: str = ""):
     cap = cv2.VideoCapture(str(src_path))
     if not cap.isOpened():
@@ -69,6 +118,8 @@ def process_one(src_path: Path, out_path: Path, artefact: str, severity: float, 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     writer = cv2.VideoWriter(str(out_path), fourcc, fps, (w, h))
     ref_face = _load_reference_face(base) if artefact == "identity_drift" else None
+    ref_bg = _load_reference_bg(base) if artefact == "background_drift" else None
+    human_masks = _load_human_masks(base) if artefact == "background_drift" else None
     idx = 0
     while True:
         ok, fr = cap.read()
@@ -84,6 +135,9 @@ def process_one(src_path: Path, out_path: Path, artefact: str, severity: float, 
             out = apply_identity_degradation(fr, idx, severity)
         elif artefact == "identity_drift":
             out = apply_identity_drift(fr, idx, n_frames, ref_face, severity)
+        elif artefact == "background_drift":
+            mask = human_masks[idx] if (human_masks is not None and idx < len(human_masks)) else None
+            out = apply_background_drift(fr, idx, n_frames, ref_bg, mask, severity)
         else:
             raise ValueError("unknown artefact: " + artefact)
         writer.write(out)
@@ -94,7 +148,8 @@ def process_one(src_path: Path, out_path: Path, artefact: str, severity: float, 
 
 
 def main():
-    for artefact in ["color_drift", "chunk_boundary", "flicker", "identity_degradation", "identity_drift"]:
+    for artefact in ["color_drift", "chunk_boundary", "flicker",
+                     "identity_degradation", "identity_drift", "background_drift"]:
         for base in BASE_VIDEOS:
             src = SRC_DIR / (base + ".mp4")
             if not src.is_file():
