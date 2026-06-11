@@ -1,4 +1,4 @@
-"""Generate all synthetic test videos: 2 base videos x 2 artefacts x 5 severities = 20 videos.
+"""Generate all synthetic test videos: 5 base videos x 6 artefacts x 5 severities = 150 videos.
 
 Reads source videos from results/mgld_synthetic_mp4/, writes to
 results/synthetic_artefacts/<artefact>/<base>_sev<S>.mp4.
@@ -24,7 +24,7 @@ from scripts.synthetic_artefacts.identity_drift import apply_identity_drift
 from scripts.synthetic_artefacts.background_drift import apply_background_drift, load_packed_masks
 
 
-BASE_VIDEOS = ["hhszUXL1Cu8", "7WHI2L_FDNg"]
+BASE_VIDEOS = ["hhszUXL1Cu8", "7WHI2L_FDNg", "KZ8p6b1zJ9U", "BrRLKMbBTYQ", "mJog8DlRk_4"]
 SEVERITIES = [0.02, 0.05, 0.10, 0.20, 0.40]
 SRC_DIR = REPO / "results" / "mgld_synthetic_mp4"
 OUT_DIR = REPO / "results" / "synthetic_artefacts"
@@ -37,6 +37,9 @@ FLICKER_PERIOD = 15  # 0.5 sec at 30 fps
 REFERENCE_FACES = {
     "hhszUXL1Cu8":  REPO / "results" / "synthetic_artefacts" / "_references" / "ref_face_for_hhsz.png",
     "7WHI2L_FDNg":  REPO / "results" / "synthetic_artefacts" / "_references" / "ref_face_for_7WHI.png",
+    "KZ8p6b1zJ9U":  REPO / "results" / "synthetic_artefacts" / "_references" / "ref_face_for_KZ.png",
+    "BrRLKMbBTYQ":  REPO / "results" / "synthetic_artefacts" / "_references" / "ref_face_for_BrRLK.png",
+    "mJog8DlRk_4":  REPO / "results" / "synthetic_artefacts" / "_references" / "ref_face_for_mJog.png",
 }
 _REF_CACHE = {}
 
@@ -44,6 +47,9 @@ _REF_CACHE = {}
 REFERENCE_BGS = {
     "hhszUXL1Cu8":  REPO / "results" / "synthetic_artefacts" / "_references" / "ref_bg_for_hhsz.png",
     "7WHI2L_FDNg":  REPO / "results" / "synthetic_artefacts" / "_references" / "ref_bg_for_7WHI.png",
+    "KZ8p6b1zJ9U":  REPO / "results" / "synthetic_artefacts" / "_references" / "ref_bg_for_KZ.png",
+    "BrRLKMbBTYQ":  REPO / "results" / "synthetic_artefacts" / "_references" / "ref_bg_for_BrRLK.png",
+    "mJog8DlRk_4":  REPO / "results" / "synthetic_artefacts" / "_references" / "ref_bg_for_mJog.png",
 }
 _BG_CACHE = {}
 
@@ -53,6 +59,9 @@ _BG_CACHE = {}
 HUMAN_MASKS = {
     "hhszUXL1Cu8":  REPO / "results" / "synthetic_artefacts" / "_human_masks" / "hhszUXL1Cu8.npz",
     "7WHI2L_FDNg":  REPO / "results" / "synthetic_artefacts" / "_human_masks" / "7WHI2L_FDNg.npz",
+    "KZ8p6b1zJ9U":  REPO / "results" / "synthetic_artefacts" / "_human_masks" / "KZ8p6b1zJ9U.npz",
+    "BrRLKMbBTYQ":  REPO / "results" / "synthetic_artefacts" / "_human_masks" / "BrRLKMbBTYQ.npz",
+    "mJog8DlRk_4":  REPO / "results" / "synthetic_artefacts" / "_human_masks" / "mJog8DlRk_4.npz",
 }
 _MASK_CACHE = {}
 

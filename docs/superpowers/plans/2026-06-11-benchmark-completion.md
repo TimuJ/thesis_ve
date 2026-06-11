@@ -1020,7 +1020,18 @@ if __name__ == "__main__":
 
 | Placeholder | Value | Resolved by |
 |---|---|---|
-| `<NEW_ID_1..3>` | _pending_ | Task 4 |
+| `<NEW_ID_1..3>` | KZ8p6b1zJ9U, BrRLKMbBTYQ, mJog8DlRk_4 (promotions — see note) | Task 4, 2026-06-11 |
 | `<LR_DIR>` | _pending_ | Task 8 Step 1 |
 | `<HR_DIR>` | _pending_ | Task 8 Step 1 |
 | classmate models | _pending_ | Task 8 Step 3 |
+
+**Task 4 outcome (2026-06-11):** the server has NO long-video pool beyond the original 5 —
+the "8 bases" assumption was wrong. Decision (Timur): **5 bases total** — promote
+KZ8p6b1zJ9U (cooking, intermittent faces, face_rate 0.51), BrRLKMbBTYQ (animated cartoon,
+face_rate 0.20), mJog8DlRk_4 (lifestyle TV, scene cuts, face_rate 0.87). All Task 5/6
+quantities scale accordingly: 3 new bases × 30 = 90 new clips, Identity ≈ 15 GPU-h total.
+Single-face stays n=1 (7WHI) — reported as documented limitation, not category claim.
+Disk decision: prune `results/mgld_synthetic` + `results/uav_synthetic` raw frames (~44 GB,
+mp4s canonical). Reference cross-assignment: faces KZ←7WHI, BrRLK←hhsz, mJog←hhsz;
+backgrounds via `select_reference_scene.py` (τ=0.25) for the 3 new bases + 7WHI re-extract
+(Fix 2); hhsz background reference unchanged (it works — Δ −0.276).
