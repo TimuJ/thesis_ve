@@ -2,6 +2,7 @@
 
 Wraps the per_video[v] output of scripts/vbench2_long/human_identity_long.py.
 """
+import statistics
 from typing import Optional
 
 from .reliability import below_threshold_penalty, above_threshold_penalty
@@ -9,18 +10,19 @@ from .reliability import below_threshold_penalty, above_threshold_penalty
 
 _FACE_RATE_FLOOR = 0.20
 _CLOSEUP_BBOX_THRESHOLD = 0.05  # face / hand bbox p50 as fraction of frame area
-_CLIP_DISPERSION_THRESHOLD = 0.25  # recalibrated by calibrate_identity_gate.py
+# Calibrated by calibrate_identity_gate.py on all artefact identity JSONs
+# (2026-06-11): hhsz p90 = 0.337, 7WHI p10 = 0.355 — midpoint 0.346.
+_CLIP_DISPERSION_THRESHOLD = 0.346
 
 
 def clip_score_dispersion(per_video: dict) -> Optional[float]:
-    """Std-dev of valid per-clip slow scores; None when < 2 valid clips
-    or clip_detail absent (older JSONs without --detail)."""
+    """Population std-dev of valid per-clip slow scores; None when < 2 valid
+    clips or clip_detail absent (older JSONs without --detail)."""
     detail = per_video.get("clip_detail") or []
     valid = [float(c["score"]) for c in detail if float(c.get("score", -1.0)) >= 0.0]
     if len(valid) < 2:
         return None
-    m = sum(valid) / len(valid)
-    return (sum((s - m) ** 2 for s in valid) / len(valid)) ** 0.5
+    return statistics.pstdev(valid)
 
 
 def identity_score(per_video: dict, closeup_bbox_p50: Optional[float] = None) -> dict:

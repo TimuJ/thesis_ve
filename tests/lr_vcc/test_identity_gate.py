@@ -27,6 +27,10 @@ def test_dispersion_none_with_single_valid_clip():
     assert clip_score_dispersion(_pv([0.7])) is None
 
 
+def test_dispersion_none_when_all_scores_invalid():
+    assert clip_score_dispersion(_pv([-1.0, -1.0, -1.0, -1.0])) is None
+
+
 def test_invalid_scores_excluded_from_dispersion():
     pv = _pv([0.7, 0.7, 0.7])
     pv["clip_detail"].append({"clip_index": 3, "clip_path": "c3.mp4", "score": -1.0})
@@ -34,8 +38,8 @@ def test_invalid_scores_excluded_from_dispersion():
 
 
 def test_low_dispersion_keeps_reliability():
-    # disp=0.0 gives a small sigmoid tail penalty (~0.076), so reliability is
-    # multiplied by ~0.924 vs the no-clip-detail case (exact 1.0).
+    # disp=0.0 gives a small sigmoid tail penalty (~0.031 at threshold 0.346),
+    # so reliability is multiplied by ~0.969 vs the no-clip-detail case (1.0).
     # We assert the gated reliability is at least 90% of the ungated value.
     gated = identity_score(_pv([0.7] * 6))
     ungated = identity_score({"fused": 0.6, "n_clips": 6, "n_clips_with_faces": 6})
