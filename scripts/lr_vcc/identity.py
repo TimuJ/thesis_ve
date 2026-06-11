@@ -10,8 +10,7 @@ from .reliability import below_threshold_penalty, above_threshold_penalty
 
 _FACE_RATE_FLOOR = 0.20
 _CLOSEUP_BBOX_THRESHOLD = 0.05  # face / hand bbox p50 as fraction of frame area
-# Calibrated by calibrate_identity_gate.py on all artefact identity JSONs
-# (2026-06-11): hhsz p90 = 0.337, 7WHI p10 = 0.355 — midpoint 0.346.
+# calibrated 2026-06-11 on 2-base data (gap 0.003 — too thin); parked until 8-base recalibration
 _CLIP_DISPERSION_THRESHOLD = 0.346
 
 
@@ -25,11 +24,17 @@ def clip_score_dispersion(per_video: dict) -> Optional[float]:
     return statistics.pstdev(valid)
 
 
-def identity_score(per_video: dict, closeup_bbox_p50: Optional[float] = None) -> dict:
+def identity_score(per_video: dict, closeup_bbox_p50: Optional[float] = None,
+                   dispersion_threshold: Optional[float] = None) -> dict:
     """Returns {"score", "reliability", "details": {...}}.
 
     score = per_video["fused"] (output of slow-fast Identity adapter).
     reliability = (1 - face_rate_penalty) * (1 - closeup_penalty) * (1 - dispersion_penalty).
+
+    dispersion_threshold: when None (default), the dispersion gate is OFF and
+    dispersion_penalty is always 0.0 (two-factor formula).  Pass
+    dispersion_threshold=_CLIP_DISPERSION_THRESHOLD explicitly to enable the gate.
+    clip_score_dispersion is always computed and reported in details regardless.
     """
     score = float(per_video.get("fused", 0.0))
     n_clips = int(per_video.get("n_clips", 0))
@@ -43,7 +48,11 @@ def identity_score(per_video: dict, closeup_bbox_p50: Optional[float] = None) ->
         closeup_pen = above_threshold_penalty(float(closeup_bbox_p50), _CLOSEUP_BBOX_THRESHOLD)
 
     disp = clip_score_dispersion(per_video)
-    disp_pen = 0.0 if disp is None else above_threshold_penalty(disp, _CLIP_DISPERSION_THRESHOLD)
+    disp_pen = (
+        0.0
+        if (disp is None or dispersion_threshold is None)
+        else above_threshold_penalty(disp, dispersion_threshold)
+    )
 
     reliability = (1.0 - face_pen) * (1.0 - closeup_pen) * (1.0 - disp_pen)
     return {

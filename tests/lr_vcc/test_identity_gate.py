@@ -38,17 +38,35 @@ def test_invalid_scores_excluded_from_dispersion():
 
 
 def test_low_dispersion_keeps_reliability():
-    # disp=0.0 gives a small sigmoid tail penalty (~0.031 at threshold 0.346),
+    # disp=0.0 gives a small sigmoid tail penalty (~0.031 at threshold 0.25),
     # so reliability is multiplied by ~0.969 vs the no-clip-detail case (1.0).
     # We assert the gated reliability is at least 90% of the ungated value.
-    gated = identity_score(_pv([0.7] * 6))
-    ungated = identity_score({"fused": 0.6, "n_clips": 6, "n_clips_with_faces": 6})
+    gated = identity_score(_pv([0.7] * 6), dispersion_threshold=0.25)
+    ungated = identity_score({"fused": 0.6, "n_clips": 6, "n_clips_with_faces": 6},
+                             dispersion_threshold=0.25)
     assert gated["reliability"] >= 0.9 * ungated["reliability"]
 
 
 def test_high_dispersion_cuts_reliability():
-    flappy = identity_score(_pv([0.05, 0.85, 0.77, 0.05, 0.75, 0.05]))
-    stable = identity_score(_pv([0.7] * 6))
+    flappy = identity_score(_pv([0.05, 0.85, 0.77, 0.05, 0.75, 0.05]),
+                            dispersion_threshold=0.25)
+    stable = identity_score(_pv([0.7] * 6), dispersion_threshold=0.25)
     assert flappy["reliability"] < 0.5 * stable["reliability"]
     assert flappy["details"]["clip_score_dispersion"] > 0.3
     assert flappy["details"]["dispersion_penalty"] > 0.5
+
+
+def test_gate_off_by_default():
+    # Without dispersion_threshold the gate is OFF: reliability equals the two-factor
+    # formula (no dispersion penalty), even for a highly flappy per_video.
+    flappy_scores = [0.05, 0.85, 0.77, 0.05, 0.75, 0.05]
+    result = identity_score(_pv(flappy_scores))
+    # dispersion_penalty must be 0.0 (gate off)
+    assert result["details"]["dispersion_penalty"] == pytest.approx(0.0, abs=1e-9)
+    # clip_score_dispersion is still reported (observability)
+    assert result["details"]["clip_score_dispersion"] is not None
+    assert result["details"]["clip_score_dispersion"] > 0.3
+    # reliability equals the same per_video evaluated with clip_detail absent (gate truly off)
+    pv_no_detail = {k: v for k, v in _pv(flappy_scores).items() if k != "clip_detail"}
+    ref = identity_score(pv_no_detail)
+    assert result["reliability"] == pytest.approx(ref["reliability"], abs=1e-9)
