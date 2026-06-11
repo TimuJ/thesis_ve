@@ -12,6 +12,9 @@ A candidate is "video_path:frame_index". The base video must never be its own
 candidate. Prints all distances, saves the most distant frame if it clears tau.
 """
 import argparse
+import os
+from pathlib import Path
+from typing import Dict, List, Tuple
 
 import cv2
 import numpy as np
@@ -23,7 +26,7 @@ def cosine_distance(a: np.ndarray, b: np.ndarray) -> float:
     return float(1.0 - float(np.dot(a, b)))
 
 
-def pick_most_distant(candidates: dict, base_embedding: np.ndarray, tau: float):
+def pick_most_distant(candidates: Dict[str, np.ndarray], base_embedding: np.ndarray, tau: float) -> Tuple[str, float]:
     """candidates: {name: embedding}. Returns (name, distance) of the farthest
     candidate; raises ValueError when even the farthest is below tau."""
     best_name, best_d = None, -1.0
@@ -38,6 +41,8 @@ def pick_most_distant(candidates: dict, base_embedding: np.ndarray, tau: float):
 
 def read_frame(video_path: str, frame_index: int) -> np.ndarray:
     cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        raise RuntimeError(f"failed to open {video_path}")
     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
     ok, frame = cap.read()
     cap.release()
@@ -46,8 +51,10 @@ def read_frame(video_path: str, frame_index: int) -> np.ndarray:
     return frame
 
 
-def sample_frames(video_path: str, n: int = 8):
+def sample_frames(video_path: str, n: int = 8) -> List[np.ndarray]:
     cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        raise RuntimeError(f"failed to open {video_path}")
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     cap.release()
     return [read_frame(video_path, i) for i in np.linspace(0, total - 1, n, dtype=int)]
@@ -79,11 +86,17 @@ def main():
     model, _, preprocess = open_clip.create_model_and_transforms(
         "ViT-B-32", pretrained="laion2b_s34b_b79k", device=device)
 
+    base_real = os.path.realpath(args.base_video)
+
     base_emb = _embed_bgr_frames(sample_frames(args.base_video), model, preprocess, device)
 
     cand_embs, cand_frames = {}, {}
     for spec in args.candidates:
+        if ":" not in spec:
+            ap.error(f"candidate '{spec}' must be video_path:frame_index")
         path, idx = spec.rsplit(":", 1)
+        if os.path.realpath(path) == base_real:
+            ap.error(f"candidate '{spec}' resolves to the base video — remove it")
         frame = read_frame(path, int(idx))
         cand_frames[spec] = frame
         cand_embs[spec] = _embed_bgr_frames([frame], model, preprocess, device)
@@ -92,7 +105,9 @@ def main():
         print(f"{cosine_distance(emb, base_emb):.3f}  {name}")
 
     name, dist = pick_most_distant(cand_embs, base_emb, args.tau)
-    cv2.imwrite(args.out, cand_frames[name])
+    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+    if not cv2.imwrite(args.out, cand_frames[name]):
+        raise RuntimeError(f"failed to write {args.out}")
     print(f"selected {name} (d={dist:.3f}) -> {args.out}")
 
 

@@ -1,7 +1,11 @@
 import numpy as np
 import pytest
 
-from scripts.synthetic_artefacts.select_reference_scene import cosine_distance, pick_most_distant
+from scripts.synthetic_artefacts.select_reference_scene import (
+    cosine_distance,
+    pick_most_distant,
+    read_frame,
+)
 
 
 def test_cosine_distance_orthogonal_is_one():
@@ -25,3 +29,8 @@ def test_pick_most_distant_raises_below_tau():
     cands = {"near": np.array([0.99, 0.01])}
     with pytest.raises(ValueError):
         pick_most_distant(cands, base, tau=0.5)
+
+
+def test_read_frame_nonexistent_raises_runtime_error():
+    with pytest.raises(RuntimeError, match="failed to open"):
+        read_frame("/nonexistent/path/video_that_does_not_exist.mp4", 0)
