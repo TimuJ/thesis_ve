@@ -179,4 +179,89 @@ The production setting was derived empirically: `--temporal_weight uniform` from
   - `docs/notes/2026-05-14-tof-tlp-long-range-results.md` — k=5–10 temporal crossover
   - `docs/notes/2026-05-21-lr-vcc-validation.md` — Layer 1+2 validation (MGLD wins 5/5)
 - **Server access + conda envs:** `docs/private/server-setup.md`
-- **Most recent weekly summary:** `reports/Timur_Iakshibaev_2026-05-22_to_2026-05-27.md`
+- **Most recent weekly summary:** `reports/Timur_Iakshibaev_2026-06-05_to_2026-06-18.md`
+
+---
+
+## 7. Standard experiment pattern (server-side)
+
+Every artefact-validation experiment follows the same shape. Code lives locally and is pushed to `/data/disk2/timur/scripts/` via `rsync`. All compute runs on the server.
+
+### 7.1 Three-phase pipeline
+
+1. **Generate** (CPU on server, ~10 min for 10 videos). Driver: `generate_all.py` — idempotent, skips existing outputs. Inputs may include per-base reference images (`scripts/synthetic_artefacts/extract_reference_*.py`) and per-base human masks (`scripts/synthetic_artefacts/precompute_human_masks.py` — uses Detectron2 in the **vbench** env).
+2. **Metric battery** (GPU, ~2–3 h for 10 videos). One launcher script per artefact at `/data/disk2/timur/run_<artefact>_eval.sh`. Each runs CLIP-IQA → tOF/tLP → DOVER → E*warp → color_hist → color_slope → Identity slow-fast in series, with `CUDA_VISIBLE_DEVICES=<n>` pinning. New artefact? Clone an existing runner with `sed 's/<old>/<new>/g'`.
+3. **LR-VCC composite** (CPU, seconds). `scripts/lr_vcc/run_lr_vcc.py` with the production CLI shown in §5 above. Reads the per-video sub-metric JSONs; no video re-scan.
+
+### 7.2 Tmux is mandatory for long stages
+
+Identity slow-fast alone is ~100 minutes for 10 videos and *will* outlast a single SSH session. Always launch under tmux. Always pipe to a log file under `/tmp/<session>.log` so a future poll can read progress. Always `touch /tmp/<session>.done` at the end so chained sessions can wait for prerequisites.
+
+### 7.3 Tmux quoting gotcha (very important)
+
+**This is buggy** — `touch` gets parsed as an arg to `tee`, not as a separate command, and `.done` is never created:
+
+```bash
+tmux new-session -d -s name "cmd 2>&1 | tee /tmp/log; touch /tmp/done"
+```
+
+Use one of these instead:
+
+```bash
+# Option A: bash -lc with an explicit multi-line script
+tmux new-session -d -s name bash -lc '
+  set -e
+  cmd 2>&1 | tee /tmp/log
+  touch /tmp/done
+'
+
+# Option B: manual fallback — poll for the work to finish, then touch by hand
+ssh ... "touch /tmp/done"  # only after verifying outputs exist
+```
+
+### 7.4 GPU pinning convention
+
+| Slot | Use |
+|------|-----|
+| `CUDA_VISIBLE_DEVICES=0` | Primary, usually free |
+| `CUDA_VISIBLE_DEVICES=7` | Backup, usually free; use when two pipelines need to run in parallel |
+| `CUDA_VISIBLE_DEVICES=1..6` | Avoid — usually occupied by other lab processes (`nvidia-smi` first) |
+
+### 7.5 Conda env quirks
+
+- **vsr** — general eval env for LR-VCC, tOF/tLP, colour sub-metrics. Stable.
+- **vbench** — VBench-2.0, Detectron2, Anatomy/Identity. **One-time fix needed:** `pip install 'setuptools<81'` because Detectron2's `model_zoo` imports `pkg_resources`, which is gone in setuptools 81+. Symptom: `ModuleNotFoundError: No module named 'pkg_resources'` at import.
+- **uav** / **mgldvsr** — pinned diffusion-VSR envs. Do **not** upgrade torch/xformers in either; the CUDA extensions silently disable and you lose ~20× speed.
+
+### 7.6 Disk pressure rescue
+
+`/data/disk2` was 100% used at start of this period. Safe ~37 GB free in 3 lines:
+
+```bash
+rm -rf /data/disk2/timur/cache/pip/*
+rm -rf /data/disk2/timur/cache/vbench/*
+rm -rf /data/disk2/timur/cache/dreamsim/*
+```
+
+All three rebuild on next use. Bigger candidates for emergency pruning (need to confirm they aren't load-bearing): `results/mgld_synthetic` raw frames (23 GB) and `results/uav_synthetic` raw frames (21 GB) — the corresponding mp4 directories are usually enough for re-evaluation.
+
+### 7.7 Standard server-side directory layout for a new artefact
+
+After all three phases:
+
+```
+/data/disk2/timur/
+├── scripts/synthetic_artefacts/<artefact>.py
+├── scripts/synthetic_artefacts/_references/ref_<face|bg>_for_<base>.png
+├── scripts/synthetic_artefacts/_human_masks/<base>.npz     # background_drift only
+├── results/synthetic_artefacts/<artefact>/<base>_sev<S>.mp4
+├── results/synthetic_artefacts_eval/{clip_iqa,tof_tlp,dover,ewarp,identity}/<artefact>/...
+├── results/lr_vcc/{color_histogram,color_slope}/<artefact>/...
+├── results/lr_vcc/closeup_map_artefacts/<artefact>.json    # copy from identity_degradation
+├── results/lr_vcc/composite_artefacts_v3_slope_b200/<artefact>/...
+└── run_<artefact>_eval.sh                                  # launcher
+```
+
+### 7.8 Six artefact families validated so far
+
+`color_drift`, `chunk_boundary`, `flicker`, `identity_degradation`, `identity_drift`, `background_drift`. Each has its own row in the verdict matrix in `reports/Timur_Iakshibaev_2026-06-05_to_2026-06-18.md`. New artefacts follow the same generator/test/runner pattern.
