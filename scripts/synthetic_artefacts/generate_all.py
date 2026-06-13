@@ -1,4 +1,4 @@
-"""Generate all synthetic test videos: 5 base videos x 6 artefacts x 5 severities = 150 videos.
+"""Generate all synthetic test videos: 5 base videos x 12 artefacts x 5 severities = 300 videos.
 
 Reads source videos from results/mgld_synthetic_mp4/, writes to
 results/synthetic_artefacts/<artefact>/<base>_sev<S>.mp4.
@@ -22,6 +22,7 @@ from scripts.synthetic_artefacts.flicker import apply_periodic_flicker
 from scripts.synthetic_artefacts.identity_degradation import apply_identity_degradation
 from scripts.synthetic_artefacts.identity_drift import apply_identity_drift
 from scripts.synthetic_artefacts.background_drift import apply_background_drift, load_packed_masks
+from scripts.synthetic_artefacts.flip import apply_flip
 
 
 BASE_VIDEOS = ["hhszUXL1Cu8", "7WHI2L_FDNg", "KZ8p6b1zJ9U", "BrRLKMbBTYQ", "mJog8DlRk_4"]
@@ -147,6 +148,8 @@ def process_one(src_path: Path, out_path: Path, artefact: str, severity: float, 
         elif artefact == "background_drift":
             mask = human_masks[idx] if (human_masks is not None and idx < len(human_masks)) else None
             out = apply_background_drift(fr, idx, n_frames, ref_bg, mask, severity)
+        elif artefact.startswith("flip_"):
+            out = apply_flip(fr, idx, n_frames, artefact[len("flip_"):], severity)
         else:
             raise ValueError("unknown artefact: " + artefact)
         writer.write(out)
@@ -158,7 +161,9 @@ def process_one(src_path: Path, out_path: Path, artefact: str, severity: float, 
 
 def main():
     for artefact in ["color_drift", "chunk_boundary", "flicker",
-                     "identity_degradation", "identity_drift", "background_drift"]:
+                     "identity_degradation", "identity_drift", "background_drift",
+                     "flip_horizontal", "flip_transpose", "flip_periodic",
+                     "flip_elastic", "flip_channel_shuffle", "flip_invert"]:
         for base in BASE_VIDEOS:
             src = SRC_DIR / (base + ".mp4")
             if not src.is_file():
