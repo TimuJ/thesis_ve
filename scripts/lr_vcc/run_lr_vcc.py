@@ -30,6 +30,10 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
                        color_hist_alpha=None,
                        color_slope_path=None,
                        color_slope_beta=None,
+                       color_hist_anchor_path=None,
+                       dprime_beta=None,
+                       clip_trajectory_path=None,
+                       dprime2_beta=None,
                        temperature=0.2, low_confidence_floor=0.2,
                        temporal_weight="log"):
     clip_iqa = json.load(open(clip_iqa_path))
@@ -76,6 +80,38 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
                 "details": details_e,
             }
 
+    # Sub-metric D' — anchor-window Lab histogram drift (optional).
+    dp_score = None
+    if color_hist_anchor_path is not None and os.path.isfile(str(color_hist_anchor_path)):
+        raw = json.load(open(color_hist_anchor_path))
+        q = raw.get("details", {}).get("trajectory_mean_per_quarter")
+        if q is not None and len(q) >= 4:
+            import math as _math
+            beta = float(dprime_beta) if dprime_beta is not None else 0.5
+            new_score = _math.exp(-beta * abs(float(q[3]) - float(q[0])))
+            new_score = max(0.0, min(1.0, new_score))
+            dp_score = {
+                "score": new_score,
+                "reliability": float(raw.get("reliability", 1.0)),
+                "details": {**(raw.get("details") or {}), "beta_override": beta},
+            }
+
+    # Sub-metric D'' — CLIP-trajectory drift (optional).
+    dpp_score = None
+    if clip_trajectory_path is not None and os.path.isfile(str(clip_trajectory_path)):
+        raw = json.load(open(clip_trajectory_path))
+        q = raw.get("details", {}).get("trajectory_mean_per_quarter")
+        if q is not None and len(q) >= 4:
+            import math as _math
+            beta = float(dprime2_beta) if dprime2_beta is not None else 3.0
+            new_score = _math.exp(-beta * abs(float(q[3]) - float(q[0])))
+            new_score = max(0.0, min(1.0, new_score))
+            dpp_score = {
+                "score": new_score,
+                "reliability": float(raw.get("reliability", 1.0)),
+                "details": {**(raw.get("details") or {}), "beta_override": beta},
+            }
+
     scores = [a["score"], t["score"], i["score"]]
     rels = [a["reliability"], t["reliability"], i["reliability"]]
     sub_metrics = {"appearance": a, "temporal": t, "identity": i}
@@ -89,6 +125,16 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
         scores.append(e["score"])
         rels.append(e["reliability"])
         sub_metrics["color_slope"] = e
+
+    if dp_score is not None:
+        scores.append(dp_score["score"])
+        rels.append(dp_score["reliability"])
+        sub_metrics["color_hist_anchor"] = dp_score
+
+    if dpp_score is not None:
+        scores.append(dpp_score["score"])
+        rels.append(dpp_score["reliability"])
+        sub_metrics["clip_trajectory"] = dpp_score
 
     comp = compose_score(scores, rels,
                          temperature=temperature,
@@ -104,6 +150,8 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
             "closeup_bbox_p50": closeup_bbox_p50,
             "color_hist_used": color_hist_path is not None,
             "color_slope_used": color_slope_path is not None,
+            "color_hist_anchor_used": color_hist_anchor_path is not None,
+            "clip_trajectory_used": clip_trajectory_path is not None,
         },
     }
 
@@ -132,6 +180,16 @@ def main():
                     help="optional override of sub-metric E's beta for "
                          "score = exp(-beta * max_abs_slope). Default None uses "
                          "the JSON's stored score (re-derive without re-scanning).")
+    ap.add_argument("--color_hist_anchor_dir", default=None,
+                    help="optional dir of <basename>_color_hist_anchor.json files "
+                         "(sub-metric D' — anchor-window Lab histogram drift)")
+    ap.add_argument("--dprime_beta", type=float, default=0.5,
+                    help="beta for D' score = exp(-beta * |q4-q1|). Default 0.5.")
+    ap.add_argument("--clip_trajectory_dir", default=None,
+                    help="optional dir of <basename>_clip_trajectory.json files "
+                         "(sub-metric D'' — CLIP-trajectory drift)")
+    ap.add_argument("--dprime2_beta", type=float, default=3.0,
+                    help="beta for D'' score = exp(-beta * |q4-q1|). Default 3.0.")
     ap.add_argument("--temporal_weight", choices=["log", "uniform", "sqrt"], default="log",
                     help="tOF weighting scheme: log (default), uniform, or sqrt")
     ap.add_argument("--output_path", required=True)
@@ -162,6 +220,14 @@ def main():
         color_slope_path = None
         if args.color_slope_dir:
             color_slope_path = os.path.join(args.color_slope_dir, base + "_color_slope.json")
+        color_hist_anchor_path = None
+        if args.color_hist_anchor_dir:
+            color_hist_anchor_path = os.path.join(
+                args.color_hist_anchor_dir, base + "_color_hist_anchor.json")
+        clip_trajectory_path = None
+        if args.clip_trajectory_dir:
+            clip_trajectory_path = os.path.join(
+                args.clip_trajectory_dir, base + "_clip_trajectory.json")
         try:
             out = evaluate_one_video(
                 video_id=base,
@@ -173,6 +239,10 @@ def main():
                 color_hist_alpha=args.color_hist_alpha,
                 color_slope_path=color_slope_path,
                 color_slope_beta=args.color_slope_beta,
+                color_hist_anchor_path=color_hist_anchor_path,
+                dprime_beta=args.dprime_beta,
+                clip_trajectory_path=clip_trajectory_path,
+                dprime2_beta=args.dprime2_beta,
                 temperature=args.temperature,
                 low_confidence_floor=args.low_confidence_floor,
                 temporal_weight=args.temporal_weight,
