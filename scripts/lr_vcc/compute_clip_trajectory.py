@@ -9,7 +9,8 @@ A consistent video stays close in CLIP-space; background_drift walks away
 because the scene literally changes. Score = exp(-beta * mean cosine distance
 from anchor for t > anchor_len).
 
-Server usage (env vsr or vbench, needs torch + open_clip):
+Server usage (env vsr or vbench, needs OpenAI clip package — pre-cached on
+the lab server at ~/.cache/clip/ViT-B-32.pt, no network needed):
     python -m scripts.lr_vcc.compute_clip_trajectory \
         --videos_dir results/synthetic_artefacts/background_drift \
         --output_path results/lr_vcc/clip_trajectory/background_drift \
@@ -17,6 +18,13 @@ Server usage (env vsr or vbench, needs torch + open_clip):
 
 Stride 8 is the recommended default — every 8th frame at 30 fps is 4 samples
 per second, plenty for a smooth trajectory and ~10x faster than full-rate.
+
+Implementation note: we use OpenAI's original `clip` package (PyPI: `clip`)
+instead of `open_clip` because open_clip insists on calling HuggingFace Hub
+even for pretrained="openai", and HF Hub is unreachable from the lab server.
+The `clip` package downloads from OpenAI's own CDN and caches at
+~/.cache/clip/. Same architecture, same embedding dim (512), same weights as
+"openai" tag in open_clip.
 """
 import argparse
 import json
@@ -59,7 +67,11 @@ def _load_sampled_frames(video_path: str, stride: int):
 
 
 def _embed_frames(frames, model, preprocess, device, batch_size=_DEFAULT_BATCH):
-    """BGR uint8 numpy frames → (N, D) float32 embeddings on CPU."""
+    """BGR uint8 numpy frames → (N, D) float32 embeddings on CPU.
+
+    Works with both `clip` (OpenAI's original) and `open_clip` models — the
+    preprocess transform and model.encode_image API are identical.
+    """
     import torch
     from PIL import Image
     embs = []
@@ -112,7 +124,7 @@ def trajectory_score(video_path: str, model, preprocess, device,
 
 
 def main():
-    import open_clip
+    import clip  # OpenAI's original CLIP package — cached at ~/.cache/clip/
     import torch
 
     ap = argparse.ArgumentParser()
@@ -124,9 +136,8 @@ def main():
     args = ap.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"loading open_clip ViT-B-32 (device={device}) ...", flush=True)
-    model, _, preprocess = open_clip.create_model_and_transforms(
-        "ViT-B-32", pretrained="laion2b_s34b_b79k", device=device)
+    print(f"loading OpenAI CLIP ViT-B/32 (device={device}) ...", flush=True)
+    model, preprocess = clip.load("ViT-B/32", device=device, download_root=None)
     model.eval()
 
     os.makedirs(args.output_path, exist_ok=True)
