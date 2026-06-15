@@ -275,25 +275,30 @@ rather than a metric bug.
 
 ### Flip ablation confirms the diagnosis empirically
 
-Predictions and outcomes line up cleanly:
+Composite-level v5 results on the 5 finished flip families (flip_invert
+still running, expected this afternoon):
 
-- `flip_invert` (histogram-disrupting control): PASS under both D' (4/5)
-  and D'' (4/5). Sanity check on both metrics — they detect the corruption
-  they were designed to detect.
-- `flip_channel_shuffle` (multiset-preserving): PASS under both D' (4/5)
-  and D'' (4/5). Channel permutation breaks per-channel-bin alignment
-  enough for both to fire.
-- `flip_transpose` (geometric, histogram-preserving): caught only by
-  D'' (3/5), not by D' (0/5). CLIP perceives rotation; pixel-distribution
-  metrics cannot.
-- `flip_horizontal` (pure mirror): only hhsz catches it under D'' (1/5).
-  **CLIP's known horizontal-flip robustness** (a documented property of
-  ViT trained on horizontally-flip-augmented data) makes this the hardest
-  case for D''. Both D and D' are blind by construction (histogram
-  identical). Becomes an honest "known limitation" thesis paragraph.
-- `flip_periodic`, `flip_elastic` (subtle structural): mostly invisible
-  to both. The high-frequency and low-amplitude transforms don't move the
-  per-quarter anchor distance enough.
+| flip transform | predicted (sub-metric level) | actual (v5 composite) |
+|---|---|:---:|
+| flip_horizontal | FLAT (D + D' + D'' all blind) | **0/5 PASS** ✓ |
+| flip_transpose | partial PASS via D'' | **3/5 PASS** (hhsz, KZ, mJog) |
+| flip_periodic | mostly FLAT (subtle) | **0/5 PASS** (1 WEAK on hhsz) |
+| flip_elastic | mostly FLAT (subtle) | **0/5 PASS** (1 WEAK on mJog) |
+| flip_channel_shuffle | PASS via both D' and D'' | **4/5 PASS** (1 FLAT on hhsz) |
+| flip_invert (control) | PASS by everyone | pending |
+
+The two clean predictions held: **flip_horizontal is composite-invisible on
+every single base** despite the full v5 composite combining 7 sub-metrics,
+empirically confirming that *no histogram- or pixel-statistics-based
+sub-metric in our pipeline catches pure horizontal mirror* — and CLIP's
+documented horizontal-flip robustness means D'' inherits the same blind
+spot. flip_channel_shuffle being caught at 4/5 confirms the multiset-vs-bin
+distinction predicted by the ablation design.
+
+`flip_transpose` is the most interesting partial result: it catches on the
+three multi-content bases (hhsz cooking, KZ scenes-with-text, mJog
+lifestyle TV) but fails on 7WHI (single face — the slow-fast pathology
+again) and BrRLK (cartoon — the same content-domain limit we keep hitting).
 
 ---
 
