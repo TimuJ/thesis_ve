@@ -116,26 +116,52 @@ useful pattern for any China-network-isolated GPU box.
 
 ---
 
-## 3. flip_invert (the 12th matrix cell) — attempted, blocked
+## 3. flip_invert (the 12th matrix cell) — identity stack rebuilt, run in progress
 
-The one incomplete item is the `flip_invert` identity row — the histogram-
-disrupting *control* artefact whose identity-slow-fast stage was killed when
-the original server died on June 15.
+The `flip_invert` identity row — the histogram-disrupting *control* artefact
+whose identity-slow-fast stage was killed when the original server died on
+June 15 — was pushed all the way to a running state this period. It required
+standing up the entire VBench-2.0 identity stack from scratch on the new
+server, which surfaced a chain of problems (all solved; see
+`docs/2026-07-01-new-server-and-gotchas.md`):
 
-Progress this period:
-- Confirmed identity does **not** need Detectron2 (that was only for the
-  human masks, which we already have). The identity path needs only
-  RetinaFace + ArcFace.
-- ArcFace weight (98 MB, Google-Drive-hosted, and Drive is unreachable from
-  the host) was fetched on the Mac and bridged to the server successfully.
-- RetinaFace (`pip install retinaface`) did not install cleanly, and its
-  weight prefetch (a GitHub release) hung on the flaky server↔GitHub link.
+1. **Detectron2 not needed** — the identity path uses only RetinaFace +
+   ArcFace; Detectron2 was only for the human masks (already have those).
+2. **ArcFace weight** (98 MB, Google-Drive-hosted, Drive unreachable from the
+   host) — fetched on the Mac, bridged via GitHub, placed at the exact path
+   VBench-2.0 expects (`~/.cache/vbench2/arcface/resnet18_110.pth`).
+3. **RetinaFace package** — the PyPI `retinaface` is a *TensorFlow* package;
+   the correct one (ternaus, provides `predict_single`) hard-pins
+   `torch==1.9.0`. Installed the package source directly into site-packages,
+   bypassing pip's dependency resolution.
+4. **RetinaFace weight** — a GitHub-release zip; the server download hung
+   repeatedly and left a truncated 40 MB partial. Fixed with a fresh
+   retry-looping curl in tmux → full 97 MB, verified it loads (456 keys).
+5. **VBench-2.0 import chain** — a dedicated `identity` conda env plus an
+   auto-installing loop for the transitive deps (gdown, scenedetect, mmengine,
+   …) until `import vbench2` was clean.
+6. **The patched `human_identity.py`** — the fresh VBench clone is *unpatched*
+   and crashed with `ZeroDivisionError` (flip_invert inverts colours →
+   RetinaFace finds no faces → `score/num` with num=0). A rigorous md5 diff of
+   our git-vendored `vbench2/` package against the fresh clone showed **exactly
+   one file differs** (`human_identity.py`, carrying the multi-face +
+   late-reference + num-guard patches). Deployed our patched copy over the
+   clone — flip_invert identity now uses the *same* code as the other 11
+   artefacts.
+7. **Parallelisation** — the sequential run was ~9 h due to shared-GPU
+   contention (both A100s at 100 % from other tenants). Split the 25 clips
+   across 8 parallel workers (4 per GPU). First attempt hit a
+   concurrent-cache-extraction race that corrupted the RetinaFace zip; fixed by
+   warming the cache once before spawning workers, and staggering any
+   relaunches by 25 s. All 8 workers now running clean.
 
-flip_invert remains blocked here. It is the least scientifically important
-of the 12 artefacts (a positive control that is predicted to PASS on all
-bases), so the synthetic-validation story is essentially complete at 11/12
-cells regardless. It can be finished opportunistically once RetinaFace
-installs, but it does not gate any thesis claim.
+**Status at report time:** all 8 identity workers running; ETA ~1.5–2.5 h.
+On completion, `scripts/finalize_flip_invert.sh` merges the 8 batch JSONs,
+computes the flip_invert v5 composite (all other stage JSONs already local),
+rebuilds the verdict matrix to a complete **12/12**, and commits — one command,
+fully staged. This cell is a positive control (predicted PASS via the
+histogram-disrupting sub-metrics; identity is expected to read ~N/A because
+inverted faces are undetectable), so it confirms rather than changes the story.
 
 ---
 
