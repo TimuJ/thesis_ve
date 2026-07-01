@@ -11,24 +11,40 @@ SSH="ssh -p 11007 -o ConnectTimeout=12 -i $HOME/.ssh/id_ed25519_timuj timur@inst
 REPO="$HOME/Desktop/Timur/thesis_ve"
 cd "$REPO"
 
-echo "=== [1] check server identity run finished ==="
-if ! $SSH 'test -f ~/flip_identity.done' 2>/dev/null; then
-  echo "identity run NOT done yet on server. Check ~/flip_identity.log there. Aborting."
-  $SSH 'grep -cE "slow =|fused =" ~/flip_identity.log 2>/dev/null | xargs -I{} echo "videos scored so far: {}/5"; grep -E "Traceback|Error" ~/flip_identity.log 2>/dev/null | tail -3' 2>/dev/null
+echo "=== [1] check all 8 parallel identity batches finished ==="
+NDONE=$($SSH 'ls ~/results/synthetic_artefacts_eval/identity/flip_invert/batch_*/results_*.json 2>/dev/null | wc -l' 2>/dev/null)
+if [ "${NDONE:-0}" -lt 8 ]; then
+  echo "only ${NDONE:-0}/8 batches finished. Aborting — wait for the rest."
+  $SSH 'ps aux | grep human_identity | grep -v grep | wc -l | xargs echo "workers still running:"' 2>/dev/null
   exit 1
 fi
-echo "identity run complete."
+echo "all 8 batches complete."
 
-echo "=== [2] pull the identity JSON ==="
+echo "=== [2] merge 8 parallel batch identity JSONs (server-side) + pull ==="
+$SSH 'bash -lc "
+BASE=~/results/synthetic_artefacts_eval/identity/flip_invert
+python3 - <<PYEOF
+import json, glob, os
+base=os.path.expanduser(\"~/results/synthetic_artefacts_eval/identity/flip_invert\")
+merged={\"per_video\":{}}
+for bj in sorted(glob.glob(base+\"/batch_*/results_*.json\")):
+    d=json.load(open(bj))
+    for v,pv in d.get(\"per_video\",{}).items():
+        merged[\"per_video\"][v]=pv
+out=base+\"/results_merged_flip_invert.json\"
+json.dump(merged, open(out,\"w\"))
+print(\"merged videos:\", len(merged[\"per_video\"]), \"->\", out)
+PYEOF
+"' 2>/dev/null
 mkdir -p results/synthetic_artefacts_eval/identity/flip_invert
 for try in 1 2 3 4 5 6; do
   rsync -a --partial -e "ssh -p 11007 -o ServerAliveInterval=15 -i $HOME/.ssh/id_ed25519_timuj" \
-    timur@instance-xzujqxam.yc.smartml.cn:'~/results/synthetic_artefacts_eval/identity/flip_invert/results_*.json' \
+    timur@instance-xzujqxam.yc.smartml.cn:'~/results/synthetic_artefacts_eval/identity/flip_invert/results_merged_flip_invert.json' \
     results/synthetic_artefacts_eval/identity/flip_invert/ 2>/dev/null && break
   echo "  rsync retry $try"; sleep 4
 done
-ID=$(ls -t results/synthetic_artefacts_eval/identity/flip_invert/results_*.json 2>/dev/null | head -1)
-if [ -z "$ID" ]; then echo "no identity JSON pulled. Aborting."; exit 1; fi
+ID=results/synthetic_artefacts_eval/identity/flip_invert/results_merged_flip_invert.json
+
 echo "identity JSON: $ID"
 python3 -c "import json; d=json.load(open('$ID')); print('  videos in JSON:', len(d.get('per_video',{})))"
 
