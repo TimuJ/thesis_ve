@@ -155,13 +155,29 @@ server, which surfaced a chain of problems (all solved; see
    warming the cache once before spawning workers, and staggering any
    relaunches by 25 s. All 8 workers now running clean.
 
-**Status at report time:** all 8 identity workers running; ETA ~1.5–2.5 h.
-On completion, `scripts/finalize_flip_invert.sh` merges the 8 batch JSONs,
-computes the flip_invert v5 composite (all other stage JSONs already local),
-rebuilds the verdict matrix to a complete **12/12**, and commits — one command,
-fully staged. This cell is a positive control (predicted PASS via the
-histogram-disrupting sub-metrics; identity is expected to read ~N/A because
-inverted faces are undetectable), so it confirms rather than changes the story.
+**Status: COMPLETE (2026-07-02).** All 8 identity workers finished cleanly —
+25/25 clips processed, zero crashes on the cache-warmed second attempt.
+`scripts/finalize_flip_invert.sh` then merged the 8 batch JSONs, computed the
+flip_invert v5 composite, rebuilt the verdict matrix to a complete **12/12**,
+and committed (`45a39b9`) — one command, fully staged.
+
+The cell landed exactly as the positive-control prediction said it would —
+**PASS on all 5 bases** (monotone decrease of LR-VCC with severity):
+
+| base | slope | verdict |
+|------|------:|:-------:|
+| 7WHI2L_FDNg | −0.147 | PASS |
+| BrRLKMbBTYQ | −0.224 | PASS |
+| KZ8p6b1zJ9U | −0.348 | PASS |
+| hhszUXL1Cu8 | −0.391 | PASS |
+| mJog8DlRk_4 | −0.069 | PASS |
+
+As predicted, the identity sub-metric read ~N/A (RetinaFace finds no faces in
+colour-inverted frames); the histogram/appearance sub-metrics (D/D'/E) carried
+the signal — which is precisely the behaviour the D→D'/D'' redesign was built
+to guarantee. So this control confirms rather than changes the story: the metric
+correctly reads a purely histogram-disrupting corruption as degradation even
+when the identity channel is blind.
 
 ---
 
@@ -172,7 +188,7 @@ the SR videos also on the new server):
 
 | artefact | status |
 |----------|--------|
-| v5 synthetic verdict matrix (12 artefacts × 5 bases) | complete, 11/12 rows (flip_invert identity pending) |
+| v5 synthetic verdict matrix (12 artefacts × 5 bases) | **complete, 12/12 rows, committed (`45a39b9`)** |
 | v5 real-model ranking (MGLD vs UAV) | **complete, committed** |
 | D / D' / D'' three-way comparison | complete |
 | All metric-stage JSONs (2627 files) | local + git-tracked figures |
@@ -197,9 +213,8 @@ result now in hand, the remaining work is almost entirely writing:
 3. **β/α sensitivity sweep + leave-one-out sub-metric ablation** — both
    recompute-only from cached JSONs, no GPU. Adds rigour reviewers will
    expect. ~1 day.
-4. **flip_invert** — finish opportunistically if RetinaFace cooperates;
-   otherwise report the 11/12 matrix with the control cell noted as
-   "infrastructure-interrupted, predicted PASS."
+4. **flip_invert** — ✅ done (2026-07-02). The 12/12 matrix is closed; no
+   remaining infrastructure-interrupted cells.
 5. **July 13–14**: internal proofread, `BlindReview=true`, final LaTeX build.
 6. **July 15**: submit.
 
