@@ -7,9 +7,10 @@
 | flip_channel_shuffle | -0.025 WEAK | -0.080 PASS | -0.305 PASS | +0.003 FLAT | -0.058 PASS |
 | flip_elastic | -0.002 FLAT | +0.000 FLAT | -0.002 FLAT | +0.007 FLAT | -0.022 WEAK |
 | flip_horizontal | +0.016 FLAT | +0.005 FLAT | -0.000 FLAT | -0.009 FLAT | -0.017 FLAT |
+| flip_invert | -0.147 PASS | -0.224 PASS | -0.348 PASS | -0.391 PASS | -0.069 PASS |
 | flip_periodic | -0.009 FLAT | -0.015 FLAT | +0.003 FLAT | -0.018 FLAT | -0.007 FLAT |
 | flip_transpose | +0.012 FLAT | +0.000 FLAT | -0.052 PASS | -0.055 PASS | -0.031 WEAK |
 | identity_degradation | -0.008 FLAT | -0.001 FLAT | -0.029 WEAK | -0.021 WEAK | -0.008 FLAT |
 | identity_drift | +0.001 FLAT | -0.001 FLAT | -0.015 FLAT | -0.026 WEAK | -0.008 FLAT |
 
-clean (PASS+WEAK): 23/55 conditions
+clean (PASS+WEAK): 28/60 conditions
