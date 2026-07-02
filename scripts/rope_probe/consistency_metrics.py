@@ -9,6 +9,7 @@ def score_condition(pred_frames, ref_frames, compute_lpips=True):
 
 
 def write_condition_json(out_path, condition, scores_vs_baseline, scores_vs_gt):
+    """Write condition and scores to JSON file."""
     payload = {
         "condition": condition,
         "vs_baseline": scores_vs_baseline,

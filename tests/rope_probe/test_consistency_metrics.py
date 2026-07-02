@@ -1,5 +1,6 @@
 # tests/rope_probe/test_consistency_metrics.py
 import json
+import pytest
 import numpy as np
 from scripts.rope_probe.consistency_metrics import (
     score_condition, write_condition_json,
@@ -10,9 +11,11 @@ def _frames(n, val):
     return [np.full((16, 16, 3), val, dtype=np.uint8) for _ in range(n)]
 
 
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 def test_identical_frames_score_infinite_psnr():
-    # skimage returns inf for zero-MSE pairs but emits a divide-by-zero warning;
-    # using > 90.0 keeps output pristine while still encoding the expected behaviour.
+    # Identical frames give zero MSE, causing skimage's peak_signal_noise_ratio
+    # to return inf and emit a divide-by-zero RuntimeWarning, which we ignore
+    # via the filterwarnings mark. Assert > 90.0 holds for inf.
     a = _frames(3, 100)
     out = score_condition(a, a, compute_lpips=False)
     assert out["PSNR_mean"] > 90.0
@@ -20,7 +23,6 @@ def test_identical_frames_score_infinite_psnr():
 
 
 def test_frame_count_mismatch_raises():
-    import pytest
     with pytest.raises(AssertionError):
         score_condition(_frames(3, 100), _frames(2, 100), compute_lpips=False)
 
