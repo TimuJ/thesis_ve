@@ -21,65 +21,14 @@ Comparisons are on the raw bf16 output tensors upcast to float32, before any
 uint8 quantisation, so sub-quantum drift is visible.
 """
 import argparse
-import importlib.util
 import json
 import os
-import sys
 
-import cv2
 import torch
 
 from scripts.rope_probe.flashvsr_hook import default_table_builder, install_position_hook
+from scripts.rope_probe.flashvsr_runner import load_infer_module, prepare, run_once
 from scripts.rope_probe.position_override import PositionOverride
-
-PAD_LR = 6   # 320x180 -> 320x192 reflect; model I/O 1280x768 (matches bench run)
-TH, TW = 768, 1280
-
-
-def load_infer_module():
-    sys.path.insert(0, os.getcwd())
-    spec = importlib.util.spec_from_file_location(
-        "infer_tiny", "infer_flashvsr_v1.1_tiny.py")
-    m = importlib.util.module_from_spec(spec)
-    sys.modules["infer_tiny"] = m
-    spec.loader.exec_module(m)
-    return m
-
-
-def prepare(path, n_frames):
-    cap = cv2.VideoCapture(path)
-    frames = []
-    while len(frames) < n_frames:
-        ok, f = cap.read()
-        if not ok:
-            break
-        frames.append(cv2.cvtColor(f, cv2.COLOR_BGR2RGB))
-    cap.release()
-    assert len(frames) == n_frames, f"only {len(frames)} frames in {path}"
-    k = (5 - n_frames) % 8
-    frames = frames + [frames[-1]] * (k + 4)
-    ts = []
-    for fr in frames:
-        p = cv2.copyMakeBorder(fr, PAD_LR, PAD_LR, 0, 0, cv2.BORDER_REFLECT_101)
-        up = cv2.resize(p, (TW, TH), interpolation=cv2.INTER_CUBIC)
-        t = torch.from_numpy(up).to(torch.float32).permute(2, 0, 1) / 255.0 * 2.0 - 1.0
-        ts.append(t.to(torch.bfloat16))
-    vid = torch.stack(ts, 0).permute(1, 0, 2, 3).unsqueeze(0)
-    # tiny (non-long) pipeline expects the LQ tensor on the GPU (the long
-    # variant stages on CPU; the short one does not — cf. stock infer scripts)
-    return vid.to("cuda"), vid.shape[2]
-
-
-def run_once(pipe, LQ, F):
-    torch.cuda.empty_cache()
-    out = pipe(
-        prompt="", negative_prompt="", cfg_scale=1.0, num_inference_steps=1,
-        seed=0, LQ_video=LQ, num_frames=F, height=TH, width=TW,
-        is_full_block=False, if_buffer=True,
-        topk_ratio=2.0 * 768 * 1280 / (TH * TW), kv_ratio=3.0,
-        local_range=11, color_fix=True,
-    )
-    return out.detach().to(torch.float32).cpu()
 
 
 def max_abs_diff(a, b):
