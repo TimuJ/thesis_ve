@@ -105,10 +105,48 @@ indices via the explicit-`indices` field or extend the helper with a `base` argu
 - Server setup script: `/tmp/flashvsr_setup.sh` (staged, resumable), log at
   `/tmp/flashvsr_setup.log`, tmux session `flashvsr_setup`.
 
-## Baseline run + VRAM (Task 4 Step 2 gate)
+## Baseline run + VRAM (Task 4 Step 2 gate) — PASSED 2026-07-02
 
-_Pending — setup in progress. To fill once the smoke test completes:_
+Smoke test: stock v1.1 tiny pipeline on the bundled `example0.mp4`
+(384×384, 85 frames → ×4 → 1536×1536, 89 padded frames, 9 streaming chunks),
+driven by an external wrapper (`/tmp/flashvsr_smoke.py` on the server) that
+imports the stock `infer_flashvsr_v1.1_tiny.py` by file path — **zero repo
+modification**.
 
-- [ ] exact baseline command
-- [ ] measured VRAM (`nvidia-smi`) — must fit 40 GB with headroom
-- [ ] output sanity check (PNG frames, visually sane)
+- **Command** (tmux, GPU 0):
+  `cd ~/repos/FlashVSR/examples/WanVSR && CUDA_VISIBLE_DEVICES=0 python /tmp/flashvsr_smoke.py`
+  (wrapper must `sys.path.insert(0, os.getcwd())` — the stock script imports
+  `utils.*` relative to `examples/WanVSR`; weights paths are cwd-relative too)
+- **Result:** 24.2 s inference, **peak VRAM 24.66 GiB** at 1536×1536 output
+  (fits the 40 GB A100 with headroom; our probe outputs, 1280×720, will be far
+  smaller), 3.67 fps under heavy tenant contention.
+- **Output sanity:** 85 PNGs at `~/results/rope_probe/_baseline_smoke/frames/`;
+  stats healthy (mean ≈ 118.5, std ≈ 60, frame0→1 mean-abs-diff 2.47 — real
+  content, temporally continuous).
+
+## Pristine-repo guarantee (for LR-VCC benchmark reuse)
+
+FlashVSR may later be evaluated *unmodified* as a method row in the LR-VCC
+benchmark, so the probe never edits the repo:
+
+- Server clone pinned at commit `b527c6f`, tagged **`pristine-2026-07-02`**;
+  `git status` clean (only the untracked `FlashVSR-v1.1/` weights dir).
+- The probe hook (Task 5) is a **runtime monkeypatch** in our own
+  `scripts/rope_probe/flashvsr_hook.py`; verify before any run with
+  `cd ~/repos/FlashVSR && git status --short`.
+- diffsynth is importable via a `.pth` file in the `flashvsr` env's
+  site-packages pointing at `~/repos/FlashVSR` (the editable install fails on
+  the setuptools-81 `pkg_resources` gotcha; `.pth` is equivalent and clean).
+
+## Server env facts (standup 2026-07-02, all resolved)
+
+- conda env **`flashvsr`** (py3.11): torch 2.6.0+cu124, FlashVSR requirements
+  (torch lines excluded), `modelscope` (diffsynth hard-imports it).
+- **Block-Sparse-Attention** compiled from source with
+  `BLOCK_SPARSE_ATTN_CUDA_ARCHS="80"` — upstream setup.py emits a
+  `compute_120` gencode that CUDA 12.4's nvcc rejects (`nvcc fatal`); pinning
+  the arch list to sm_80 (A100) fixes it. ~15 min at `MAX_JOBS=8`.
+- Import-order gotcha: `import torch` **before** `block_sparse_attn`
+  (the CUDA extension needs torch's `libc10.so` on the loader path).
+- Setup scripts (staged/resumable, logs in `/tmp`): `/tmp/flashvsr_setup.sh`,
+  `/tmp/flashvsr_fix45.sh`; stage flags `/tmp/flashvsr_setup.stage[1-6].done`.
