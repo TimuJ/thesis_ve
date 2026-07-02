@@ -291,7 +291,8 @@ check that would explain FlashVSR's weakest benchmark cell.
    story (a modern method wins; LR-VCC still discriminates via D'') but was
    computed after the nominal freeze — needs an explicit freeze-exception
    decision like Q1/Q3.
-5. Priority between thesis writing and the RoPE probe for the coming two
-   weeks: the probe instrument is ready (Task 5 gate passed), but July 15 is
-   the blind-review deadline — proposal: probe runs only as background GPU
-   jobs, all foreground time on writing.
+5. Priority between thesis writing and the RoPE probe: the probe instrument
+   is ready (Task 5 gate passed), and the blind-review deadline is confirmed
+   as **July 25** (not July 15 — ten extra days). Proposal: probe continues
+   as background GPU jobs + short foreground bursts through ~July 8, then
+   full focus on writing.
