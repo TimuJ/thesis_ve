@@ -1,4 +1,5 @@
 from scripts.rope_probe.position_override import (
+    transform_indices,
     PositionOverride, temporal_indices, is_noop,
 )
 
@@ -43,3 +44,36 @@ def test_explicit_indices_length_must_match():
     import pytest
     with pytest.raises(ValueError):
         temporal_indices(3, ov)
+
+
+def test_transform_indices_noop_is_identity():
+    ov = PositionOverride()
+    assert transform_indices([4, 5], ov) == [4, 5]
+    assert transform_indices([0, 1, 2, 3, 4, 5], ov) == [0, 1, 2, 3, 4, 5]
+
+
+def test_transform_indices_shift_on_chunk_base():
+    ov = PositionOverride(shift=100)
+    assert transform_indices([4, 5], ov) == [104, 105]
+
+
+def test_transform_indices_stretch_scales_chunk_base():
+    ov = PositionOverride(stretch=2.0)
+    assert transform_indices([4, 5], ov) == [8, 10]
+
+
+def test_transform_indices_explicit_indices_win():
+    ov = PositionOverride(indices=[7, 42])
+    assert transform_indices([4, 5], ov) == [7, 42]
+
+
+def test_transform_indices_explicit_length_mismatch_raises():
+    import pytest
+    ov = PositionOverride(indices=[7])
+    with pytest.raises(ValueError):
+        transform_indices([4, 5], ov)
+
+
+def test_temporal_indices_consistent_with_transform():
+    ov = PositionOverride(shift=3, stretch=1.5)
+    assert temporal_indices(4, ov) == transform_indices([0, 1, 2, 3], ov)

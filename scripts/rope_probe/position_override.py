@@ -18,13 +18,19 @@ class PositionOverride:
     length: Optional[int] = None          # for the chunked/extended path (informational)
 
 
-def temporal_indices(base_len: int, ov: PositionOverride) -> list:
+def transform_indices(base: list, ov: PositionOverride) -> list:
+    """Apply an override to arbitrary baseline positions (e.g. a streaming
+    chunk's [4+2i, 5+2i]), not just range(n)."""
     if ov.indices is not None:
-        if len(ov.indices) != base_len:
+        if len(ov.indices) != len(base):
             raise ValueError(
-                f"explicit indices len {len(ov.indices)} != base_len {base_len}")
+                f"explicit indices len {len(ov.indices)} != base len {len(base)}")
         return list(ov.indices)
-    return [int(round(i * ov.stretch)) + ov.shift for i in range(base_len)]
+    return [int(round(j * ov.stretch)) + ov.shift for j in base]
+
+
+def temporal_indices(base_len: int, ov: PositionOverride) -> list:
+    return transform_indices(list(range(base_len)), ov)
 
 
 def is_noop(ov: PositionOverride) -> bool:
