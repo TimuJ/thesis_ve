@@ -65,7 +65,9 @@ def prepare(path, n_frames):
         t = torch.from_numpy(up).to(torch.float32).permute(2, 0, 1) / 255.0 * 2.0 - 1.0
         ts.append(t.to(torch.bfloat16))
     vid = torch.stack(ts, 0).permute(1, 0, 2, 3).unsqueeze(0)
-    return vid, vid.shape[2]
+    # tiny (non-long) pipeline expects the LQ tensor on the GPU (the long
+    # variant stages on CPU; the short one does not — cf. stock infer scripts)
+    return vid.to("cuda"), vid.shape[2]
 
 
 def run_once(pipe, LQ, F):
