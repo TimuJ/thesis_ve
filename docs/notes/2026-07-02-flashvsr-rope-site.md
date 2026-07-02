@@ -138,6 +138,31 @@ benchmark, so the probe never edits the repo:
   site-packages pointing at `~/repos/FlashVSR` (the editable install fails on
   the setuptools-81 `pkg_resources` gotcha; `.pth` is equivalent and clean).
 
+## Task 5 gate — PASSED 2026-07-02 (bit-exact)
+
+Hook design (better than planned): instead of monkeypatching a pipeline
+function, `scripts/rope_probe/flashvsr_hook.py` swaps `dit.freqs[0]` for a
+duck-typed `TemporalFreqTable` whose `__getitem__` routes every slice through
+the `PositionOverride` — one injection point covers tiny / tiny_long / full /
+`WanModel.forward`; no-op returns the original table view (bit-exact by
+construction); out-of-range positions served from an on-demand extended table
+built by the model's own `precompute_freqs_cis` (prefix bitwise-asserted).
+
+`verify_noop.py` five-run gate on hhsz first 85 frames (GPU 0, one process,
+seed 0), comparing raw bf16 outputs upcast to fp32:
+
+| check | value | meaning |
+|---|---|---|
+| floor (unhooked rerun) | **0.0** | pipeline fully deterministic in-process |
+| no-op drift | **0.0** | hooked no-op bit-exact — gate PASS |
+| shift=+1 diff | 0.2949 | hook engages (and: +1 latent position visibly changes output) |
+| after restore() | **0.0** | restore clean |
+
+The shift-engagement check exists to kill the silent-no-wire failure mode; its
+magnitude is *not* yet evidence about H0 (could be bf16 phase-rounding
+amplification, first-chunk boundary, or genuine leakage — Phase 1's sweep with
+per-frame aggregate metrics answers that properly).
+
 ## Server env facts (standup 2026-07-02, all resolved)
 
 - conda env **`flashvsr`** (py3.11): torch 2.6.0+cu124, FlashVSR requirements
