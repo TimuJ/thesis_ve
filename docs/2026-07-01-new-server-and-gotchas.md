@@ -164,3 +164,18 @@ the 773 MB of MGLD SR outputs had to be bridged to the server.)
 - Restore-from-scratch procedure: `docs/server_restore_guide.md`
 - The finalize-flip_invert one-shot: `scripts/finalize_flip_invert.sh`
 - Weekly narrative: `reports/Timur_Iakshibaev_2026-06-29_to_2026-07-01.md`
+
+## Addenda (2026-07-02, RoPE-probe / FlashVSR work)
+
+- **setuptools<81 gotcha also hits the `vsr` env** (not just `vbench`):
+  `pyiqa`→`clip`→`pkg_resources` import chain. Same fix:
+  `pip install 'setuptools<81'` inside `vsr`.
+- **Server now has GitHub push auth** (fine-grained PAT, contents:write on
+  `TimuJ/thesis_ve` only, expires ~2026-07-09, stored in `~/.git-credentials`).
+  Server→Mac bulk transfer = reverse bridge: push orphan branch from server,
+  pull on Mac, delete branch. Used for FlashVSR mp4s (314 MB) + metric JSONs.
+- **FlashVSR env (`flashvsr`)**: torch 2.6.0+cu124, Block-Sparse-Attention
+  compiled with `BLOCK_SPARSE_ATTN_CUDA_ARCHS="80"` (upstream emits compute_120
+  → nvcc 12.4 fatal), `import torch` before `block_sparse_attn` (libc10.so),
+  `modelscope` required by diffsynth, diffsynth wired via .pth (editable
+  install fails on the setuptools gotcha). Repo pinned `pristine-2026-07-02`.
