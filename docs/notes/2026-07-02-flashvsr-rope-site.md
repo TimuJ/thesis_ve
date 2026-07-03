@@ -163,6 +163,49 @@ magnitude is *not* yet evidence about H0 (could be bf16 phase-rounding
 amplification, first-chunk boundary, or genuine leakage — Phase 1's sweep with
 per-frame aggregate metrics answers that properly).
 
+## Task 6 first sweeps — hhsz 85 frames, pyiqa-scored (2026-07-03)
+
+Self-consistency vs the in-process baseline; **pyiqa** (IQA-PyTorch), PSNR/SSIM
+RGB (`test_y_channel=False`, DOVE convention), pyiqa LPIPS — NOT
+skimage/lpips-pkg, so numbers are comparable with the project's baselines.
+Driver saves frames only; `score_conditions.py` scores separately (vsr env).
+JSONs: `results/rope_probe/{shift,stretch}/hhsz85/`.
+
+**Shift control (H0)** — k ∈ {2, 8, 32, 128, 512, 996}, positions stay in-table:
+
+PSNR 52.9–53.1 dB, SSIM 0.9976–0.9978, LPIPS 0.0006 — **flat, no trend in k**
+even at the table edge (k=996 → top position 1020). The sparse streaming
+attention is effectively shift-invariant in-range: RoPE's relative property
+survives LCSA + bf16; no meaningful absolute-position leakage. (H0: no
+leakage — the 0.295 max-abs from the gate's shift-1 check was numerics-level
+at PSNR ≈ 53 dB, as suspected.)
+
+**Stretch (toward H1)** — s ∈ {2…64}, same frames, positions spread out:
+
+| s | PSNR | SSIM | LPIPS |
+|---|-----:|-----:|------:|
+| 2 | 35.65 | 0.9460 | 0.0419 |
+| 4 | 32.72 | 0.9125 | 0.0744 |
+| 8 | 32.14 | 0.9019 | 0.0825 |
+| 16 | 32.64 | 0.9084 | 0.0788 |
+| 32 | 33.58 | 0.9230 | 0.0651 |
+| 64 | 32.10 | 0.8988 | 0.0877 |
+
+Reads: (1) stretching relative distances changes output ~20 dB more than any
+in-range shift — the model is sensitive to position *geometry*, not position
+*offset*; (2) the response saturates after s≈4–8 with a mild non-monotonic
+wobble (s=16/32 slightly closer to baseline than s=8 — possibly RoPE
+frequency periodicity; worth a finer sweep); (3) s=64 pushes positions to
+~1536, past the 1024-row table — the extended-table path ran in production
+and output degraded smoothly, **no crash / no collapse** on this 85-frame
+clip.
+
+Caveats: self-consistency measures *change*, not *quality* — the H1 verdict
+needs vs-GT and LR-VCC on longer clips (next: longer-window sweeps + Task 7
+LR-VCC pass + Task 8 curves). A correctly-relative attention is *expected* to
+respond to stretch (geometry changes); the question is whether output
+*quality* degrades where long videos actually operate.
+
 ## Server env facts (standup 2026-07-02, all resolved)
 
 - conda env **`flashvsr`** (py3.11): torch 2.6.0+cu124, FlashVSR requirements

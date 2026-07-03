@@ -269,9 +269,34 @@ FlashVSR-specific anatomy run was needed.)
   replaces SparkVSR — tests whether window attention avoids the drift that
   absolute streaming positions incur.
 
-Next on the probe: Task 6 (shift/stretch sweep driver through the verified
-hook), then Phase-1 shift-control curves, and the D''-vs-position causal
-check that would explain FlashVSR's weakest benchmark cell.
+### 6.4 July 3 — first sweep results: shift-invariance holds; stretch is what bites
+
+Task 6 (sweep driver) ran the first two position sweeps on an 85-frame clip,
+scored with **pyiqa / IQA-PyTorch under the project's DOVE RGB convention**
+(same metric stack as every verified baseline number — an early scikit-image
+scoring pass was discarded and redone for exactly this comparability reason).
+
+- **Shift control (H0):** temporal indices shifted by k ∈ {2…996} with
+  content fixed → self-consistency PSNR **52.9–53.1 dB flat** (SSIM 0.998,
+  LPIPS 0.0006), no trend in k even at the RoPE table edge. The streaming
+  attention is effectively shift-invariant in-range — **no meaningful
+  absolute-position leakage**. RoPE's relative property survives the sparse
+  attention and bf16.
+- **Stretch (toward H1):** spreading the same frames' positions by s ∈
+  {2…64} → PSNR drops to **35.7 (s=2) and ~32 dB (s≥4)**, LPIPS rises ~140×
+  over the shift condition, with a mild non-monotonic wobble (s=16/32
+  slightly closer to baseline — possibly RoPE frequency periodicity).
+  At s=64 positions reach ~1536, *past* the 1024-row table: the probe's
+  extended-table path ran in production and degradation stayed smooth —
+  no collapse on this short clip.
+- **Interpretation (honest):** the model responds to position *geometry*,
+  not position *offset*. Self-consistency measures change, not quality —
+  the H1 quality verdict needs vs-GT + LR-VCC scoring on longer windows,
+  which is the next probe step (Tasks 7–8).
+
+Probe artefacts: `results/rope_probe/{shift,stretch}/hhsz85/` (per-condition
+frames on the server, pyiqa JSONs mirrored locally);
+`docs/notes/2026-07-02-flashvsr-rope-site.md` §"Task 6 first sweeps".
 
 ## Open questions for the meeting
 
