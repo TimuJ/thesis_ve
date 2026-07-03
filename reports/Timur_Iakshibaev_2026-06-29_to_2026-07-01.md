@@ -298,6 +298,21 @@ Probe artefacts: `results/rope_probe/{shift,stretch}/hhsz85/` (per-condition
 frames on the server, pyiqa JSONs mirrored locally);
 `docs/notes/2026-07-02-flashvsr-rope-site.md` §"Task 6 first sweeps".
 
+**July 4 addendum — supervisor framing integrated + dose-response.** The
+group's "21-frame window / ~80 frames" maps exactly onto the probe: 81 pixel
+frames = 21 latent frames = the DiT's trained RoPE range (rows 0–20); our
+shift/stretch axes decompose window-exit into *magnitude* (harmless, 53 dB)
+vs *distance* (what bites, ~32 dB) extrapolation — directly relevant to the
+planned window-extension study (extending 21→N latents is the distance
+axis). A fine/fractional sweep (s ∈ 0.25…3.0) shows a smooth monotone
+dose-response in both directions with no cliff; naive integer-rounded
+position *compression* (the PI trick) perturbs at least as much as dilation,
+though a rounding confound (duplicate positions) must be removed via a
+continuous-position table builder before reading that as "PI won't help."
+Proposed causal tool for the window-extension work: run extended windows
+stock vs position-compressed (stretch = 21/N) — quality recovery would pin
+the bottleneck on RoPE extrapolation specifically.
+
 ## Open questions for the meeting
 
 1. Is the unanimous MGLD > UAV v5 ranking (with the honest note that the two

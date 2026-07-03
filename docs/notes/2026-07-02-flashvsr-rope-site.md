@@ -235,6 +235,42 @@ Quality recovers → RoPE extrapolation is the bottleneck (and PI is the fix);
 doesn't recover → capacity/content, not positions. A fractional+fine stretch
 sweep (s ∈ {0.25…3.0}) is running to chart the PI side of that curve.
 
+## Fine/fractional stretch sweep (2026-07-04) — dose-response around s=1
+
+Same 85-frame clip, pyiqa-scored self-consistency vs baseline
+(`results/rope_probe/stretch_fine/hhsz85/`):
+
+| s | PSNR | SSIM | LPIPS |
+|---|-----:|-----:|------:|
+| 0.25 | 31.23 | 0.887 | 0.091 |
+| 0.5 | 33.89 | 0.928 | 0.059 |
+| 0.75 | 36.48 | 0.954 | 0.033 |
+| 1.0 | — baseline — | | |
+| 1.25 | 38.08 | 0.963 | 0.026 |
+| 1.5 | 37.63 | 0.962 | 0.029 |
+| 3.0 | 33.47 | 0.921 | 0.064 |
+
+Reads:
+
+1. **Monotone dose-response in both directions:** the further position
+   geometry deviates from trained (s=1), the larger the output change. No
+   cliff anywhere — smooth throughout.
+2. **Compression is NOT gentler than dilation** at matched deviation:
+   s=0.5 (33.9 dB) vs s=2 (35.7); s=0.25 (31.2) vs s=4 (32.7). Naive
+   PI-style position compression perturbs this model *more* than the
+   equivalent dilation.
+3. **Caveat — integer rounding confound:** our table-lookup hook rounds
+   fractional positions to integer rows, so s<1 produces *duplicate*
+   positions (0,1,1,2,2,…) — pairs of frames at zero rotary distance. True
+   LLM-style PI uses continuous positions. Before concluding "PI hurts",
+   the hook needs a continuous-position table builder (compute
+   `polar(1, p·freqs)` at fractional p directly — small extension). The
+   compression-worse-than-dilation asymmetry may be entirely this artefact.
+4. For the window-extension handoff: the honest current message is
+   "integer-compressed positions change output as much as extrapolated
+   ones on a short clip; the quality question needs the extended-window
+   vs-GT experiment, ideally with continuous PI."
+
 ## Server env facts (standup 2026-07-02, all resolved)
 
 - conda env **`flashvsr`** (py3.11): torch 2.6.0+cu124, FlashVSR requirements
