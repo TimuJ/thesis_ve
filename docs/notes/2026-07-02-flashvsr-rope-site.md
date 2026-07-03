@@ -206,6 +206,35 @@ LR-VCC pass + Task 8 curves). A correctly-relative attention is *expected* to
 respond to stretch (geometry changes); the question is whether output
 *quality* degrades where long videos actually operate.
 
+## The "21-frame window" (supervisor discussion 2026-07-03) — code-level mapping
+
+Group discussion framed the goal as: the model has a **trained window of 21
+(latent) / ~81 (pixel) frames**; beyond it RoPE must extrapolate; another
+student will *extend* the window and check quality. Code confirms all of it:
+
+- 81 pixel frames = pipeline default `num_frames=81` (`flashvsr_tiny.py:291`);
+  causal-VAE 4× time compression → (81−1)/4 + 1 = **21 latent frames** — the
+  DiT's trained temporal window; RoPE positions 0..20 are the trained rows.
+- **Streaming avoids distance extrapolation by construction:** attention span
+  per chunk = 2 current latents + `kv_len=3` cached windows (cache trim in
+  `wan_video_dit.py:368-375` region) ≈ 8 latents ≈ ~30 pixel frames. Relative
+  distances stay far inside the trained window on any-length stream; only the
+  **absolute** position magnitude grows (`4+2i`, unbounded).
+- Our sweeps decompose exactly these two factors:
+  **magnitude beyond trained window (shift) = free** (53 dB flat, clip parked
+  at 996–1020 ≫ 20); **distance beyond trained window (stretch) = what
+  bites** (~32 dB, saturating).
+
+Implication for the window-extension work (the other student): a window of N
+latents has relative distances up to N — at N > 21 that is distance
+extrapolation, our "stretch" axis, not our benign "shift" axis. Predicted:
+moderate, saturating degradation. **Causal tool we can hand over:** run the
+extended window twice, stock positions vs `stretch = 21/N` (position
+*compression* — LLM-style Position Interpolation via our hook, no repo edit).
+Quality recovers → RoPE extrapolation is the bottleneck (and PI is the fix);
+doesn't recover → capacity/content, not positions. A fractional+fine stretch
+sweep (s ∈ {0.25…3.0}) is running to chart the PI side of that curve.
+
 ## Server env facts (standup 2026-07-02, all resolved)
 
 - conda env **`flashvsr`** (py3.11): torch 2.6.0+cu124, FlashVSR requirements
