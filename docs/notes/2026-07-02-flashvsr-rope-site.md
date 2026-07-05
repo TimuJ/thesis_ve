@@ -305,6 +305,20 @@ Reads:
    the alternative — extrapolated distances — may degrade quality more
    than compression does; self-consistency cannot rank the two).
 
+## vs-GT quality verdict on DOVE-UDM10 (2026-07-06)
+
+The quality-bearing run: 10 UDM10 clips x 22 conditions vs DOVE GT
+(`reports/figures/rope_probe_udm10_gt.md` for full tables). Headlines:
+**shift is quality-free** (+-0.001 dB even at positions 996-1020, at every
+stretch level) — H0 settled in quality terms; **mild compression s=0.75 is
+quality-free** (+0.01 dB) while dilation damages monotonically (-0.12 @1.25
+to -0.95 @3.0) and strong compression hurts (-0.66 @0.5); **self-consistency
+provably does not predict quality** (s=0.75 vs s=1.5: same self-PSNR 31.8,
+opposite GT verdicts). Baseline sanity: FlashVSR 24.02 dB on UDM10 ~ MGLD's
+verified 24.23. PI implication: window extension 21->~28 latents with
+compressed positions should be RoPE-loss-free; the extended-window run
+remains the decisive test beyond that.
+
 ## Server env facts (standup 2026-07-02, all resolved)
 
 - conda env **`flashvsr`** (py3.11): torch 2.6.0+cu124, FlashVSR requirements
