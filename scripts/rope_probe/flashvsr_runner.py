@@ -36,31 +36,41 @@ def load_infer_module():
     return m
 
 
-def prepare(path, n_frames):
-    """First n_frames of a 320x180 video -> (1,C,F,H,W) bf16 CUDA tensor.
+def prepare(path, n_frames, device="cuda"):
+    """First n_frames of an LR video file OR a PNG frames dir ->
+    ((1,C,F,H,W) bf16 tensor on `device`, F, (TH, TW)).
 
-    Dup-pads the tail so that F % 8 == 1 exactly (stock 8n+1 rule with the
-    +4 pad folded in); output frame count == F, of which n_frames are real.
+    Any LR resolution: reflect-pads each dim to a multiple of 32 (so the x4
+    output is a 128-multiple; cf. pad_amounts). Dup-pads the tail so that
+    F % 8 == 1 exactly (stock 8n+1 rule with the +4 pad folded in); of the
+    F frames, the first n_frames are real.
     """
-    cap = cv2.VideoCapture(path)
-    frames = []
-    while len(frames) < n_frames:
-        ok, f = cap.read()
-        if not ok:
-            break
-        frames.append(cv2.cvtColor(f, cv2.COLOR_BGR2RGB))
-    cap.release()
+    if os.path.isdir(path):
+        import glob
+        paths = sorted(glob.glob(os.path.join(path, "*.png")))[:n_frames]
+        frames = [cv2.cvtColor(cv2.imread(f), cv2.COLOR_BGR2RGB) for f in paths]
+    else:
+        cap = cv2.VideoCapture(path)
+        frames = []
+        while len(frames) < n_frames:
+            ok, f = cap.read()
+            if not ok:
+                break
+            frames.append(cv2.cvtColor(f, cv2.COLOR_BGR2RGB))
+        cap.release()
     assert len(frames) == n_frames, f"only {len(frames)} frames in {path}"
+    (pt, pb, pl, pr), (TH, TW) = pad_amounts(*frames[0].shape[:2])
     k = (5 - n_frames) % 8
     frames = frames + [frames[-1]] * (k + 4)
     ts = []
     for fr in frames:
-        p = cv2.copyMakeBorder(fr, PAD_LR, PAD_LR, 0, 0, cv2.BORDER_REFLECT_101)
+        p = cv2.copyMakeBorder(fr, pt, pb, pl, pr, cv2.BORDER_REFLECT_101)
         up = cv2.resize(p, (TW, TH), interpolation=cv2.INTER_CUBIC)
         t = torch.from_numpy(up).to(torch.float32).permute(2, 0, 1) / 255.0 * 2.0 - 1.0
         ts.append(t.to(torch.bfloat16))
     vid = torch.stack(ts, 0).permute(1, 0, 2, 3).unsqueeze(0)
-    return vid.to("cuda"), vid.shape[2]
+    # tiny (non-long) pipeline expects the LQ tensor on the GPU
+    return vid.to(device), vid.shape[2], (TH, TW)
 
 
 def run_once(pipe, LQ, F, th, tw):

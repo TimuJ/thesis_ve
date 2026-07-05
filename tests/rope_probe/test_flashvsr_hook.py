@@ -140,3 +140,21 @@ def test_center_crop_to_ref_shape():
     assert out.shape == (720, 1272, 3)
     same = center_crop(pred, (768, 1280))
     assert same.shape == (768, 1280, 3)
+
+
+def test_prepare_reads_frames_dir_and_pads(tmp_path):
+    # guards against the silent-refactor breakage that killed the first
+    # UDM10 sweep: prepare must return (tensor, F, (TH, TW)) and handle
+    # UDM10-sized (318x180) PNG dirs
+    import cv2
+    import numpy as np
+    from scripts.rope_probe.flashvsr_runner import prepare
+    d = tmp_path / "lq"
+    d.mkdir()
+    for i in range(13):  # 13 % 8 == 5 -> F = 17, no trim
+        img = np.random.randint(0, 256, (180, 318, 3), dtype=np.uint8)
+        cv2.imwrite(str(d / f"{i:04d}.png"), img)
+    vid, F, (th, tw) = prepare(str(d), 13, device="cpu")
+    assert F == 17
+    assert (th, tw) == (768, 1280)
+    assert tuple(vid.shape) == (1, 3, 17, 768, 1280)
