@@ -29,13 +29,20 @@ from scripts.rope_probe.position_override import PositionOverride, is_noop, tran
 
 
 class TemporalFreqTable:
-    """Duck-typed stand-in for `dit.freqs[0]`: only `__getitem__` is served."""
+    """Duck-typed stand-in for `dit.freqs[0]`: only `__getitem__` is served.
+
+    Integer overrides index the (possibly extended) precomputed table;
+    continuous overrides bypass tables entirely and compute rows at the exact
+    fractional positions via `row_builder` (true position interpolation).
+    """
 
     def __init__(self, table: torch.Tensor, override: PositionOverride,
-                 table_builder: Optional[Callable[[int], torch.Tensor]] = None):
+                 table_builder: Optional[Callable[[int], torch.Tensor]] = None,
+                 row_builder: Optional[Callable[[list], torch.Tensor]] = None):
         self._table = table
         self._ov = override
         self._builder = table_builder
+        self._row_builder = row_builder
         self._ext: Optional[torch.Tensor] = None
 
     def _extended(self, needed: int) -> torch.Tensor:
@@ -64,6 +71,12 @@ class TemporalFreqTable:
         idx = transform_indices(base, self._ov)
         if any(i < 0 for i in idx):
             raise ValueError(f"override maps to negative position(s): {idx[:4]}...")
+        if self._ov.continuous:
+            if self._row_builder is None:
+                raise RuntimeError(
+                    "continuous override needs a row_builder "
+                    "(use default_row_builder(t_dim) on the server)")
+            return self._row_builder(idx)
         table = self._table
         top = max(idx)
         if top >= table.shape[0]:
@@ -72,10 +85,11 @@ class TemporalFreqTable:
 
 
 def install_position_hook(dit, override: PositionOverride,
-                          table_builder: Optional[Callable[[int], torch.Tensor]] = None):
+                          table_builder: Optional[Callable[[int], torch.Tensor]] = None,
+                          row_builder: Optional[Callable[[list], torch.Tensor]] = None):
     """Swap dit.freqs[0] for the wrapped table; returns a restore() callable."""
     orig = dit.freqs
-    dit.freqs = (TemporalFreqTable(orig[0], override, table_builder),
+    dit.freqs = (TemporalFreqTable(orig[0], override, table_builder, row_builder),
                  orig[1], orig[2])
 
     def restore():
@@ -93,3 +107,18 @@ def default_table_builder(t_dim: int, theta: float = 10000.0):
     from diffsynth.models.wan_video_dit import precompute_freqs_cis
 
     return lambda end: precompute_freqs_cis(t_dim, end, theta)
+
+
+def default_row_builder(t_dim: int, theta: float = 10000.0):
+    """Continuous-position row builder: `polar(1, p·freqs)` at arbitrary real
+    positions — same formula as precompute_freqs_cis, evaluated at fractional
+    p instead of arange rows. Mirrors its dtype path (float32) so integer
+    positions reproduce the table's values."""
+    base = 1.0 / (theta ** (torch.arange(0, t_dim, 2)[: t_dim // 2].float() / t_dim))
+
+    def build(positions):
+        pos = torch.tensor(positions, dtype=torch.float32)
+        ang = torch.outer(pos, base)
+        return torch.polar(torch.ones_like(ang), ang)
+
+    return build

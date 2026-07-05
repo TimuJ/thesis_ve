@@ -69,3 +69,47 @@ def test_install_and_restore_roundtrip():
     assert torch.equal(dit.freqs[0][0:2], table[1:3])
     restore()
     assert dit.freqs[0] is table
+
+
+def _fake_base_freqs(dim=4):
+    return (torch.arange(dim, dtype=torch.float64) + 1) * 0.01
+
+
+def _fake_row_builder(positions):
+    pos = torch.as_tensor(positions, dtype=torch.float64).unsqueeze(1)
+    k = _fake_base_freqs().unsqueeze(0)
+    return torch.polar(torch.ones(len(positions), 4, dtype=torch.float64), pos * k)
+
+
+def test_continuous_rows_match_table_at_integer_positions():
+    table = _fake_table(16)
+    wrapped = TemporalFreqTable(table, PositionOverride(continuous=True),
+                                row_builder=_fake_row_builder)
+    got = wrapped[2:6]  # continuous identity -> positions 2.0..5.0
+    assert torch.allclose(got, table[2:6])
+
+
+def test_continuous_compression_uses_fractional_positions():
+    table = _fake_table(16)
+    wrapped = TemporalFreqTable(table, PositionOverride(stretch=0.5, continuous=True),
+                                row_builder=_fake_row_builder)
+    got = wrapped[4:6]  # positions 2.0, 2.5
+    expect = _fake_row_builder([2.0, 2.5])
+    assert torch.equal(got, expect)
+    # and crucially: NOT equal to integer-rounded rows (2, 2)
+    assert not torch.allclose(got[1], table[2])
+
+
+def test_continuous_without_builder_raises():
+    table = _fake_table(16)
+    wrapped = TemporalFreqTable(table, PositionOverride(stretch=0.5, continuous=True))
+    with pytest.raises(RuntimeError):
+        wrapped[4:6]
+
+
+def test_continuous_subsumes_extension_beyond_table():
+    table = _fake_table(16)
+    wrapped = TemporalFreqTable(table, PositionOverride(shift=20, continuous=True),
+                                row_builder=_fake_row_builder)
+    got = wrapped[2:4]  # positions 22.0, 23.0 — beyond 16 rows, no ext table needed
+    assert torch.equal(got, _fake_row_builder([22.0, 23.0]))

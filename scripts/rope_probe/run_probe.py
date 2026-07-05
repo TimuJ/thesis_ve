@@ -23,22 +23,23 @@ import os
 from scripts.rope_probe.position_override import PositionOverride, is_noop
 
 
-def expand_grid(shifts, stretches):
+def expand_grid(shifts, stretches, continuous=False):
     seen, grid = set(), []
-    grid.append(PositionOverride())
-    seen.add((0, 1.0))
+    grid.append(PositionOverride())          # baseline: integer no-op, unhooked
+    seen.add((0, 1.0, False))
     for s in shifts:
         for st in stretches:
-            key = (int(s), float(st))
+            key = (int(s), float(st), continuous)
             if key in seen:
                 continue
             seen.add(key)
-            grid.append(PositionOverride(shift=int(s), stretch=float(st)))
+            grid.append(PositionOverride(shift=int(s), stretch=float(st),
+                                         continuous=continuous))
     return grid
 
 
 def cond_id(ov):
-    return f"shift{ov.shift}_stretch{ov.stretch}"
+    return f"shift{ov.shift}_stretch{ov.stretch}" + ("c" if ov.continuous else "")
 
 
 def main():
@@ -48,6 +49,9 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--shifts", default="0")
     ap.add_argument("--stretches", default="1.0")
+    ap.add_argument("--continuous", action="store_true",
+                    help="true position interpolation: fractional positions, "
+                         "rows computed on the fly (no integer rounding)")
     args = ap.parse_args()
 
     # server-only imports below (torch, cv2, the stock infer script)
@@ -56,14 +60,14 @@ def main():
     import torch
     from scripts.rope_probe.consistency_metrics import write_condition_json
     from scripts.rope_probe.flashvsr_hook import (
-        default_table_builder, install_position_hook)
+        default_row_builder, default_table_builder, install_position_hook)
     from scripts.rope_probe.flashvsr_runner import (
         load_infer_module, prepare, run_once, to_uint8_frames)
 
     os.makedirs(args.out, exist_ok=True)
     shifts = [int(x) for x in args.shifts.split(",")]
     stretches = [float(x) for x in args.stretches.split(",")]
-    grid = expand_grid(shifts, stretches)
+    grid = expand_grid(shifts, stretches, continuous=args.continuous)
     print(f"{len(grid)} conditions: {[cond_id(o) for o in grid]}", flush=True)
 
     infer = load_infer_module()
@@ -77,7 +81,8 @@ def main():
         cid = cond_id(ov)
         restore = None
         if not is_noop(ov):
-            restore = install_position_hook(dit, ov, default_table_builder(t_dim))
+            restore = install_position_hook(dit, ov, default_table_builder(t_dim),
+                                            default_row_builder(t_dim))
         try:
             video = run_once(pipe, LQ, F)
         finally:
@@ -91,6 +96,7 @@ def main():
         # match the project's DOVE-convention pyiqa metrics.
         write_condition_json(os.path.join(args.out, cid + ".json"),
                              {"shift": ov.shift, "stretch": ov.stretch,
+                              "continuous": ov.continuous,
                               "frames": args.frames, "input": args.input},
                              None, None)
         fdir = os.path.join(args.out, cid)

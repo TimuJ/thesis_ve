@@ -77,3 +77,24 @@ def test_transform_indices_explicit_length_mismatch_raises():
 def test_temporal_indices_consistent_with_transform():
     ov = PositionOverride(shift=3, stretch=1.5)
     assert temporal_indices(4, ov) == transform_indices([0, 1, 2, 3], ov)
+
+
+def test_continuous_transform_preserves_fractions():
+    ov = PositionOverride(stretch=0.5, continuous=True)
+    assert transform_indices([4, 5], ov) == [2.0, 2.5]
+
+
+def test_continuous_identity_returns_float_positions():
+    ov = PositionOverride(continuous=True)
+    assert transform_indices([4, 5], ov) == [4.0, 5.0]
+
+
+def test_continuous_false_still_rounds():
+    ov = PositionOverride(stretch=0.5)
+    assert transform_indices([4, 5], ov) == [2, 2]
+
+
+def test_continuous_override_is_not_noop():
+    # continuous identity recomputes rows via a float path — not bit-exact,
+    # so it must NOT be treated as a no-op
+    assert is_noop(PositionOverride(continuous=True)) is False

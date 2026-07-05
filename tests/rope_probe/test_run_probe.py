@@ -16,3 +16,12 @@ def test_cond_id_is_filename_safe_and_unique():
     assert len(set(ids)) == len(ids)
     assert all("/" not in i and " " not in i for i in ids)
     assert cond_id(grid[0]) == "shift0_stretch1.0"
+
+
+def test_continuous_grid_keeps_integer_baseline_and_suffixes_ids():
+    grid = expand_grid([0], [1.0, 0.5], continuous=True)
+    assert is_noop(grid[0])                       # baseline stays integer no-op
+    assert not grid[0].continuous
+    rest = grid[1:]
+    assert all(o.continuous for o in rest)
+    assert {cond_id(o) for o in rest} == {"shift0_stretch1.0c", "shift0_stretch0.5c"}
