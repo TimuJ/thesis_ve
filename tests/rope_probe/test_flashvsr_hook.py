@@ -113,3 +113,30 @@ def test_continuous_subsumes_extension_beyond_table():
                                 row_builder=_fake_row_builder)
     got = wrapped[2:4]  # positions 22.0, 23.0 — beyond 16 rows, no ext table needed
     assert torch.equal(got, _fake_row_builder([22.0, 23.0]))
+
+
+# --- runner padding math (UDM10 318x180 support) ---
+
+def test_pad_amounts_synthetic_320x180():
+    from scripts.rope_probe.flashvsr_runner import pad_amounts
+    (top, bot, left, right), (th, tw) = pad_amounts(180, 320)
+    assert (top, bot, left, right) == (6, 6, 0, 0)
+    assert (th, tw) == (768, 1280)
+
+
+def test_pad_amounts_udm10_318x180():
+    from scripts.rope_probe.flashvsr_runner import pad_amounts
+    (top, bot, left, right), (th, tw) = pad_amounts(180, 318)
+    assert (top, bot) == (6, 6)
+    assert (left, right) == (1, 1)
+    assert (th, tw) == (768, 1280)
+
+
+def test_center_crop_to_ref_shape():
+    import numpy as np
+    from scripts.rope_probe.score_conditions import center_crop
+    pred = np.zeros((768, 1280, 3), dtype=np.uint8)
+    out = center_crop(pred, (720, 1272))
+    assert out.shape == (720, 1272, 3)
+    same = center_crop(pred, (768, 1280))
+    assert same.shape == (768, 1280, 3)

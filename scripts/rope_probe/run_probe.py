@@ -74,8 +74,8 @@ def main():
     pipe = infer.init_pipeline()
     dit = pipe.denoising_model()
     t_dim = dit.freqs[0].shape[1] * 2
-    LQ, F = prepare(os.path.expanduser(args.input), args.frames)
-    print(f"clip ready: F={F} ({args.frames} real frames)", flush=True)
+    LQ, F, (th, tw) = prepare(os.path.expanduser(args.input), args.frames)
+    print(f"clip ready: F={F} ({args.frames} real frames), I/O {tw}x{th}", flush=True)
 
     for ov in grid:
         cid = cond_id(ov)
@@ -84,7 +84,7 @@ def main():
             restore = install_position_hook(dit, ov, default_table_builder(t_dim),
                                             default_row_builder(t_dim))
         try:
-            video = run_once(pipe, LQ, F)
+            video = run_once(pipe, LQ, F, th, tw)
         finally:
             if restore:
                 restore()

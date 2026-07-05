@@ -15,8 +15,15 @@ import cv2
 import numpy as np
 import torch
 
-PAD_LR = 6
-TH, TW = 768, 1280
+def pad_amounts(h, w):
+    """Reflect-pad amounts to make LR dims multiples of 32 (so x4 output is a
+    128-multiple), split evenly (extra px to bottom/right). Returns
+    ((top, bottom, left, right), (TH, TW)) with TH/TW the model I/O dims.
+    320x180 -> pad (6,6,0,0), I/O 1280x768; UDM10 318x180 -> (6,6,1,1)."""
+    th_lr = -(-h // 32) * 32
+    tw_lr = -(-w // 32) * 32
+    ph, pw = th_lr - h, tw_lr - w
+    return (ph // 2, ph - ph // 2, pw // 2, pw - pw // 2), (th_lr * 4, tw_lr * 4)
 
 
 def load_infer_module():
@@ -56,14 +63,14 @@ def prepare(path, n_frames):
     return vid.to("cuda"), vid.shape[2]
 
 
-def run_once(pipe, LQ, F):
+def run_once(pipe, LQ, F, th, tw):
     """One stock-parameter inference; returns fp32 CPU tensor (1,C,F,H,W)."""
     torch.cuda.empty_cache()
     out = pipe(
         prompt="", negative_prompt="", cfg_scale=1.0, num_inference_steps=1,
-        seed=0, LQ_video=LQ, num_frames=F, height=TH, width=TW,
+        seed=0, LQ_video=LQ, num_frames=F, height=th, width=tw,
         is_full_block=False, if_buffer=True,
-        topk_ratio=2.0 * 768 * 1280 / (TH * TW), kv_ratio=3.0,
+        topk_ratio=2.0 * 768 * 1280 / (th * tw), kv_ratio=3.0,
         local_range=11, color_fix=True,
     )
     return out.detach().to(torch.float32).cpu()

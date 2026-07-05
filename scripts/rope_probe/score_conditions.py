@@ -35,8 +35,20 @@ def _to_tensor(img, device):
     return t.unsqueeze(0).to(device)
 
 
+def center_crop(img, hw):
+    """Center-crop an HxWxC array to (H, W) — used to trim the model's
+    128-multiple output (e.g. 1280x768) back to the GT frame size
+    (e.g. 1272x720). No-op when shapes already match."""
+    h, w = hw
+    H, W = img.shape[:2]
+    assert H >= h and W >= w, (img.shape, hw)
+    t, l = (H - h) // 2, (W - w) // 2
+    return img[t:t + h, l:l + w]
+
+
 def score_pair_lists(preds, refs, metrics, device):
     assert len(preds) == len(refs) and preds, (len(preds), len(refs))
+    preds = [center_crop(p, refs[0].shape[:2]) for p in preds]
     per = {name: [] for name in metrics}
     with torch.no_grad():
         for p, r in zip(preds, refs):

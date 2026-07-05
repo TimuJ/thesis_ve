@@ -46,29 +46,29 @@ def main():
     pipe = infer.init_pipeline()
     dit = pipe.denoising_model()
     t_dim = dit.freqs[0].shape[1] * 2
-    LQ, F = prepare(os.path.expanduser(args.input), args.frames)
+    LQ, F, (th, tw) = prepare(os.path.expanduser(args.input), args.frames)
     print(f"clip ready: F={F} (from {args.frames} real frames)", flush=True)
 
-    a = run_once(pipe, LQ, F)
-    b = run_once(pipe, LQ, F)
+    a = run_once(pipe, LQ, F, th, tw)
+    b = run_once(pipe, LQ, F, th, tw)
     floor = max_abs_diff(a, b)
     print(f"[floor] unhooked rerun max|A-B| = {floor:.3e}", flush=True)
 
     restore = install_position_hook(dit, PositionOverride(),
                                     default_table_builder(t_dim))
-    c = run_once(pipe, LQ, F)
+    c = run_once(pipe, LQ, F, th, tw)
     drift = max_abs_diff(a, c)
     print(f"[noop ] hooked no-op  max|A-C| = {drift:.3e}", flush=True)
     restore()
 
     restore = install_position_hook(dit, PositionOverride(shift=1),
                                     default_table_builder(t_dim))
-    d = run_once(pipe, LQ, F)
+    d = run_once(pipe, LQ, F, th, tw)
     engaged = max_abs_diff(a, d)
     print(f"[shift] hooked shift1 max|A-D| = {engaged:.3e}", flush=True)
     restore()
 
-    e = run_once(pipe, LQ, F)
+    e = run_once(pipe, LQ, F, th, tw)
     restored = max_abs_diff(a, e)
     print(f"[rest ] after restore max|A-E| = {restored:.3e}", flush=True)
 
