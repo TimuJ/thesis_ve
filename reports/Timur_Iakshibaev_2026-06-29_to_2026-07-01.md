@@ -298,26 +298,10 @@ Probe artefacts: `results/rope_probe/{shift,stretch}/hhsz85/` (per-condition
 frames on the server, pyiqa JSONs mirrored locally);
 `docs/notes/2026-07-02-flashvsr-rope-site.md` §"Task 6 first sweeps".
 
-**July 4 addendum — supervisor framing integrated + dose-response.** The
-group's "21-frame window / ~80 frames" maps exactly onto the probe: 81 pixel
-frames = 21 latent frames = the DiT's trained RoPE range (rows 0–20); our
-shift/stretch axes decompose window-exit into *magnitude* (harmless, 53 dB)
-vs *distance* (what bites, ~32 dB) extrapolation — directly relevant to the
-planned window-extension study (extending 21→N latents is the distance
-axis). A fine/fractional sweep (s ∈ 0.25…3.0) shows a smooth monotone
-dose-response in both directions with no cliff; naive integer-rounded
-position *compression* (the PI trick) perturbs at least as much as dilation,
-though a rounding confound (duplicate positions) had to be removed first.
-**July 5:** continuous-position PI built (fractional positions, on-the-fly
-row computation; validated — continuous identity sits exactly at the 53 dB
-numerics floor). Result: rounding explained ~half the asymmetry; true-PI
-compression still perturbs about as much as dilation (0.5→34.5 dB vs
-2.0→35.7). Naive PI is not free for this model — but whether PI beats
-*extrapolated* distances on quality inside an actual extended window is the
-decisive (pending) test. Proposed causal tool for the window-extension work
-stands: run extended windows stock vs position-compressed (stretch = 21/N) —
-quality recovery would pin the bottleneck on RoPE extrapolation
-specifically.
+*(Probe work after July 3 — supervisor-framing integration, the fine and
+continuous-PI dose-response sweeps, and the vs-GT quality verdict on
+DOVE-UDM10 — is reported in the next weekly,
+`Timur_Iakshibaev_2026-07-04_to_2026-07-06.md`.)*
 
 ## Open questions for the meeting
 
