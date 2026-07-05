@@ -271,6 +271,40 @@ Reads:
    ones on a short clip; the quality question needs the extended-window
    vs-GT experiment, ideally with continuous PI."
 
+## Continuous-position PI sweep (2026-07-05) — rounding confound resolved
+
+True position interpolation: fractional positions, rows computed on the fly
+by `default_row_builder` (same `polar(1, p·freqs)` formula as the table).
+`results/rope_probe/stretch_cont/hhsz85/`; integer values from the 07-04
+sweep in parentheses.
+
+| s | PSNR cont. (int) | SSIM | LPIPS |
+|---|-----:|-----:|------:|
+| **1.0c (identity)** | **53.39** (—) | 0.9979 | 0.0006 |
+| 0.25 | 31.94 (31.23) | 0.896 | 0.078 |
+| 0.5 | 34.46 (33.89) | 0.935 | 0.046 |
+| 0.75 | 37.98 (36.48) | 0.966 | 0.025 |
+| 1.25 | 38.93 (38.08) | 0.969 | 0.022 |
+| 1.5 | 38.15 (37.63) | 0.965 | 0.025 |
+| 3.0 | 33.46 (33.47) | 0.921 | 0.064 |
+
+Reads:
+
+1. **Builder validated:** continuous identity scores 53.4 dB — exactly the
+   bf16 numerics floor from the shift sweep. The float path adds nothing.
+   Also s=3.0 continuous ≡ integer to 0.01 dB (integer multiples are exact
+   in both paths) — strong internal-consistency check.
+2. **The rounding confound was real but explains only ~half the
+   asymmetry:** true-PI compression gains +0.5–1.5 dB over integer-rounded,
+   yet matched-pair comparison still favours dilation slightly
+   (0.5c 34.5 vs 2.0 35.7; 0.25c 31.9 vs 4.0 32.7).
+3. **Verdict for the window-extension handoff:** naive PI is not free —
+   FlashVSR is genuinely sensitive to compressed position geometry, about
+   as much as to dilated. The decisive test remains PI *inside an actual
+   extended window scored for quality* (PI could still win there because
+   the alternative — extrapolated distances — may degrade quality more
+   than compression does; self-consistency cannot rank the two).
+
 ## Server env facts (standup 2026-07-02, all resolved)
 
 - conda env **`flashvsr`** (py3.11): torch 2.6.0+cu124, FlashVSR requirements

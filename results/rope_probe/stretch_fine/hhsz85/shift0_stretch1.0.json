@@ -1,0 +1,10 @@
+{
+  "condition": {
+    "shift": 0,
+    "stretch": 1.0,
+    "frames": 85,
+    "input": "/home/timur/synthetic_data/synthetic/hhszUXL1Cu8.mp4"
+  },
+  "vs_baseline": null,
+  "vs_gt": null
+}

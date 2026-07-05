@@ -307,11 +307,17 @@ planned window-extension study (extending 21→N latents is the distance
 axis). A fine/fractional sweep (s ∈ 0.25…3.0) shows a smooth monotone
 dose-response in both directions with no cliff; naive integer-rounded
 position *compression* (the PI trick) perturbs at least as much as dilation,
-though a rounding confound (duplicate positions) must be removed via a
-continuous-position table builder before reading that as "PI won't help."
-Proposed causal tool for the window-extension work: run extended windows
-stock vs position-compressed (stretch = 21/N) — quality recovery would pin
-the bottleneck on RoPE extrapolation specifically.
+though a rounding confound (duplicate positions) had to be removed first.
+**July 5:** continuous-position PI built (fractional positions, on-the-fly
+row computation; validated — continuous identity sits exactly at the 53 dB
+numerics floor). Result: rounding explained ~half the asymmetry; true-PI
+compression still perturbs about as much as dilation (0.5→34.5 dB vs
+2.0→35.7). Naive PI is not free for this model — but whether PI beats
+*extrapolated* distances on quality inside an actual extended window is the
+decisive (pending) test. Proposed causal tool for the window-extension work
+stands: run extended windows stock vs position-compressed (stretch = 21/N) —
+quality recovery would pin the bottleneck on RoPE extrapolation
+specifically.
 
 ## Open questions for the meeting
 
