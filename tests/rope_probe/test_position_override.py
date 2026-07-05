@@ -98,3 +98,19 @@ def test_continuous_override_is_not_noop():
     # continuous identity recomputes rows via a float path — not bit-exact,
     # so it must NOT be treated as a no-op
     assert is_noop(PositionOverride(continuous=True)) is False
+
+
+def test_modulo_cycles_positions():
+    ov = PositionOverride(modulo=16)
+    assert transform_indices([4, 5], ov) == [4, 5]
+    assert transform_indices([18, 19], ov) == [2, 3]
+    assert transform_indices([336, 337], ov) == [0, 1]
+
+
+def test_modulo_applies_after_shift_stretch():
+    ov = PositionOverride(shift=2, modulo=10)
+    assert transform_indices([9, 10], ov) == [1, 2]
+
+
+def test_modulo_not_noop():
+    assert is_noop(PositionOverride(modulo=16)) is False

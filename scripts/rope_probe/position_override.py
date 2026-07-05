@@ -18,6 +18,8 @@ class PositionOverride:
     length: Optional[int] = None          # for the chunked/extended path (informational)
     continuous: bool = False              # keep fractional positions (true PI);
                                           # False = round to integer table rows
+    modulo: Optional[int] = None          # cycle positions: p -> p % modulo
+                                          # (applied last; bounds magnitude)
 
 
 def transform_indices(base: list, ov: PositionOverride) -> list:
@@ -30,8 +32,12 @@ def transform_indices(base: list, ov: PositionOverride) -> list:
                 f"explicit indices len {len(ov.indices)} != base len {len(base)}")
         return list(ov.indices)
     if ov.continuous:
-        return [float(j * ov.stretch) + ov.shift for j in base]
-    return [int(round(j * ov.stretch)) + ov.shift for j in base]
+        out = [float(j * ov.stretch) + ov.shift for j in base]
+    else:
+        out = [int(round(j * ov.stretch)) + ov.shift for j in base]
+    if ov.modulo is not None:
+        out = [j % ov.modulo for j in out]
+    return out
 
 
 def temporal_indices(base_len: int, ov: PositionOverride) -> list:
@@ -42,4 +48,5 @@ def is_noop(ov: PositionOverride) -> bool:
     # continuous identity recomputes rows via a float path (not the verbatim
     # table view), so it is deliberately NOT a no-op
     return (ov.shift == 0 and ov.stretch == 1.0 and not ov.continuous
+            and ov.modulo is None
             and ov.indices is None and ov.length is None)

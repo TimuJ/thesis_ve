@@ -158,3 +158,21 @@ def test_prepare_reads_frames_dir_and_pads(tmp_path):
     assert F == 17
     assert (th, tw) == (768, 1280)
     assert tuple(vid.shape) == (1, 3, 17, 768, 1280)
+
+
+def test_slice_beyond_table_not_clamped():
+    # single-pass long videos slice past the table end; the hook must compute
+    # baseline positions from the RAW slice bounds, not clamp to table length
+    table = _fake_table(16)
+    wrapped = TemporalFreqTable(table, PositionOverride(modulo=10**9),
+                                table_builder=_fake_table)
+    got = wrapped[18:20]   # beyond the 16-row table; modulo huge = identity
+    big = _fake_table(32)
+    assert got.shape[0] == 2
+    assert torch.equal(got, big[torch.tensor([18, 19])])
+
+
+def test_modulo_cycles_via_table():
+    table = _fake_table(16)
+    wrapped = TemporalFreqTable(table, PositionOverride(modulo=8))
+    assert torch.equal(wrapped[18:20], table[torch.tensor([2, 3])])

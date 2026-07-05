@@ -67,7 +67,12 @@ class TemporalFreqTable:
             raise TypeError(f"only slice access expected from pipelines, got {key!r}")
         if is_noop(self._ov):
             return self._table[key]
-        base = list(range(*key.indices(self._table.shape[0])))
+        # RAW slice bounds — key.indices() would clamp to the table length,
+        # silently emptying past-the-table slices on single-pass long videos
+        start = key.start or 0
+        if key.stop is None:
+            raise TypeError("open-ended temporal slice not expected from pipelines")
+        base = list(range(start, key.stop, key.step or 1))
         idx = transform_indices(base, self._ov)
         if any(i < 0 for i in idx):
             raise ValueError(f"override maps to negative position(s): {idx[:4]}...")
