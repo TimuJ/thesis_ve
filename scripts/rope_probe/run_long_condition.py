@@ -130,17 +130,28 @@ def main():
     peak = torch.cuda.max_memory_allocated() / 1024**3
     print(f"[{vid_id}] inference {dt:.0f}s, peak {peak:.1f} GiB", flush=True)
 
-    frames_out = infer.tensor2video(video)
-    del video, LQ
+    # RAM discipline (5000-frame runs OOM-killed the naive path): free the
+    # input tensor first, then convert/write in small slices instead of one
+    # whole-video fp32 blow-up (stock tensor2video needs ~59 GB at 5009f).
+    del LQ
     gc.collect(); torch.cuda.empty_cache()
+    v = video[0] if video.dim() == 5 else video   # C T H W, bf16 CPU
 
     import imageio
     w = imageio.get_writer(mp4_path, fps=fps, quality=6)
-    for i in range(n_real):
-        fr = np.asarray(frames_out[i])[CROP_HR:-CROP_HR]
-        Image.fromarray(fr).save(os.path.join(png_dir, f"{i:05d}.png"))
-        w.append_data(fr)
+    CHUNK = 250
+    for s0 in range(0, n_real, CHUNK):
+        s1 = min(s0 + CHUNK, n_real)
+        blk = ((v[:, s0:s1].float() + 1) * 127.5).clamp(0, 255).to(torch.uint8)
+        blk = blk.permute(1, 2, 3, 0).numpy()     # t H W C
+        for i in range(s1 - s0):
+            fr = blk[i][CROP_HR:-CROP_HR]
+            Image.fromarray(fr).save(os.path.join(png_dir, f"{s0 + i:05d}.png"))
+            w.append_data(fr)
+        del blk
     w.close()
+    del v, video
+    gc.collect()
     with open(os.path.join(args.out, vid_id + "_stats.json"), "w") as f:
         json.dump({"video": vid_id, "mode": args.mode, "frames": n_real,
                    "sec": round(dt, 1), "peak_vram_gib": round(peak, 2)}, f)
