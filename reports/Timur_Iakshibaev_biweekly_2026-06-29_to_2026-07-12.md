@@ -4,7 +4,7 @@
 
 > New cadence: biweekly reports aggregate the weekly ones. Sources for this
 > period: `Timur_Iakshibaev_2026-06-29_to_2026-07-01.md` (extended through
-> July 3 + addenda) and `Timur_Iakshibaev_2026-07-04_to_2026-07-06.md`.
+> July 3 + addenda) and `Timur_Iakshibaev_2026-07-04_to_2026-07-10.md`.
 
 ## The period in three headlines
 

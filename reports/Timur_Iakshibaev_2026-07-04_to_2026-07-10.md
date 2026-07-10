@@ -1,6 +1,6 @@
 # Weekly Progress Report — Timur Iakshibaev
 
-## Period: July 4 – 6, 2026
+## Period: July 4 – 10, 2026
 
 ## Headline
 
@@ -88,13 +88,40 @@ changes.
 - PAT (server→GitHub push auth) expires **~July 9** — remaining bulk
   transfers should happen before then or a new token gets minted.
 
-## 5. Next
+## 5. The D″ causal check (July 10, in flight)
 
-1. Extended-window experiment coordination with the window-extension student
+The experiment connecting the probe to the benchmark's weakest FlashVSR cell
+(D″ CLIP-trajectory drift). Design: same long videos, three arms —
+**A** segmented stock (the benchmark outputs, position+cache reset at frame
+2500), **B** true single-pass (positions grow to latent ~1252, served by the
+extended table), **C** single-pass with positions cycled mod 336 (magnitude
+bounded, no content seam). B≈A≈C → drift not positional; B worse than C →
+accumulated magnitude matters; B better than A → the segmentation seam was
+the cost. Every outcome is informative.
+
+Enablers built (test-covered, 45 local tests): `modulo` position transform;
+a fix for a real hook bug (slice bounds were clamped to the table length —
+past-the-table chunks would have silently received empty position lists);
+a chunked uint8 conversion in the long-video driver after the first attempt's
+5000-frame runs were OOM-killed *post-inference* by the naive whole-video
+fp32 decode (~120 GB transient).
+
+**Already established:** (1) single-pass inference past the stock 4089-frame
+ceiling **works in production** — 5009 frames, latents to 1252 on the
+extended table, 11.6 GiB VRAM; the ceiling is purely a stock-code artefact,
+removable via positions alone. (2) Preliminary causal data point (hhsz,
+2412 frames): D″ = 0.4216 stock vs 0.4220 with cycled positions —
+**position magnitude does not move drift** on this video. The four
+5000-frame arms (where arm A has a real seam) are re-running with the memory
+fix; final A/B/C table to follow.
+
+## 6. Next
+
+1. Finalise the D″ causal table (runs in flight) → findings note (Task 10)
+   + Task 8 curves; then the whole-branch review.
+2. Extended-window experiment coordination with the window-extension student
    (their engineering + our position tool + these predictions).
-2. D″ causal check (stock growing positions vs position-reset on a long
-   video, scored with LR-VCC) — connects the probe to the FlashVSR
-   benchmark row's weakest cell.
-3. Task 8 curves + Task 10 findings note; then the whole-branch review.
-4. **Thesis writing becomes the foreground from ~July 8** (blind review
-   July 25, hard).
+3. **Thesis writing is now the foreground** (blind review July 25, hard);
+   probe work continues as background GPU jobs only.
+4. Housekeeping: the server GitHub PAT has lapsed (~July 9) — mint a
+   successor only if another bulk transfer is needed; small files go by scp.
