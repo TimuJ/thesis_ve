@@ -58,3 +58,7 @@ proposal/thesis_proposal.log
 proposal/thesis_proposal.out
 proposal/thesis_proposal.toc
 proposal/thesis_proposal.synctex.gz
+
+# Large inspection/SR-output videos (keep out of git)
+inspection_videos/
+results/flashvsr_synthetic_mp4/

@@ -1,0 +1,20 @@
+{
+  "video_path": "/home/timur/results/flashvsr_synthetic_mp4/KZ8p6b1zJ9U.mp4",
+  "score": 0.17092123557684996,
+  "reliability": 1.0,
+  "details": {
+    "anchor_len_frames": 60,
+    "anchor_count_sampled": 7,
+    "post_anchor_count_sampled": 618,
+    "stride": 8,
+    "beta": 5.0,
+    "mean_cos_dist_to_anchor": 0.35331048785097,
+    "max_cos_dist_to_anchor": 0.5491897463798523,
+    "trajectory_mean_per_quarter": [
+      0.34297248548077,
+      0.3020698210885448,
+      0.4045444672757929,
+      0.3640550390466467
+    ]
+  }
+}

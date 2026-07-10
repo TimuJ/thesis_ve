@@ -1,0 +1,20 @@
+{
+  "video_path": "/home/timur/results/rope_probe/dpp_causal/mod336/hhszUXL1Cu8.mp4",
+  "score": 0.42198043745004576,
+  "reliability": 1.0,
+  "details": {
+    "anchor_len_frames": 60,
+    "anchor_count_sampled": 7,
+    "post_anchor_count_sampled": 295,
+    "stride": 8,
+    "beta": 5.0,
+    "mean_cos_dist_to_anchor": 0.17255926455481577,
+    "max_cos_dist_to_anchor": 0.5572859346866608,
+    "trajectory_mean_per_quarter": [
+      0.1425822876595162,
+      0.14450381575403987,
+      0.14974277083938187,
+      0.25451570341031843
+    ]
+  }
+}
