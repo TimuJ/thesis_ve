@@ -1,6 +1,6 @@
 # Weekly Progress Report — Timur Iakshibaev
 
-## Period: June 29 – July 1, 2026
+## Period: June 29 – July 3, 2026
 
 ## Headline
 
@@ -218,6 +218,106 @@ result now in hand, the remaining work is almost entirely writing:
 5. **July 13–14**: internal proofread, `BlindReview=true`, final LaTeX build.
 6. **July 15**: submit.
 
+## 6. July 2 — RoPE-extrapolation probe launched; FlashVSR becomes the third benchmark row
+
+The post-thesis research arc (Direction 4 of the long-term plan) started a
+day early and produced two results in one sprint.
+
+### 6.1 The probe instrument, built and verified
+
+Working hypothesis: RoPE-based VSR attention fails to *extrapolate* beyond
+its trained temporal position range, and this — not just content difficulty —
+degrades long-video SR. Spec + 10-task plan committed
+(`docs/superpowers/specs/2026-07-02-rope-extrapolation-vsr-design.md`);
+Tasks 1–5 executed the same day:
+
+- **FlashVSR** (DiffSynth fork of Wan2.1 DiT, one-step streaming VSR) stood
+  up on the SmartML server from zero (new `flashvsr` env, torch 2.6+cu124,
+  Block-Sparse-Attention compiled for sm_80 after an upstream gencode bug).
+- **Architecture finding:** temporal RoPE positions are a slice into a
+  1024-row precomputed table, and the streaming pipelines advance *absolute*
+  positions per chunk without ever resetting. Two consequences: long videos
+  extrapolate by construction, and **stock FlashVSR cannot process more than
+  4089 frames (~2.3 min @ 30 fps) in a single pass, period** — the table
+  runs out. (`docs/notes/2026-07-02-flashvsr-rope-site.md`)
+- **The injection hook passed its faithfulness gate bit-exactly:** the
+  probe swaps the freq table for a wrapper that routes position lookups
+  through an override; with a no-op override the output is bit-identical to
+  stock (drift 0.0 against a measured 0.0 nondeterminism floor), and a +1
+  shift demonstrably changes output (0.295) — the instrument works and is
+  provably faithful. The FlashVSR repo itself is untouched (pinned + tagged
+  `pristine-2026-07-02`; hooks are runtime-only).
+
+### 6.2 FlashVSR tops the LR-VCC v5 ranking (benchmark by-product)
+
+Because the install is pristine, the same FlashVSR served unmodified as a
+third real-SR method. Full-coverage inference on all 5 long synthetic videos,
+I/O-matched to MGLD/UAV (1280×720 full content, exact frame counts; the four
+5000-frame videos forced into 2 segments each by the ceiling above — an
+honest property of the method on long videos). Full 7-stage battery + v5
+composite (`reports/figures/realmodel_v5_3method.md`):
+
+| | MGLD | UAV | **FlashVSR** |
+|---|-----:|----:|---------:|
+| LR-VCC v5 mean | 0.589 | 0.552 | **0.610** |
+| videos won | 3 (narrow: ≤0.029) | 0 | 2 (large: +0.085, +0.074) |
+
+Sub-metric reading: FlashVSR's win is driven by **identity** (0.598 vs
+0.555/0.463); but it is **worst on D'' CLIP-trajectory** (0.862 vs
+0.893/0.884) — the long-range-drift cell. A 2025 streaming model beats the
+2023 baselines overall while showing exactly the drift signature the probe
+attributes to growing absolute positions: the benchmark and the probe now
+point at the same suspect from opposite directions. (Closeup-map choice
+bracketed with both existing maps — composite moves ≤0.001, so no
+FlashVSR-specific anatomy run was needed.)
+
+### 6.3 Infrastructure notes
+
+- Server→Mac bulk transfer solved with a **reverse GitHub bridge**: a 7-day
+  fine-grained PAT (contents:write, this repo only) on the server; orphan
+  branch push → local pull → branch delete. Moved 314 MB of FlashVSR outputs
+  + all metric JSONs. Token lapses ~Jul 9.
+- The setuptools-81 `pkg_resources` gotcha struck a third env (`vsr`, via
+  pyiqa→clip); fixed the documented way. All new gotchas recorded as addenda
+  in `docs/2026-07-01-new-server-and-gotchas.md`.
+- Round-2 contrast model decided: **SeedVR2** (window-local positions)
+  replaces SparkVSR — tests whether window attention avoids the drift that
+  absolute streaming positions incur.
+
+### 6.4 July 3 — first sweep results: shift-invariance holds; stretch is what bites
+
+Task 6 (sweep driver) ran the first two position sweeps on an 85-frame clip,
+scored with **pyiqa / IQA-PyTorch under the project's DOVE RGB convention**
+(same metric stack as every verified baseline number — an early scikit-image
+scoring pass was discarded and redone for exactly this comparability reason).
+
+- **Shift control (H0):** temporal indices shifted by k ∈ {2…996} with
+  content fixed → self-consistency PSNR **52.9–53.1 dB flat** (SSIM 0.998,
+  LPIPS 0.0006), no trend in k even at the RoPE table edge. The streaming
+  attention is effectively shift-invariant in-range — **no meaningful
+  absolute-position leakage**. RoPE's relative property survives the sparse
+  attention and bf16.
+- **Stretch (toward H1):** spreading the same frames' positions by s ∈
+  {2…64} → PSNR drops to **35.7 (s=2) and ~32 dB (s≥4)**, LPIPS rises ~140×
+  over the shift condition, with a mild non-monotonic wobble (s=16/32
+  slightly closer to baseline — possibly RoPE frequency periodicity).
+  At s=64 positions reach ~1536, *past* the 1024-row table: the probe's
+  extended-table path ran in production and degradation stayed smooth —
+  no collapse on this short clip.
+- **Interpretation (honest):** the model responds to position *geometry*,
+  not position *offset*. Self-consistency measures change, not quality —
+  the H1 quality verdict needs vs-GT + LR-VCC scoring on longer windows,
+  which is the next probe step (Tasks 7–8).
+
+Probe artefacts: `results/rope_probe/{shift,stretch}/hhsz85/` (per-condition
+frames on the server, pyiqa JSONs mirrored locally);
+`docs/notes/2026-07-02-flashvsr-rope-site.md` §"Task 6 first sweeps".
+
+*(Probe work after July 3 — supervisor-framing integration, the fine and
+continuous-PI dose-response sweeps, and the vs-GT quality verdict on
+DOVE-UDM10 — is reported in the next weekly,
+`Timur_Iakshibaev_2026-07-04_to_2026-07-06.md`.)*
+
 ## Open questions for the meeting
 
 1. Is the unanimous MGLD > UAV v5 ranking (with the honest note that the two
@@ -231,3 +331,13 @@ result now in hand, the remaining work is almost entirely writing:
    shock is a non-event? This is the third recovery this term.
 3. Confirm the July-1 freeze holds for synthetic experiments, with only the
    real-model anchor (Q1) and flip_invert as permitted exceptions.
+4. **Does the 3-method table (FlashVSR added, §6.2) enter the thesis
+   experiments chapter, or stay paper-side?** It strengthens the ranking
+   story (a modern method wins; LR-VCC still discriminates via D'') but was
+   computed after the nominal freeze — needs an explicit freeze-exception
+   decision like Q1/Q3.
+5. Priority between thesis writing and the RoPE probe: the probe instrument
+   is ready (Task 5 gate passed), and the blind-review deadline is confirmed
+   as **July 25** (not July 15 — ten extra days). Proposal: probe continues
+   as background GPU jobs + short foreground bursts through ~July 8, then
+   full focus on writing.

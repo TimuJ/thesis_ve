@@ -1,484 +1,21 @@
-% use `texdoc biblatex` to get help
-@www{zjuthesisrules,
-  title  = {浙江大学本科生毕业论文（设计）编写规则},
-  author = {浙江大学本科生院},
-  year   = {2018},
-  url    = {http://bksy.zju.edu.cn/attachments/2018-01/01-1517384518-1149149.pdf}
-}
-@www{tikz,
-  title  = {tikz宏包},
-  author = {Till Tantau},
-  year   = {2018},
-  url    = {https://sourceforge.net/projects/pgf/}
-}
-@www{zjuthesis,
-  title  = {浙江大学毕业设计/论文模板},
-  author = {王子轩},
-  year   = {2019},
-  url    = {https://github.com/TheNetAdmin/zjuthesis}
-}
-@www{zjugradthesisrules,
-  title  = {浙江大学研究生学位论文编写规则},
-  author = {浙江大学研究生院},
-  year   = {2008},
-  url    = {http://grs.zju.edu.cn/redir.php?catalog_id=10038&object_id=12877}
+@article{krizhevsky_imagenet_2017,
+  title    = {{ImageNet} classification with deep convolutional neural networks},
+  volume   = {60},
+  issn     = {0001-0782, 1557-7317},
+  url      = {https://dl.acm.org/doi/10.1145/3065386},
+  doi      = {10.1145/3065386},
+  abstract = {We trained a large, deep convolutional neural network to classify the 1.2 million high-resolution images in the ImageNet LSVRC-2010 contest into the 1000 different classes. On the test data, we achieved top-1 and top-5 error rates of 37.5\% and 17.0\%, respectively, which is considerably better than the previous state-of-the-art. The neural network, which has 60 million parameters and 650,000 neurons, consists of five convolutional layers, some of which are followed by max-pooling layers, and three fully connected layers with a final 1000-way softmax. To make training faster, we used non-saturating neurons and a very efficient GPU implementation of the convolution operation. To reduce overfitting in the fully connected layers we employed a recently developed regularization method called "dropout" that proved to be very effective. We also entered a variant of this model in the ILSVRC-2012 competition and achieved a winning top-5 test error rate of 15.3\%, compared to 26.2\% achieved by the second-best entry.},
+  language = {en},
+  number   = {6},
+  urldate  = {2025-12-24},
+  journal  = {Communications of the ACM},
+  author   = {Krizhevsky, Alex and Sutskever, Ilya and Hinton, Geoffrey E.},
+  month    = may,
+  year     = {2017},
+  pages    = {84--90}
 }
 
-% methodology and experiments refs
-@inproceedings{pont-tuset_2017_davis,
-  title     = {The 2017 {DAVIS} Challenge on Video Object Segmentation},
-  author    = {Pont-Tuset, Jordi and Perazzi, Federico and Caelles, Sergi and Arbel{\'a}ez, Pablo and Sorkine-Hornung, Alexander and Van Gool, Luc},
-  booktitle = {arXiv:1704.00675},
-  year      = {2017}
-}
 
-@inproceedings{farneback_2003,
-  title     = {Two-Frame Motion Estimation Based on Polynomial Expansion},
-  author    = {Farneb{\"a}ck, Gunnar},
-  booktitle = {Scandinavian Conference on Image Analysis (SCIA)},
-  pages     = {363--370},
-  year      = {2003}
-}
-
-@inproceedings{kroeger_dis_2016,
-  title     = {Fast Optical Flow Using Dense Inverse Search},
-  author    = {Kroeger, Till and Timofte, Radu and Dai, Dengxin and Van Gool, Luc},
-  booktitle = {European Conference on Computer Vision (ECCV)},
-  pages     = {471--488},
-  year      = {2016}
-}
-
-% introduction refs
-@misc{yan_visa_2024,
-  title      = {{VISA}: {Reasoning} {Video} {Object} {Segmentation} via {Large} {Language} {Models}},
-  shorttitle = {{VISA}},
-  url        = {http://arxiv.org/abs/2407.11325},
-  doi        = {10.48550/arXiv.2407.11325},
-  abstract   = {Existing Video Object Segmentation (VOS) relies on explicit user instructions, such as categories, masks, or short phrases, restricting their ability to perform complex video segmentation requiring reasoning with world knowledge. In this paper, we introduce a new task, Reasoning Video Object Segmentation (ReasonVOS). This task aims to generate a sequence of segmentation masks in response to implicit text queries that require complex reasoning abilities based on world knowledge and video contexts, which is crucial for structured environment understanding and object-centric interactions, pivotal in the development of embodied AI. To tackle ReasonVOS, we introduce VISA (Video-based large language Instructed Segmentation Assistant), to leverage the world knowledge reasoning capabilities of multi-modal LLMs while possessing the ability to segment and track objects in videos with a mask decoder. Moreover, we establish a comprehensive benchmark consisting of 35,074 instruction-mask sequence pairs from 1,042 diverse videos, which incorporates complex world knowledge reasoning into segmentation tasks for instruction-tuning and evaluation purposes of ReasonVOS models. Experiments conducted on 8 datasets demonstrate the effectiveness of VISA in tackling complex reasoning segmentation and vanilla referring segmentation in both video and image domains. The code and dataset are available at https://github.com/cilinyan/VISA.},
-  urldate    = {2025-05-04},
-  publisher  = {arXiv},
-  author     = {Yan, Cilin and Wang, Haochen and Yan, Shilin and Jiang, Xiaolong and Hu, Yao and Kang, Guoliang and Xie, Weidi and Gavves, Efstratios},
-  month      = jul,
-  year       = {2024},
-  note       = {arXiv:2407.11325 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition}
-}
-@misc{alayrac_flamingo_2022,
-  title      = {Flamingo: a {Visual} {Language} {Model} for {Few}-{Shot} {Learning}},
-  shorttitle = {Flamingo},
-  url        = {http://arxiv.org/abs/2204.14198},
-  doi        = {10.48550/arXiv.2204.14198},
-  abstract   = {Building models that can be rapidly adapted to novel tasks using only a handful of annotated examples is an open challenge for multimodal machine learning research. We introduce Flamingo, a family of Visual Language Models (VLM) with this ability. We propose key architectural innovations to: (i) bridge powerful pretrained vision-only and language-only models, (ii) handle sequences of arbitrarily interleaved visual and textual data, and (iii) seamlessly ingest images or videos as inputs. Thanks to their flexibility, Flamingo models can be trained on large-scale multimodal web corpora containing arbitrarily interleaved text and images, which is key to endow them with in-context few-shot learning capabilities. We perform a thorough evaluation of our models, exploring and measuring their ability to rapidly adapt to a variety of image and video tasks. These include open-ended tasks such as visual question-answering, where the model is prompted with a question which it has to answer; captioning tasks, which evaluate the ability to describe a scene or an event; and close-ended tasks such as multiple-choice visual question-answering. For tasks lying anywhere on this spectrum, a single Flamingo model can achieve a new state of the art with few-shot learning, simply by prompting the model with task-specific examples. On numerous benchmarks, Flamingo outperforms models fine-tuned on thousands of times more task-specific data.},
-  urldate    = {2025-05-04},
-  publisher  = {arXiv},
-  author     = {Alayrac, Jean-Baptiste and Donahue, Jeff and Luc, Pauline and Miech, Antoine and Barr, Iain and Hasson, Yana and Lenc, Karel and Mensch, Arthur and Millican, Katie and Reynolds, Malcolm and Ring, Roman and Rutherford, Eliza and Cabi, Serkan and Han, Tengda and Gong, Zhitao and Samangooei, Sina and Monteiro, Marianne and Menick, Jacob and Borgeaud, Sebastian and Brock, Andrew and Nematzadeh, Aida and Sharifzadeh, Sahand and Binkowski, Mikolaj and Barreira, Ricardo and Vinyals, Oriol and Zisserman, Andrew and Simonyan, Karen},
-  month      = nov,
-  year       = {2022},
-  note       = {arXiv:2204.14198 [cs]},
-  keywords   = {Computer Science - Artificial Intelligence, Computer Science - Computer Vision and Pattern Recognition, Computer Science - Machine Learning},
-  annote     = {Comment: 54 pages. In Proceedings of Neural Information Processing Systems (NeurIPS) 2022}
-}
-@misc{li_blip-2_2023,
-  title      = {{BLIP}-2: {Bootstrapping} {Language}-{Image} {Pre}-training with {Frozen} {Image} {Encoders} and {Large} {Language} {Models}},
-  shorttitle = {{BLIP}-2},
-  url        = {http://arxiv.org/abs/2301.12597},
-  doi        = {10.48550/arXiv.2301.12597},
-  abstract   = {The cost of vision-and-language pre-training has become increasingly prohibitive due to end-to-end training of large-scale models. This paper proposes BLIP-2, a generic and efficient pre-training strategy that bootstraps vision-language pre-training from off-the-shelf frozen pre-trained image encoders and frozen large language models. BLIP-2 bridges the modality gap with a lightweight Querying Transformer, which is pre-trained in two stages. The first stage bootstraps vision-language representation learning from a frozen image encoder. The second stage bootstraps vision-to-language generative learning from a frozen language model. BLIP-2 achieves state-of-the-art performance on various vision-language tasks, despite having significantly fewer trainable parameters than existing methods. For example, our model outperforms Flamingo80B by 8.7\% on zero-shot VQAv2 with 54x fewer trainable parameters. We also demonstrate the model's emerging capabilities of zero-shot image-to-text generation that can follow natural language instructions.},
-  urldate    = {2025-05-04},
-  publisher  = {arXiv},
-  author     = {Li, Junnan and Li, Dongxu and Savarese, Silvio and Hoi, Steven},
-  month      = jun,
-  year       = {2023},
-  note       = {arXiv:2301.12597 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition}
-}
-@misc{ye_mplug-owl_2024,
-  title      = {{mPLUG}-{Owl}: {Modularization} {Empowers} {Large} {Language} {Models} with {Multimodality}},
-  shorttitle = {{mPLUG}-{Owl}},
-  url        = {http://arxiv.org/abs/2304.14178},
-  doi        = {10.48550/arXiv.2304.14178},
-  abstract   = {Large language models (LLMs) have demonstrated impressive zero-shot abilities on a variety of open-ended tasks, while recent research has also explored the use of LLMs for multi-modal generation. In this study, we introduce mPLUG-Owl, a novel training paradigm that equips LLMs with multi-modal abilities through modularized learning of foundation LLM, a visual knowledge module, and a visual abstractor module. This approach can support multiple modalities and facilitate diverse unimodal and multimodal abilities through modality collaboration. The training paradigm of mPLUG-Owl involves a two-stage method for aligning image and text, which learns visual knowledge with the assistance of LLM while maintaining and even improving the generation abilities of LLM. In the first stage, the visual knowledge module and abstractor module are trained with a frozen LLM module to align the image and text. In the second stage, language-only and multi-modal supervised datasets are used to jointly fine-tune a low-rank adaption (LoRA) module on LLM and the abstractor module by freezing the visual knowledge module. We carefully build a visually-related instruction evaluation set OwlEval. Experimental results show that our model outperforms existing multi-modal models, demonstrating mPLUG-Owl's impressive instruction and visual understanding ability, multi-turn conversation ability, and knowledge reasoning ability. Besides, we observe some unexpected and exciting abilities such as multi-image correlation and scene text understanding, which makes it possible to leverage it for harder real scenarios, such as vision-only document comprehension. Our code, pre-trained model, instruction-tuned models, and evaluation set are available at https://github.com/X-PLUG/mPLUG-Owl. The online demo is available at https://www.modelscope.cn/studios/damo/mPLUG-Owl.},
-  urldate    = {2025-05-04},
-  publisher  = {arXiv},
-  author     = {Ye, Qinghao and Xu, Haiyang and Xu, Guohai and Ye, Jiabo and Yan, Ming and Zhou, Yiyang and Wang, Junyang and Hu, Anwen and Shi, Pengcheng and Shi, Yaya and Li, Chenliang and Xu, Yuanhong and Chen, Hehong and Tian, Junfeng and Qian, Qi and Zhang, Ji and Huang, Fei and Zhou, Jingren},
-  month      = mar,
-  year       = {2024},
-  note       = {arXiv:2304.14178 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition, Computer Science - Machine Learning, Computer Science - Computation and Language},
-  annote     = {Comment: Working in Process}
-}
-@misc{radford_learning_2021,
-  title     = {Learning {Transferable} {Visual} {Models} {From} {Natural} {Language} {Supervision}},
-  url       = {http://arxiv.org/abs/2103.00020},
-  doi       = {10.48550/arXiv.2103.00020},
-  abstract  = {State-of-the-art computer vision systems are trained to predict a fixed set of predetermined object categories. This restricted form of supervision limits their generality and usability since additional labeled data is needed to specify any other visual concept. Learning directly from raw text about images is a promising alternative which leverages a much broader source of supervision. We demonstrate that the simple pre-training task of predicting which caption goes with which image is an efficient and scalable way to learn SOTA image representations from scratch on a dataset of 400 million (image, text) pairs collected from the internet. After pre-training, natural language is used to reference learned visual concepts (or describe new ones) enabling zero-shot transfer of the model to downstream tasks. We study the performance of this approach by benchmarking on over 30 different existing computer vision datasets, spanning tasks such as OCR, action recognition in videos, geo-localization, and many types of fine-grained object classification. The model transfers non-trivially to most tasks and is often competitive with a fully supervised baseline without the need for any dataset specific training. For instance, we match the accuracy of the original ResNet-50 on ImageNet zero-shot without needing to use any of the 1.28 million training examples it was trained on. We release our code and pre-trained model weights at https://github.com/OpenAI/CLIP.},
-  urldate   = {2025-05-04},
-  publisher = {arXiv},
-  author    = {Radford, Alec and Kim, Jong Wook and Hallacy, Chris and Ramesh, Aditya and Goh, Gabriel and Agarwal, Sandhini and Sastry, Girish and Askell, Amanda and Mishkin, Pamela and Clark, Jack and Krueger, Gretchen and Sutskever, Ilya},
-  month     = feb,
-  year      = {2021},
-  note      = {arXiv:2103.00020 [cs]},
-  keywords  = {Computer Science - Computer Vision and Pattern Recognition, Computer Science - Machine Learning}
-}
-@misc{ravi_sam_2024,
-  title      = {{SAM} 2: {Segment} {Anything} in {Images} and {Videos}},
-  shorttitle = {{SAM} 2},
-  url        = {http://arxiv.org/abs/2408.00714},
-  doi        = {10.48550/arXiv.2408.00714},
-  abstract   = {We present Segment Anything Model 2 (SAM 2), a foundation model towards solving promptable visual segmentation in images and videos. We build a data engine, which improves model and data via user interaction, to collect the largest video segmentation dataset to date. Our model is a simple transformer architecture with streaming memory for real-time video processing. SAM 2 trained on our data provides strong performance across a wide range of tasks. In video segmentation, we observe better accuracy, using 3x fewer interactions than prior approaches. In image segmentation, our model is more accurate and 6x faster than the Segment Anything Model (SAM). We believe that our data, model, and insights will serve as a significant milestone for video segmentation and related perception tasks. We are releasing our main model, dataset, as well as code for model training and our demo.},
-  urldate    = {2025-03-05},
-  publisher  = {arXiv},
-  author     = {Ravi, Nikhila and Gabeur, Valentin and Hu, Yuan-Ting and Hu, Ronghang and Ryali, Chaitanya and Ma, Tengyu and Khedr, Haitham and Rädle, Roman and Rolland, Chloe and Gustafson, Laura and Mintun, Eric and Pan, Junting and Alwala, Kalyan Vasudev and Carion, Nicolas and Wu, Chao-Yuan and Girshick, Ross and Dollár, Piotr and Feichtenhofer, Christoph},
-  month      = oct,
-  year       = {2024},
-  note       = {arXiv:2408.00714 [cs]},
-  keywords   = {Computer Science - Artificial Intelligence, Computer Science - Computer Vision and Pattern Recognition, Computer Science - Machine Learning},
-  annote     = {Comment: Website: https://ai.meta.com/sam2},
-  file       = {Preprint PDF:/home/timur/Zotero/storage/VAGKNFDJ/Ravi и др. - 2024 - SAM 2 Segment Anything in Images and Videos.pdf:application/pdf;Snapshot:/home/timur/Zotero/storage/IAHY2S7S/2408.html:text/html}
-}
-@misc{huang_otter_2025,
-  title      = {{OTTER}: {A} {Vision}-{Language}-{Action} {Model} with {Text}-{Aware} {Visual} {Feature} {Extraction}},
-  shorttitle = {{OTTER}},
-  url        = {http://arxiv.org/abs/2503.03734},
-  doi        = {10.48550/arXiv.2503.03734},
-  abstract   = {Vision-Language-Action (VLA) models aim to predict robotic actions based on visual observations and language instructions. Existing approaches require fine-tuning pre-trained visionlanguage models (VLMs) as visual and language features are independently fed into downstream policies, degrading the pre-trained semantic alignments. We propose OTTER, a novel VLA architecture that leverages these existing alignments through explicit, text-aware visual feature extraction. Instead of processing all visual features, OTTER selectively extracts and passes only task-relevant visual features that are semantically aligned with the language instruction to the policy transformer. This allows OTTER to keep the pre-trained vision-language encoders frozen. Thereby, OTTER preserves and utilizes the rich semantic understanding learned from large-scale pre-training, enabling strong zero-shot generalization capabilities. In simulation and real-world experiments, OTTER significantly outperforms existing VLA models, demonstrating strong zeroshot generalization to novel objects and environments. Video, code, checkpoints, and dataset: https://ottervla.github.io/.},
-  urldate    = {2025-05-04},
-  publisher  = {arXiv},
-  author     = {Huang, Huang and Liu, Fangchen and Fu, Letian and Wu, Tingfan and Mukadam, Mustafa and Malik, Jitendra and Goldberg, Ken and Abbeel, Pieter},
-  month      = mar,
-  year       = {2025},
-  note       = {arXiv:2503.03734 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition, Computer Science - Robotics}
-}
-@misc{wang_internvideo2_2024,
-  title      = {{InternVideo2}: {Scaling} {Foundation} {Models} for {Multimodal} {Video} {Understanding}},
-  shorttitle = {{InternVideo2}},
-  url        = {http://arxiv.org/abs/2403.15377},
-  doi        = {10.48550/arXiv.2403.15377},
-  abstract   = {We introduce InternVideo2, a new family of video foundation models (ViFM) that achieve the state-of-the-art results in video recognition, video-text tasks, and video-centric dialogue. Our core design is a progressive training approach that unifies the masked video modeling, crossmodal contrastive learning, and next token prediction, scaling up the video encoder size to 6B parameters. At the data level, we prioritize spatiotemporal consistency by semantically segmenting videos and generating video-audio-speech captions. This improves the alignment between video and text. Through extensive experiments, we validate our designs and demonstrate superior performance on over 60 video and audio tasks. Notably, our model outperforms others on various video-related dialogue and long video understanding benchmarks, highlighting its ability to reason and comprehend longer contexts. Code and models are available at https://github.com/OpenGVLab/InternVideo/tree/main/InternVideo2/.},
-  urldate    = {2025-05-04},
-  publisher  = {arXiv},
-  author     = {Wang, Yi and Li, Kunchang and Li, Xinhao and Yu, Jiashuo and He, Yinan and Wang, Chenting and Chen, Guo and Pei, Baoqi and Yan, Ziang and Zheng, Rongkun and Xu, Jilan and Wang, Zun and Shi, Yansong and Jiang, Tianxiang and Li, Songze and Zhang, Hongjie and Huang, Yifei and Qiao, Yu and Wang, Yali and Wang, Limin},
-  month      = aug,
-  year       = {2024},
-  note       = {arXiv:2403.15377 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition},
-  annote     = {Comment: a technical report about video understanding (accepted to ECCV2024)},
-  file       = {Preprint PDF:/home/timur/Zotero/storage/7UPG4YVV/Wang и др. - 2024 - InternVideo2 Scaling Foundation Models for Multim.pdf:application/pdf;Snapshot:/home/timur/Zotero/storage/M26WKW58/2403.html:text/html}
-}
-@misc{wang_videomae_2023,
-  title      = {{VideoMAE} {V2}: {Scaling} {Video} {Masked} {Autoencoders} with {Dual} {Masking}},
-  shorttitle = {{VideoMAE} {V2}},
-  url        = {http://arxiv.org/abs/2303.16727},
-  doi        = {10.48550/arXiv.2303.16727},
-  abstract   = {Scale is the primary factor for building a powerful foundation model that could well generalize to a variety of downstream tasks. However, it is still challenging to train video foundation models with billions of parameters. This paper shows that video masked autoencoder (VideoMAE) is a scalable and general self-supervised pre-trainer for building video foundation models. We scale the VideoMAE in both model and data with a core design. Specifically, we present a dual masking strategy for efficient pre-training, with an encoder operating on a subset of video tokens and a decoder processing another subset of video tokens. Although VideoMAE is very efficient due to high masking ratio in encoder, masking decoder can still further reduce the overall computational cost. This enables the efficient pre-training of billion-level models in video. We also use a progressive training paradigm that involves an initial pre-training on a diverse multi-sourced unlabeled dataset, followed by a post-pre-training on a mixed labeled dataset. Finally, we successfully train a video ViT model with a billion parameters, which achieves a new state-of-the-art performance on the datasets of Kinetics (90.0\% on K400 and 89.9\% on K600) and Something-Something (68.7\% on V1 and 77.0\% on V2). In addition, we extensively verify the pre-trained video ViT models on a variety of downstream tasks, demonstrating its effectiveness as a general video representation learner. The code and model is available at {\textbackslash}url\{https://github.com/OpenGVLab/VideoMAEv2\}.},
-  urldate    = {2025-05-04},
-  publisher  = {arXiv},
-  author     = {Wang, Limin and Huang, Bingkun and Zhao, Zhiyu and Tong, Zhan and He, Yinan and Wang, Yi and Wang, Yali and Qiao, Yu},
-  month      = apr,
-  year       = {2023},
-  note       = {arXiv:2303.16727 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition, Computer Science - Machine Learning},
-  annote     = {Comment: CVPR 2023 camera-ready version},
-  file       = {Preprint PDF:/home/timur/Zotero/storage/UXUKMKU6/Wang и др. - 2023 - VideoMAE V2 Scaling Video Masked Autoencoders wit.pdf:application/pdf}
-}
-@misc{zhu_minigpt-4_2023,
-  title      = {{MiniGPT}-4: {Enhancing} {Vision}-{Language} {Understanding} with {Advanced} {Large} {Language} {Models}},
-  shorttitle = {{MiniGPT}-4},
-  url        = {http://arxiv.org/abs/2304.10592},
-  doi        = {10.48550/arXiv.2304.10592},
-  abstract   = {The recent GPT-4 has demonstrated extraordinary multi-modal abilities, such as directly generating websites from handwritten text and identifying humorous elements within images. These features are rarely observed in previous vision-language models. However, the technical details behind GPT-4 continue to remain undisclosed. We believe that the enhanced multi-modal generation capabilities of GPT-4 stem from the utilization of sophisticated large language models (LLM). To examine this phenomenon, we present MiniGPT-4, which aligns a frozen visual encoder with a frozen advanced LLM, Vicuna, using one projection layer. Our work, for the first time, uncovers that properly aligning the visual features with an advanced large language model can possess numerous advanced multi-modal abilities demonstrated by GPT-4, such as detailed image description generation and website creation from hand-drawn drafts. Furthermore, we also observe other emerging capabilities in MiniGPT-4, including writing stories and poems inspired by given images, teaching users how to cook based on food photos, and so on. In our experiment, we found that the model trained on short image caption pairs could produce unnatural language outputs (e.g., repetition and fragmentation). To address this problem, we curate a detailed image description dataset in the second stage to finetune the model, which consequently improves the model's generation reliability and overall usability. Our code, pre-trained model, and collected dataset are available at https://minigpt-4.github.io/.},
-  urldate    = {2025-05-04},
-  publisher  = {arXiv},
-  author     = {Zhu, Deyao and Chen, Jun and Shen, Xiaoqian and Li, Xiang and Elhoseiny, Mohamed},
-  month      = oct,
-  year       = {2023},
-  note       = {arXiv:2304.10592 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition},
-  annote     = {Comment: Project Website: https://minigpt-4.github.io/; Code, Pretrained Model, and Dataset: https://github.com/Vision-CAIR/MiniGPT-4; Deyao Zhu and Jun Chen contributed equally to this work}
-}
-@misc{yang_qwen2_2024,
-  title     = {Qwen2 {Technical} {Report}},
-  url       = {http://arxiv.org/abs/2407.10671},
-  doi       = {10.48550/arXiv.2407.10671},
-  abstract  = {This report introduces the Qwen2 series, the latest addition to our large language models and large multimodal models. We release a comprehensive suite of foundational and instruction-tuned language models, encompassing a parameter range from 0.5 to 72 billion, featuring dense models and a Mixture-of-Experts model. Qwen2 surpasses most prior open-weight models, including its predecessor Qwen1.5, and exhibits competitive performance relative to proprietary models across diverse benchmarks on language understanding, generation, multilingual proficiency, coding, mathematics, and reasoning. The flagship model, Qwen2-72B, showcases remarkable performance: 84.2 on MMLU, 37.9 on GPQA, 64.6 on HumanEval, 89.5 on GSM8K, and 82.4 on BBH as a base language model. The instruction-tuned variant, Qwen2-72B-Instruct, attains 9.1 on MT-Bench, 48.1 on Arena-Hard, and 35.7 on LiveCodeBench. Moreover, Qwen2 demonstrates robust multilingual capabilities, proficient in approximately 30 languages, spanning English, Chinese, Spanish, French, German, Arabic, Russian, Korean, Japanese, Thai, Vietnamese, and more, underscoring its versatility and global reach. To foster community innovation and accessibility, we have made the Qwen2 model weights openly available on Hugging Face and ModelScope, and the supplementary materials including example code on GitHub. These platforms also include resources for quantization, fine-tuning, and deployment, facilitating a wide range of applications and research endeavors.},
-  urldate   = {2025-05-04},
-  publisher = {arXiv},
-  author    = {Yang, An and Yang, Baosong and Hui, Binyuan and Zheng, Bo and Yu, Bowen and Zhou, Chang and Li, Chengpeng and Li, Chengyuan and Liu, Dayiheng and Huang, Fei and Dong, Guanting and Wei, Haoran and Lin, Huan and Tang, Jialong and Wang, Jialin and Yang, Jian and Tu, Jianhong and Zhang, Jianwei and Ma, Jianxin and Yang, Jianxin and Xu, Jin and Zhou, Jingren and Bai, Jinze and He, Jinzheng and Lin, Junyang and Dang, Kai and Lu, Keming and Chen, Keqin and Yang, Kexin and Li, Mei and Xue, Mingfeng and Ni, Na and Zhang, Pei and Wang, Peng and Peng, Ru and Men, Rui and Gao, Ruize and Lin, Runji and Wang, Shijie and Bai, Shuai and Tan, Sinan and Zhu, Tianhang and Li, Tianhao and Liu, Tianyu and Ge, Wenbin and Deng, Xiaodong and Zhou, Xiaohuan and Ren, Xingzhang and Zhang, Xinyu and Wei, Xipin and Ren, Xuancheng and Liu, Xuejing and Fan, Yang and Yao, Yang and Zhang, Yichang and Wan, Yu and Chu, Yunfei and Liu, Yuqiong and Cui, Zeyu and Zhang, Zhenru and Guo, Zhifang and Fan, Zhihao},
-  month     = sep,
-  year      = {2024},
-  note      = {arXiv:2407.10671 [cs]},
-  keywords  = {Computer Science - Artificial Intelligence, Computer Science - Computation and Language},
-  annote    = {Comment: 26 pages, 1 figure}
-}
-@misc{wu_defense_2022,
-  title     = {In {Defense} of {Online} {Models} for {Video} {Instance} {Segmentation}},
-  url       = {http://arxiv.org/abs/2207.10661},
-  doi       = {10.48550/arXiv.2207.10661},
-  abstract  = {In recent years, video instance segmentation (VIS) has been largely advanced by offline models, while online models gradually attracted less attention possibly due to their inferior performance. However, online methods have their inherent advantage in handling long video sequences and ongoing videos while offline models fail due to the limit of computational resources. Therefore, it would be highly desirable if online models can achieve comparable or even better performance than offline models. By dissecting current online models and offline models, we demonstrate that the main cause of the performance gap is the error-prone association between frames caused by the similar appearance among different instances in the feature space. Observing this, we propose an online framework based on contrastive learning that is able to learn more discriminative instance embeddings for association and fully exploit history information for stability. Despite its simplicity, our method outperforms all online and offline methods on three benchmarks. Specifically, we achieve 49.5 AP on YouTube-VIS 2019, a significant improvement of 13.2 AP and 2.1 AP over the prior online and offline art, respectively. Moreover, we achieve 30.2 AP on OVIS, a more challenging dataset with significant crowding and occlusions, surpassing the prior art by 14.8 AP. The proposed method won first place in the video instance segmentation track of the 4th Large-scale Video Object Segmentation Challenge (CVPR2022). We hope the simplicity and effectiveness of our method, as well as our insight into current methods, could shed light on the exploration of VIS models.},
-  urldate   = {2025-05-11},
-  publisher = {arXiv},
-  author    = {Wu, Junfeng and Liu, Qihao and Jiang, Yi and Bai, Song and Yuille, Alan and Bai, Xiang},
-  month     = jul,
-  year      = {2022},
-  note      = {arXiv:2207.10661 [cs]},
-  keywords  = {Computer Science - Computer Vision and Pattern Recognition},
-  annote    = {Comment: ECCV 2022, Oral}
-}
-@misc{zhang_dvis_2023,
-  title      = {{DVIS}: {Decoupled} {Video} {Instance} {Segmentation} {Framework}},
-  shorttitle = {{DVIS}},
-  url        = {http://arxiv.org/abs/2306.03413},
-  doi        = {10.48550/arXiv.2306.03413},
-  abstract   = {Video instance segmentation (VIS) is a critical task with diverse applications, including autonomous driving and video editing. Existing methods often underperform on complex and long videos in real world, primarily due to two factors. Firstly, offline methods are limited by the tightly-coupled modeling paradigm, which treats all frames equally and disregards the interdependencies between adjacent frames. Consequently, this leads to the introduction of excessive noise during long-term temporal alignment. Secondly, online methods suffer from inadequate utilization of temporal information. To tackle these challenges, we propose a decoupling strategy for VIS by dividing it into three independent sub-tasks: segmentation, tracking, and refinement. The efficacy of the decoupling strategy relies on two crucial elements: 1) attaining precise long-term alignment outcomes via frame-by-frame association during tracking, and 2) the effective utilization of temporal information predicated on the aforementioned accurate alignment outcomes during refinement. We introduce a novel referring tracker and temporal refiner to construct the {\textbackslash}textbf\{D\}ecoupled {\textbackslash}textbf\{VIS\} framework ({\textbackslash}textbf\{DVIS\}). DVIS achieves new SOTA performance in both VIS and VPS, surpassing the current SOTA methods by 7.3 AP and 9.6 VPQ on the OVIS and VIPSeg datasets, which are the most challenging and realistic benchmarks. Moreover, thanks to the decoupling strategy, the referring tracker and temporal refiner are super light-weight (only 1.69{\textbackslash}\% of the segmenter FLOPs), allowing for efficient training and inference on a single GPU with 11G memory. The code is available at {\textbackslash}href\{https://github.com/zhang-tao-whu/DVIS\}\{https://github.com/zhang-tao-whu/DVIS\}.},
-  urldate    = {2025-05-11},
-  publisher  = {arXiv},
-  author     = {Zhang, Tao and Tian, Xingye and Wu, Yu and Ji, Shunping and Wang, Xuebo and Zhang, Yuan and Wan, Pengfei},
-  month      = jul,
-  year       = {2023},
-  note       = {arXiv:2306.03413 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition},
-  annote     = {Comment: Accepted by ICCV 2023}
-}
-@misc{botach_end--end_2022,
-  title     = {End-to-{End} {Referring} {Video} {Object} {Segmentation} with {Multimodal} {Transformers}},
-  url       = {http://arxiv.org/abs/2111.14821},
-  doi       = {10.48550/arXiv.2111.14821},
-  abstract  = {The referring video object segmentation task (RVOS) involves segmentation of a text-referred object instance in the frames of a given video. Due to the complex nature of this multimodal task, which combines text reasoning, video understanding, instance segmentation and tracking, existing approaches typically rely on sophisticated pipelines in order to tackle it. In this paper, we propose a simple Transformer-based approach to RVOS. Our framework, termed Multimodal Tracking Transformer (MTTR), models the RVOS task as a sequence prediction problem. Following recent advancements in computer vision and natural language processing, MTTR is based on the realization that video and text can be processed together effectively and elegantly by a single multimodal Transformer model. MTTR is end-to-end trainable, free of text-related inductive bias components and requires no additional mask-refinement post-processing steps. As such, it simplifies the RVOS pipeline considerably compared to existing methods. Evaluation on standard benchmarks reveals that MTTR significantly outperforms previous art across multiple metrics. In particular, MTTR shows impressive +5.7 and +5.0 mAP gains on the A2D-Sentences and JHMDB-Sentences datasets respectively, while processing 76 frames per second. In addition, we report strong results on the public validation set of Refer-YouTube-VOS, a more challenging RVOS dataset that has yet to receive the attention of researchers. The code to reproduce our experiments is available at https://github.com/mttr2021/MTTR},
-  urldate   = {2025-05-11},
-  publisher = {arXiv},
-  author    = {Botach, Adam and Zheltonozhskii, Evgenii and Baskin, Chaim},
-  month     = apr,
-  year      = {2022},
-  note      = {arXiv:2111.14821 [cs]},
-  keywords  = {Computer Science - Computer Vision and Pattern Recognition, Computer Science - Machine Learning, Computer Science - Computation and Language},
-  annote    = {Comment: Accepted to CVPR 2022}
-}
-@incollection{vedaldi_urvos_2020,
-  address    = {Cham},
-  title      = {{URVOS}: {Unified} {Referring} {Video} {Object} {Segmentation} {Network} with a {Large}-{Scale} {Benchmark}},
-  volume     = {12360},
-  isbn       = {978-3-030-58554-9 978-3-030-58555-6},
-  shorttitle = {{URVOS}},
-  url        = {https://link.springer.com/10.1007/978-3-030-58555-6_13},
-  language   = {en},
-  urldate    = {2025-05-11},
-  booktitle  = {Computer {Vision} – {ECCV} 2020},
-  publisher  = {Springer International Publishing},
-  author     = {Seo, Seonguk and Lee, Joon-Young and Han, Bohyung},
-  editor     = {Vedaldi, Andrea and Bischof, Horst and Brox, Thomas and Frahm, Jan-Michael},
-  year       = {2020},
-  doi        = {10.1007/978-3-030-58555-6_13},
-  note       = {Series Title: Lecture Notes in Computer Science},
-  pages      = {208--223}
-}
-@misc{zhao_learning_2023,
-  title     = {Learning {Referring} {Video} {Object} {Segmentation} from {Weak} {Annotation}},
-  url       = {http://arxiv.org/abs/2308.02162},
-  doi       = {10.48550/arXiv.2308.02162},
-  abstract  = {Referring video object segmentation (RVOS) is a task that aims to segment the target object in all video frames based on a sentence describing the object. Although existing RVOS methods have achieved significant performance, they depend on densely-annotated datasets, which are expensive and time-consuming to obtain. In this paper, we propose a new annotation scheme that reduces the annotation effort by 8 times, while providing sufficient supervision for RVOS. Our scheme only requires a mask for the frame where the object first appears and bounding boxes for the rest of the frames. Based on this scheme, we develop a novel RVOS method that exploits weak annotations effectively. Specifically, we build a simple but effective baseline model, SimRVOS, for RVOS with weak annotation. Then, we design a cross frame segmentation module, which uses the language-guided dynamic filters from one frame to segment the target object in other frames to thoroughly leverage the valuable mask annotation and bounding boxes. Finally, we develop a bi-level contrastive learning method to enhance the pixel-level discriminative representation of the model with weak annotation. We conduct extensive experiments to show that our method achieves comparable or even superior performance to fully-supervised methods, without requiring dense mask annotations.},
-  urldate   = {2025-05-11},
-  publisher = {arXiv},
-  author    = {Zhao, Wangbo and Nan, Kepan and Zhang, Songyang and Chen, Kai and Lin, Dahua and You, Yang},
-  month     = dec,
-  year      = {2023},
-  note      = {arXiv:2308.02162 [cs]},
-  keywords  = {Computer Science - Computer Vision and Pattern Recognition}
-}
-@misc{bellver_refvos_2020,
-  title      = {{RefVOS}: {A} {Closer} {Look} at {Referring} {Expressions} for {Video} {Object} {Segmentation}},
-  shorttitle = {{RefVOS}},
-  url        = {http://arxiv.org/abs/2010.00263},
-  doi        = {10.48550/arXiv.2010.00263},
-  abstract   = {The task of video object segmentation with referring expressions (language-guided VOS) is to, given a linguistic phrase and a video, generate binary masks for the object to which the phrase refers. Our work argues that existing benchmarks used for this task are mainly composed of trivial cases, in which referents can be identified with simple phrases. Our analysis relies on a new categorization of the phrases in the DAVIS-2017 and Actor-Action datasets into trivial and non-trivial REs, with the non-trivial REs annotated with seven RE semantic categories. We leverage this data to analyze the results of RefVOS, a novel neural network that obtains competitive results for the task of language-guided image segmentation and state of the art results for language-guided VOS. Our study indicates that the major challenges for the task are related to understanding motion and static actions.},
-  urldate    = {2025-05-11},
-  publisher  = {arXiv},
-  author     = {Bellver, Miriam and Ventura, Carles and Silberer, Carina and Kazakos, Ioannis and Torres, Jordi and Giro-i-Nieto, Xavier},
-  month      = oct,
-  year       = {2020},
-  note       = {arXiv:2010.00263 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition}
-}
-@misc{zhu_deformable_2021,
-  title      = {Deformable {DETR}: {Deformable} {Transformers} for {End}-to-{End} {Object} {Detection}},
-  shorttitle = {Deformable {DETR}},
-  url        = {http://arxiv.org/abs/2010.04159},
-  doi        = {10.48550/arXiv.2010.04159},
-  abstract   = {DETR has been recently proposed to eliminate the need for many hand-designed components in object detection while demonstrating good performance. However, it suffers from slow convergence and limited feature spatial resolution, due to the limitation of Transformer attention modules in processing image feature maps. To mitigate these issues, we proposed Deformable DETR, whose attention modules only attend to a small set of key sampling points around a reference. Deformable DETR can achieve better performance than DETR (especially on small objects) with 10 times less training epochs. Extensive experiments on the COCO benchmark demonstrate the effectiveness of our approach. Code is released at https://github.com/fundamentalvision/Deformable-DETR.},
-  urldate    = {2025-05-11},
-  publisher  = {arXiv},
-  author     = {Zhu, Xizhou and Su, Weijie and Lu, Lewei and Li, Bin and Wang, Xiaogang and Dai, Jifeng},
-  month      = mar,
-  year       = {2021},
-  note       = {arXiv:2010.04159 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition},
-  annote     = {Comment: ICLR 2021 Oral}
-}
-@misc{zhai_sigmoid_2023,
-  title     = {Sigmoid {Loss} for {Language} {Image} {Pre}-{Training}},
-  url       = {http://arxiv.org/abs/2303.15343},
-  doi       = {10.48550/arXiv.2303.15343},
-  abstract  = {We propose a simple pairwise Sigmoid loss for Language-Image Pre-training (SigLIP). Unlike standard contrastive learning with softmax normalization, the sigmoid loss operates solely on image-text pairs and does not require a global view of the pairwise similarities for normalization. The sigmoid loss simultaneously allows further scaling up the batch size, while also performing better at smaller batch sizes. Combined with Locked-image Tuning, with only four TPUv4 chips, we train a SigLiT model that achieves 84.5\% ImageNet zero-shot accuracy in two days. The disentanglement of the batch size from the loss further allows us to study the impact of examples vs pairs and negative to positive ratio. Finally, we push the batch size to the extreme, up to one million, and find that the benefits of growing batch size quickly diminish, with a more reasonable batch size of 32k being sufficient. We release our models at https://github.com/google-research/big\_vision and hope our research motivates further explorations in improving the quality and efficiency of language-image pre-training.},
-  urldate   = {2025-05-04},
-  publisher = {arXiv},
-  author    = {Zhai, Xiaohua and Mustafa, Basil and Kolesnikov, Alexander and Beyer, Lucas},
-  month     = sep,
-  year      = {2023},
-  note      = {arXiv:2303.15343 [cs]},
-  keywords  = {Computer Science - Artificial Intelligence, Computer Science - Computer Vision and Pattern Recognition},
-  annote    = {Comment: ICCV'23 Oral. arXiv v2: fix typo in pseudocode; v3: clarify t vs t' init; v4: add SigLIP Base, Large, Shape-Optimized 400M results. Models released at: https://github.com/google-research/big\_vision. Xiaohua and Lucas contributed equally},
-  file      = {Preprint PDF:/home/timur/Zotero/storage/Z8L57CBY/Zhai и др. - 2023 - Sigmoid Loss for Language Image Pre-Training.pdf:application/pdf}
-}
-@misc{li_llava-onevision_2024,
-  title      = {{LLaVA}-{OneVision}: {Easy} {Visual} {Task} {Transfer}},
-  shorttitle = {{LLaVA}-{OneVision}},
-  url        = {http://arxiv.org/abs/2408.03326},
-  doi        = {10.48550/arXiv.2408.03326},
-  abstract   = {We present LLaVA-OneVision, a family of open large multimodal models (LMMs) developed by consolidating our insights into data, models, and visual representations in the LLaVA-NeXT blog series. Our experimental results demonstrate that LLaVA-OneVision is the first single model that can simultaneously push the performance boundaries of open LMMs in three important computer vision scenarios: single-image, multi-image, and video scenarios. Importantly, the design of LLaVA-OneVision allows strong transfer learning across different modalities/scenarios, yielding new emerging capabilities. In particular, strong video understanding and cross-scenario capabilities are demonstrated through task transfer from images to videos.},
-  urldate    = {2025-05-04},
-  publisher  = {arXiv},
-  author     = {Li, Bo and Zhang, Yuanhan and Guo, Dong and Zhang, Renrui and Li, Feng and Zhang, Hao and Zhang, Kaichen and Zhang, Peiyuan and Li, Yanwei and Liu, Ziwei and Li, Chunyuan},
-  month      = oct,
-  year       = {2024},
-  note       = {arXiv:2408.03326 [cs]},
-  keywords   = {Computer Science - Artificial Intelligence, Computer Science - Computation and Language, Computer Science - Computer Vision and Pattern Recognition},
-  annote     = {Comment: Project Homepage: https://llava-vl.github.io/blog/2024-08-05-llava-onevision/}
-}
-@misc{zheng_villa_2025,
-  title      = {{ViLLa}: {Video} {Reasoning} {Segmentation} with {Large} {Language} {Model}},
-  shorttitle = {{ViLLa}},
-  url        = {http://arxiv.org/abs/2407.14500},
-  doi        = {10.48550/arXiv.2407.14500},
-  abstract   = {Recent efforts in video reasoning segmentation (VRS) integrate large language models (LLMs) with perception models to localize and track objects via textual instructions, achieving barely satisfactory results in simple scenarios. However, they struggled to discriminate and deduce the objects from user queries in more real-world scenes featured by long durations, multiple objects, rapid motion, and heavy occlusions. In this work, we analyze the underlying causes of these limitations, and present ViLLa: Video reasoning segmentation with Large Language Model. Remarkably, our ViLLa manages to tackle these challenges through multiple core innovations: (1) a context synthesizer that dynamically encodes the user intent with video contexts for accurate reasoning, resolving ambiguities in complex queries, and (2) a hierarchical temporal synchronizer that disentangles multi-object interactions across complex temporal scenarios by modelling multi-object interactions at local and global temporal scales. To enable efficient processing of long videos, ViLLa incorporates (3) a key segment sampler that adaptively partitions long videos into shorter but semantically dense segments for less redundancy. What's more, to promote research in this unexplored area, we construct a VRS benchmark, VideoReasonSeg, featuring different complex scenarios. Our model also exhibits impressive state-of-the-art results on VideoReasonSeg, Ref-YouTube-VOS, Ref-DAVIS17, MeViS, and ReVOS. Both quantitative and qualitative experiments demonstrate that our method effectively enhances video reasoning segmentation capabilities for multimodal LLMs. The code and dataset will be available at https://github.com/rkzheng99/ViLLa.},
-  urldate    = {2025-05-04},
-  publisher  = {arXiv},
-  author     = {Zheng, Rongkun and Qi, Lu and Chen, Xi and Wang, Yi and Wang, Kun and Qiao, Yu and Zhao, Hengshuang},
-  month      = mar,
-  year       = {2025},
-  note       = {arXiv:2407.14500 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition},
-  annote     = {Comment: 15 pages,7 figures}
-}
-@misc{bai_one_2024,
-  title      = {One {Token} to {Seg} {Them} {All}: {Language} {Instructed} {Reasoning} {Segmentation} in {Videos}},
-  shorttitle = {One {Token} to {Seg} {Them} {All}},
-  url        = {http://arxiv.org/abs/2409.19603},
-  doi        = {10.48550/arXiv.2409.19603},
-  abstract   = {We introduce VideoLISA, a video-based multimodal large language model designed to tackle the problem of language-instructed reasoning segmentation in videos. Leveraging the reasoning capabilities and world knowledge of large language models, and augmented by the Segment Anything Model, VideoLISA generates temporally consistent segmentation masks in videos based on language instructions. Existing image-based methods, such as LISA, struggle with video tasks due to the additional temporal dimension, which requires temporal dynamic understanding and consistent segmentation across frames. VideoLISA addresses these challenges by integrating a Sparse Dense Sampling strategy into the video-LLM, which balances temporal context and spatial detail within computational constraints. Additionally, we propose a One-Token-Seg-All approach using a specially designed {\textless}TRK{\textgreater} token, enabling the model to segment and track objects across multiple frames. Extensive evaluations on diverse benchmarks, including our newly introduced ReasonVOS benchmark, demonstrate VideoLISA's superior performance in video object segmentation tasks involving complex reasoning, temporal understanding, and object tracking. While optimized for videos, VideoLISA also shows promising generalization to image segmentation, revealing its potential as a unified foundation model for language-instructed object segmentation. Code and model will be available at: https://github.com/showlab/VideoLISA.},
-  urldate    = {2025-05-04},
-  publisher  = {arXiv},
-  author     = {Bai, Zechen and He, Tong and Mei, Haiyang and Wang, Pichao and Gao, Ziteng and Chen, Joya and Liu, Lei and Zhang, Zheng and Shou, Mike Zheng},
-  month      = sep,
-  year       = {2024},
-  note       = {arXiv:2409.19603 [cs]},
-  keywords   = {Computer Science - Artificial Intelligence, Computer Science - Computer Vision and Pattern Recognition},
-  annote     = {Comment: Accepted by NeurlPS 2024}
-}
-@misc{lv_rt-detrv2_2024,
-  title      = {{RT}-{DETRv2}: {Improved} {Baseline} with {Bag}-of-{Freebies} for {Real}-{Time} {Detection} {Transformer}},
-  shorttitle = {{RT}-{DETRv2}},
-  url        = {http://arxiv.org/abs/2407.17140},
-  doi        = {10.48550/arXiv.2407.17140},
-  abstract   = {In this report, we present RT-DETRv2, an improved Real-Time DEtection TRansformer (RT-DETR). RT-DETRv2 builds upon the previous state-of-the-art real-time detector, RT-DETR, and opens up a set of bag-of-freebies for flexibility and practicality, as well as optimizing the training strategy to achieve enhanced performance. To improve the flexibility, we suggest setting a distinct number of sampling points for features at different scales in the deformable attention to achieve selective multi-scale feature extraction by the decoder. To enhance practicality, we propose an optional discrete sampling operator to replace the grid\_sample operator that is specific to RT-DETR compared to YOLOs. This removes the deployment constraints typically associated with DETRs. For the training strategy, we propose dynamic data augmentation and scale-adaptive hyperparameters customization to improve performance without loss of speed. Source code and pre-trained models will be available at https://github.com/lyuwenyu/RT-DETR.},
-  urldate    = {2025-03-05},
-  publisher  = {arXiv},
-  author     = {Lv, Wenyu and Zhao, Yian and Chang, Qinyao and Huang, Kui and Wang, Guanzhong and Liu, Yi},
-  month      = jul,
-  year       = {2024},
-  note       = {arXiv:2407.17140 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition},
-  file       = {Preprint PDF:/home/timur/Zotero/storage/CXU83KFB/Lv и др. - 2024 - RT-DETRv2 Improved Baseline with Bag-of-Freebies .pdf:application/pdf}
-}
-@misc{khanam_yolov11_2024,
-  title      = {{YOLOv11}: {An} {Overview} of the {Key} {Architectural} {Enhancements}},
-  shorttitle = {{YOLOv11}},
-  url        = {http://arxiv.org/abs/2410.17725},
-  doi        = {10.48550/arXiv.2410.17725},
-  abstract   = {This study presents an architectural analysis of YOLOv11, the latest iteration in the YOLO (You Only Look Once) series of object detection models. We examine the models architectural innovations, including the introduction of the C3k2 (Cross Stage Partial with kernel size 2) block, SPPF (Spatial Pyramid Pooling - Fast), and C2PSA (Convolutional block with Parallel Spatial Attention) components, which contribute in improving the models performance in several ways such as enhanced feature extraction. The paper explores YOLOv11's expanded capabilities across various computer vision tasks, including object detection, instance segmentation, pose estimation, and oriented object detection (OBB). We review the model's performance improvements in terms of mean Average Precision (mAP) and computational efficiency compared to its predecessors, with a focus on the trade-off between parameter count and accuracy. Additionally, the study discusses YOLOv11's versatility across different model sizes, from nano to extra-large, catering to diverse application needs from edge devices to high-performance computing environments. Our research provides insights into YOLOv11's position within the broader landscape of object detection and its potential impact on real-time computer vision applications.},
-  urldate    = {2025-03-05},
-  publisher  = {arXiv},
-  author     = {Khanam, Rahima and Hussain, Muhammad},
-  month      = oct,
-  year       = {2024},
-  note       = {arXiv:2410.17725 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition},
-  file       = {Preprint PDF:/home/timur/Zotero/storage/B3KV8AGC/Khanam и Hussain - 2024 - YOLOv11 An Overview of the Key Architectural Enha.pdf:application/pdf}
-}
-@misc{cheng_yolo-world_2024,
-  title      = {{YOLO}-{World}: {Real}-{Time} {Open}-{Vocabulary} {Object} {Detection}},
-  shorttitle = {{YOLO}-{World}},
-  url        = {http://arxiv.org/abs/2401.17270},
-  doi        = {10.48550/arXiv.2401.17270},
-  abstract   = {The You Only Look Once (YOLO) series of detectors have established themselves as efficient and practical tools. However, their reliance on predefined and trained object categories limits their applicability in open scenarios. Addressing this limitation, we introduce YOLO-World, an innovative approach that enhances YOLO with open-vocabulary detection capabilities through vision-language modeling and pre-training on large-scale datasets. Specifically, we propose a new Re-parameterizable Vision-Language Path Aggregation Network (RepVL-PAN) and region-text contrastive loss to facilitate the interaction between visual and linguistic information. Our method excels in detecting a wide range of objects in a zero-shot manner with high efficiency. On the challenging LVIS dataset, YOLO-World achieves 35.4 AP with 52.0 FPS on V100, which outperforms many state-of-the-art methods in terms of both accuracy and speed. Furthermore, the fine-tuned YOLO-World achieves remarkable performance on several downstream tasks, including object detection and open-vocabulary instance segmentation.},
-  urldate    = {2025-03-05},
-  publisher  = {arXiv},
-  author     = {Cheng, Tianheng and Song, Lin and Ge, Yixiao and Liu, Wenyu and Wang, Xinggang and Shan, Ying},
-  month      = feb,
-  year       = {2024},
-  note       = {arXiv:2401.17270 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition},
-  annote     = {Comment: Work still in progress. Code \& models are available at: https://github.com/AILab-CVC/YOLO-World},
-  file       = {Preprint PDF:/home/timur/Zotero/storage/G5AHFPNB/Cheng и др. - 2024 - YOLO-World Real-Time Open-Vocabulary Object Detec.pdf:application/pdf;Snapshot:/home/timur/Zotero/storage/KMAUE2IB/2401.html:text/html}
-}
-@misc{liu_grounding_2024,
-  title      = {Grounding {DINO}: {Marrying} {DINO} with {Grounded} {Pre}-{Training} for {Open}-{Set} {Object} {Detection}},
-  shorttitle = {Grounding {DINO}},
-  url        = {http://arxiv.org/abs/2303.05499},
-  doi        = {10.48550/arXiv.2303.05499},
-  abstract   = {In this paper, we present an open-set object detector, called Grounding DINO, by marrying Transformer-based detector DINO with grounded pre-training, which can detect arbitrary objects with human inputs such as category names or referring expressions. The key solution of open-set object detection is introducing language to a closed-set detector for open-set concept generalization. To effectively fuse language and vision modalities, we conceptually divide a closed-set detector into three phases and propose a tight fusion solution, which includes a feature enhancer, a language-guided query selection, and a cross-modality decoder for cross-modality fusion. While previous works mainly evaluate open-set object detection on novel categories, we propose to also perform evaluations on referring expression comprehension for objects specified with attributes. Grounding DINO performs remarkably well on all three settings, including benchmarks on COCO, LVIS, ODinW, and RefCOCO/+/g. Grounding DINO achieves a \$52.5\$ AP on the COCO detection zero-shot transfer benchmark, i.e., without any training data from COCO. It sets a new record on the ODinW zero-shot benchmark with a mean \$26.1\$ AP. Code will be available at {\textbackslash}url\{https://github.com/IDEA-Research/GroundingDINO\}.},
-  urldate    = {2025-03-05},
-  publisher  = {arXiv},
-  author     = {Liu, Shilong and Zeng, Zhaoyang and Ren, Tianhe and Li, Feng and Zhang, Hao and Yang, Jie and Jiang, Qing and Li, Chunyuan and Yang, Jianwei and Su, Hang and Zhu, Jun and Zhang, Lei},
-  month      = jul,
-  year       = {2024},
-  note       = {arXiv:2303.05499 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition},
-  annote     = {Comment: Code will be available at https://github.com/IDEA-Research/GroundingDINO}
-}
-@misc{ravi_sam_2024,
-  title      = {{SAM} 2: {Segment} {Anything} in {Images} and {Videos}},
-  shorttitle = {{SAM} 2},
-  url        = {http://arxiv.org/abs/2408.00714},
-  doi        = {10.48550/arXiv.2408.00714},
-  abstract   = {We present Segment Anything Model 2 (SAM 2), a foundation model towards solving promptable visual segmentation in images and videos. We build a data engine, which improves model and data via user interaction, to collect the largest video segmentation dataset to date. Our model is a simple transformer architecture with streaming memory for real-time video processing. SAM 2 trained on our data provides strong performance across a wide range of tasks. In video segmentation, we observe better accuracy, using 3x fewer interactions than prior approaches. In image segmentation, our model is more accurate and 6x faster than the Segment Anything Model (SAM). We believe that our data, model, and insights will serve as a significant milestone for video segmentation and related perception tasks. We are releasing our main model, dataset, as well as code for model training and our demo.},
-  urldate    = {2025-03-05},
-  publisher  = {arXiv},
-  author     = {Ravi, Nikhila and Gabeur, Valentin and Hu, Yuan-Ting and Hu, Ronghang and Ryali, Chaitanya and Ma, Tengyu and Khedr, Haitham and Rädle, Roman and Rolland, Chloe and Gustafson, Laura and Mintun, Eric and Pan, Junting and Alwala, Kalyan Vasudev and Carion, Nicolas and Wu, Chao-Yuan and Girshick, Ross and Dollár, Piotr and Feichtenhofer, Christoph},
-  month      = oct,
-  year       = {2024},
-  note       = {arXiv:2408.00714 [cs]},
-  keywords   = {Computer Science - Artificial Intelligence, Computer Science - Computer Vision and Pattern Recognition, Computer Science - Machine Learning},
-  annote     = {Comment: Website: https://ai.meta.com/sam2},
-  file       = {Preprint PDF:/home/timur/Zotero/storage/VAGKNFDJ/Ravi и др. - 2024 - SAM 2 Segment Anything in Images and Videos.pdf:application/pdf;Snapshot:/home/timur/Zotero/storage/IAHY2S7S/2408.html:text/html}
-}
-@misc{bai_qwen25-vl_2025,
-  title     = {Qwen2.5-{VL} {Technical} {Report}},
-  url       = {http://arxiv.org/abs/2502.13923},
-  doi       = {10.48550/arXiv.2502.13923},
-  abstract  = {We introduce Qwen2.5-VL, the latest flagship model of Qwen vision-language series, which demonstrates significant advancements in both foundational capabilities and innovative functionalities. Qwen2.5-VL achieves a major leap forward in understanding and interacting with the world through enhanced visual recognition, precise object localization, robust document parsing, and long-video comprehension. A standout feature of Qwen2.5-VL is its ability to localize objects using bounding boxes or points accurately. It provides robust structured data extraction from invoices, forms, and tables, as well as detailed analysis of charts, diagrams, and layouts. To handle complex inputs, Qwen2.5-VL introduces dynamic resolution processing and absolute time encoding, enabling it to process images of varying sizes and videos of extended durations (up to hours) with second-level event localization. This allows the model to natively perceive spatial scales and temporal dynamics without relying on traditional normalization techniques. By training a native dynamic-resolution Vision Transformer (ViT) from scratch and incorporating Window Attention, we reduce computational overhead while maintaining native resolution. As a result, Qwen2.5-VL excels not only in static image and document understanding but also as an interactive visual agent capable of reasoning, tool usage, and task execution in real-world scenarios such as operating computers and mobile devices. Qwen2.5-VL is available in three sizes, addressing diverse use cases from edge AI to high-performance computing. The flagship Qwen2.5-VL-72B model matches state-of-the-art models like GPT-4o and Claude 3.5 Sonnet, particularly excelling in document and diagram understanding. Additionally, Qwen2.5-VL maintains robust linguistic performance, preserving the core language competencies of the Qwen2.5 LLM.},
-  urldate   = {2025-03-05},
-  publisher = {arXiv},
-  author    = {Bai, Shuai and Chen, Keqin and Liu, Xuejing and Wang, Jialin and Ge, Wenbin and Song, Sibo and Dang, Kai and Wang, Peng and Wang, Shijie and Tang, Jun and Zhong, Humen and Zhu, Yuanzhi and Yang, Mingkun and Li, Zhaohai and Wan, Jianqiang and Wang, Pengfei and Ding, Wei and Fu, Zheren and Xu, Yiheng and Ye, Jiabo and Zhang, Xi and Xie, Tianbao and Cheng, Zesen and Zhang, Hang and Yang, Zhibo and Xu, Haiyang and Lin, Junyang},
-  month     = feb,
-  year      = {2025},
-  note      = {arXiv:2502.13923 [cs]},
-  keywords  = {Computer Science - Computer Vision and Pattern Recognition, Computer Science - Computation and Language}
-}
-@misc{zhang_videollama_2025,
-  title      = {{VideoLLaMA} 3: {Frontier} {Multimodal} {Foundation} {Models} for {Image} and {Video} {Understanding}},
-  shorttitle = {{VideoLLaMA} 3},
-  url        = {http://arxiv.org/abs/2501.13106},
-  doi        = {10.48550/arXiv.2501.13106},
-  abstract   = {In this paper, we propose VideoLLaMA3, a more advanced multimodal foundation model for image and video understanding. The core design philosophy of VideoLLaMA3 is vision-centric. The meaning of "vision-centric" is two-fold: the vision-centric training paradigm and vision-centric framework design. The key insight of our vision-centric training paradigm is that high-quality image-text data is crucial for both image and video understanding. Instead of preparing massive video-text datasets, we focus on constructing large-scale and high-quality image-text datasets. VideoLLaMA3 has four training stages: 1) Vision Encoder Adaptation, which enables vision encoder to accept images of variable resolutions as input; 2) Vision-Language Alignment, which jointly tunes the vision encoder, projector, and LLM with large-scale image-text data covering multiple types (including scene images, documents, charts) as well as text-only data. 3) Multi-task Fine-tuning, which incorporates image-text SFT data for downstream tasks and video-text data to establish a foundation for video understanding. 4) Video-centric Fine-tuning, which further improves the model's capability in video understanding. As for the framework design, to better capture fine-grained details in images, the pretrained vision encoder is adapted to encode images of varying sizes into vision tokens with corresponding numbers, rather than a fixed number of tokens. For video inputs, we reduce the number of vision tokens according to their similarity so that the representation of videos will be more precise and compact. Benefit from vision-centric designs, VideoLLaMA3 achieves compelling performances in both image and video understanding benchmarks.},
-  urldate    = {2025-03-05},
-  publisher  = {arXiv},
-  author     = {Zhang, Boqiang and Li, Kehan and Cheng, Zesen and Hu, Zhiqiang and Yuan, Yuqian and Chen, Guanzheng and Leng, Sicong and Jiang, Yuming and Zhang, Hang and Li, Xin and Jin, Peng and Zhang, Wenqi and Wang, Fan and Bing, Lidong and Zhao, Deli},
-  month      = jan,
-  year       = {2025},
-  note       = {arXiv:2501.13106 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition},
-  annote     = {Comment: BZ, KL, ZC, ZH, YY, GC, SL, YJ, HZ, and XL contributed equally to this project. Code: https://github.com/DAMO-NLP-SG/VideoLLaMA3}
-}
 @misc{lai_lisa_2024,
   title      = {{LISA}: {Reasoning} {Segmentation} via {Large} {Language} {Model}},
   shorttitle = {{LISA}},
@@ -495,89 +32,485 @@
   annote     = {Comment: Code, models, and data are available at https://github.com/dvlab-research/LISA},
   file       = {Preprint PDF:/home/timur/Zotero/storage/MRSMWCHR/Lai и др. - 2024 - LISA Reasoning Segmentation via Large Language Mo.pdf:application/pdf;Snapshot:/home/timur/Zotero/storage/RR74PNHI/2308.html:text/html}
 }
-@misc{xia_gsva_2024,
-  title      = {{GSVA}: {Generalized} {Segmentation} via {Multimodal} {Large} {Language} {Models}},
-  shorttitle = {{GSVA}},
-  url        = {http://arxiv.org/abs/2312.10103},
-  doi        = {10.48550/arXiv.2312.10103},
-  abstract   = {Generalized Referring Expression Segmentation (GRES) extends the scope of classic RES to refer to multiple objects in one expression or identify the empty targets absent in the image. GRES poses challenges in modeling the complex spatial relationships of the instances in the image and identifying non-existing referents. Multimodal Large Language Models (MLLMs) have recently shown tremendous progress in these complicated vision-language tasks. Connecting Large Language Models (LLMs) and vision models, MLLMs are proficient in understanding contexts with visual inputs. Among them, LISA, as a representative, adopts a special [SEG] token to prompt a segmentation mask decoder, e.g., SAM, to enable MLLMs in the RES task. However, existing solutions to GRES remain unsatisfactory since current segmentation MLLMs cannot correctly handle the cases where users might reference multiple subjects in a singular prompt or provide descriptions incongruent with any image target. In this paper, we propose Generalized Segmentation Vision Assistant (GSVA) to address this gap. Specifically, GSVA reuses the [SEG] token to prompt the segmentation model towards supporting multiple mask references simultaneously and innovatively learns to generate a [REJ] token to reject the null targets explicitly. Experiments validate GSVA's efficacy in resolving the GRES issue, marking a notable enhancement and setting a new record on the GRES benchmark gRefCOCO dataset. GSVA also proves effective across various classic referring segmentation and comprehension tasks.},
+
+
+@misc{bai_one_2024,
+  title      = {One {Token} to {Seg} {Them} {All}: {Language} {Instructed} {Reasoning} {Segmentation} in {Videos}},
+  shorttitle = {One {Token} to {Seg} {Them} {All}},
+  url        = {http://arxiv.org/abs/2409.19603},
+  doi        = {10.48550/arXiv.2409.19603},
+  abstract   = {We introduce VideoLISA, a video-based multimodal large language model designed to tackle the problem of language-instructed reasoning segmentation in videos. Leveraging the reasoning capabilities and world knowledge of large language models, and augmented by the Segment Anything Model, VideoLISA generates temporally consistent segmentation masks in videos based on language instructions. Existing image-based methods, such as LISA, struggle with video tasks due to the additional temporal dimension, which requires temporal dynamic understanding and consistent segmentation across frames. VideoLISA addresses these challenges by integrating a Sparse Dense Sampling strategy into the video-LLM, which balances temporal context and spatial detail within computational constraints. Additionally, we propose a One-Token-Seg-All approach using a specially designed {\textless}TRK{\textgreater} token, enabling the model to segment and track objects across multiple frames. Extensive evaluations on diverse benchmarks, including our newly introduced ReasonVOS benchmark, demonstrate VideoLISA's superior performance in video object segmentation tasks involving complex reasoning, temporal understanding, and object tracking. While optimized for videos, VideoLISA also shows promising generalization to image segmentation, revealing its potential as a unified foundation model for language-instructed object segmentation. Code and model will be available at: https://github.com/showlab/VideoLISA.},
+  urldate    = {2025-05-04},
+  publisher  = {arXiv},
+  author     = {Bai, Zechen and He, Tong and Mei, Haiyang and Wang, Pichao and Gao, Ziteng and Chen, Joya and Liu, Lei and Zhang, Zheng and Shou, Mike Zheng},
+  month      = sep,
+  year       = {2024},
+  note       = {arXiv:2409.19603 [cs]},
+  keywords   = {Computer Science - Artificial Intelligence, Computer Science - Computer Vision and Pattern Recognition},
+  annote     = {Comment: Accepted by NeurlPS 2024},
+  file       = {Preprint PDF:/home/timur/Zotero/storage/228AI2XR/Bai и др. - 2024 - One Token to Seg Them All Language Instructed Rea.pdf:application/pdf;Snapshot:/home/timur/Zotero/storage/WEFIV2M3/2409.html:text/html}
+}
+
+
+@misc{zheng_villa_2025,
+  title      = {{ViLLa}: {Video} {Reasoning} {Segmentation} with {Large} {Language} {Model}},
+  shorttitle = {{ViLLa}},
+  url        = {http://arxiv.org/abs/2407.14500},
+  doi        = {10.48550/arXiv.2407.14500},
+  abstract   = {Recent efforts in video reasoning segmentation (VRS) integrate large language models (LLMs) with perception models to localize and track objects via textual instructions, achieving barely satisfactory results in simple scenarios. However, they struggled to discriminate and deduce the objects from user queries in more real-world scenes featured by long durations, multiple objects, rapid motion, and heavy occlusions. In this work, we analyze the underlying causes of these limitations, and present ViLLa: Video reasoning segmentation with Large Language Model. Remarkably, our ViLLa manages to tackle these challenges through multiple core innovations: (1) a context synthesizer that dynamically encodes the user intent with video contexts for accurate reasoning, resolving ambiguities in complex queries, and (2) a hierarchical temporal synchronizer that disentangles multi-object interactions across complex temporal scenarios by modelling multi-object interactions at local and global temporal scales. To enable efficient processing of long videos, ViLLa incorporates (3) a key segment sampler that adaptively partitions long videos into shorter but semantically dense segments for less redundancy. What's more, to promote research in this unexplored area, we construct a VRS benchmark, VideoReasonSeg, featuring different complex scenarios. Our model also exhibits impressive state-of-the-art results on VideoReasonSeg, Ref-YouTube-VOS, Ref-DAVIS17, MeViS, and ReVOS. Both quantitative and qualitative experiments demonstrate that our method effectively enhances video reasoning segmentation capabilities for multimodal LLMs. The code and dataset will be available at https://github.com/rkzheng99/ViLLa.},
+  urldate    = {2025-05-04},
+  publisher  = {arXiv},
+  author     = {Zheng, Rongkun and Qi, Lu and Chen, Xi and Wang, Yi and Wang, Kun and Qiao, Yu and Zhao, Hengshuang},
+  month      = mar,
+  year       = {2025},
+  note       = {arXiv:2407.14500 [cs]},
+  keywords   = {Computer Science - Computer Vision and Pattern Recognition},
+  annote     = {Comment: 15 pages,7 figures},
+  file       = {Preprint PDF:/home/timur/Zotero/storage/Y9FVTF6W/Zheng и др. - 2025 - ViLLa Video Reasoning Segmentation with Large Lan.pdf:application/pdf;Snapshot:/home/timur/Zotero/storage/A8K6LTWT/2407.html:text/html}
+}
+
+
+@misc{radford_learning_2021,
+  title     = {Learning {Transferable} {Visual} {Models} {From} {Natural} {Language} {Supervision}},
+  url       = {http://arxiv.org/abs/2103.00020},
+  doi       = {10.48550/arXiv.2103.00020},
+  abstract  = {State-of-the-art computer vision systems are trained to predict a fixed set of predetermined object categories. This restricted form of supervision limits their generality and usability since additional labeled data is needed to specify any other visual concept. Learning directly from raw text about images is a promising alternative which leverages a much broader source of supervision. We demonstrate that the simple pre-training task of predicting which caption goes with which image is an efficient and scalable way to learn SOTA image representations from scratch on a dataset of 400 million (image, text) pairs collected from the internet. After pre-training, natural language is used to reference learned visual concepts (or describe new ones) enabling zero-shot transfer of the model to downstream tasks. We study the performance of this approach by benchmarking on over 30 different existing computer vision datasets, spanning tasks such as OCR, action recognition in videos, geo-localization, and many types of fine-grained object classification. The model transfers non-trivially to most tasks and is often competitive with a fully supervised baseline without the need for any dataset specific training. For instance, we match the accuracy of the original ResNet-50 on ImageNet zero-shot without needing to use any of the 1.28 million training examples it was trained on. We release our code and pre-trained model weights at https://github.com/OpenAI/CLIP.},
+  urldate   = {2025-12-24},
+  publisher = {arXiv},
+  author    = {Radford, Alec and Kim, Jong Wook and Hallacy, Chris and Ramesh, Aditya and Goh, Gabriel and Agarwal, Sandhini and Sastry, Girish and Askell, Amanda and Mishkin, Pamela and Clark, Jack and Krueger, Gretchen and Sutskever, Ilya},
+  month     = feb,
+  year      = {2021},
+  note      = {arXiv:2103.00020 [cs]},
+  keywords  = {Computer Science - Computer Vision and Pattern Recognition, Computer Science - Machine Learning},
+  file      = {Preprint PDF:/home/timur/Zotero/storage/997TIKGQ/Radford и др. - 2021 - Learning Transferable Visual Models From Natural Language Supervision.pdf:application/pdf}
+}
+
+
+@misc{ravi_sam_2024,
+  title      = {{SAM} 2: {Segment} {Anything} in {Images} and {Videos}},
+  shorttitle = {{SAM} 2},
+  url        = {http://arxiv.org/abs/2408.00714},
+  doi        = {10.48550/arXiv.2408.00714},
+  abstract   = {We present Segment Anything Model 2 (SAM 2), a foundation model towards solving promptable visual segmentation in images and videos. We build a data engine, which improves model and data via user interaction, to collect the largest video segmentation dataset to date. Our model is a simple transformer architecture with streaming memory for real-time video processing. SAM 2 trained on our data provides strong performance across a wide range of tasks. In video segmentation, we observe better accuracy, using 3x fewer interactions than prior approaches. In image segmentation, our model is more accurate and 6x faster than the Segment Anything Model (SAM). We believe that our data, model, and insights will serve as a significant milestone for video segmentation and related perception tasks. We are releasing our main model, dataset, as well as code for model training and our demo.},
   urldate    = {2025-03-05},
   publisher  = {arXiv},
-  author     = {Xia, Zhuofan and Han, Dongchen and Han, Yizeng and Pan, Xuran and Song, Shiji and Huang, Gao},
-  month      = mar,
+  author     = {Ravi, Nikhila and Gabeur, Valentin and Hu, Yuan-Ting and Hu, Ronghang and Ryali, Chaitanya and Ma, Tengyu and Khedr, Haitham and Rädle, Roman and Rolland, Chloe and Gustafson, Laura and Mintun, Eric and Pan, Junting and Alwala, Kalyan Vasudev and Carion, Nicolas and Wu, Chao-Yuan and Girshick, Ross and Dollár, Piotr and Feichtenhofer, Christoph},
+  month      = oct,
   year       = {2024},
-  note       = {arXiv:2312.10103 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition},
-  annote     = {Comment: Accepted by CVPR2024 (19 pages, 9 figures, 11 tables)},
-  file       = {Preprint PDF:/home/timur/Zotero/storage/Q8F3DDGG/Xia и др. - 2024 - GSVA Generalized Segmentation via Multimodal Larg.pdf:application/pdf;Snapshot:/home/timur/Zotero/storage/9UF3KTIL/2312.html:text/html}
+  note       = {arXiv:2408.00714 [cs]},
+  keywords   = {Computer Science - Artificial Intelligence, Computer Science - Computer Vision and Pattern Recognition, Computer Science - Machine Learning},
+  annote     = {Comment: Website: https://ai.meta.com/sam2},
+  file       = {Preprint PDF:/home/timur/Zotero/storage/VAGKNFDJ/Ravi и др. - 2024 - SAM 2 Segment Anything in Images and Videos.pdf:application/pdf;Snapshot:/home/timur/Zotero/storage/IAHY2S7S/2408.html:text/html}
 }
-@misc{gong_vrs_hq_2025,
-  title      = {{VRS-HQ}: {Hierarchical} {Temporal} {Tokens} for {High}-{Quality} {Video} {Reasoning} {Segmentation}},
-  shorttitle = {{VRS-HQ}},
-  url        = {http://arxiv.org/abs/2503.19903},
-  doi        = {10.48550/arXiv.2503.19903},
-  abstract   = {Video Reasoning Segmentation (VRS) is an emerging challenge that demands models to segment and track objects based on complex textual queries requiring temporal reasoning. While current methods largely adapt image-level techniques to video, they often fail to capture long-range temporal dependencies essential for reasoning. We propose VRS-HQ, a hierarchical temporal token framework that models video at two distinct granularities: frame-level SEG tokens for spatial detail and temporal-level TAK tokens for capturing global temporal semantics. This dual-token design enables the model to leverage MLLM's autoregressive learning for both local and global temporal reasoning. We further introduce Token-Driven Keyframe Selection (TKS), which utilizes SAM 2's occlusion scores to dynamically select the most informative keyframes at inference time. Extensive experiments across multiple VRS benchmarks demonstrate that VRS-HQ achieves state-of-the-art performance, significantly outperforming prior approaches.},
-  urldate    = {2025-05-15},
+
+
+@misc{li_llava-onevision_2024,
+  title      = {{LLaVA}-{OneVision}: {Easy} {Visual} {Task} {Transfer}},
+  shorttitle = {{LLaVA}-{OneVision}},
+  url        = {http://arxiv.org/abs/2408.03326},
+  doi        = {10.48550/arXiv.2408.03326},
+  abstract   = {We present LLaVA-OneVision, a family of open large multimodal models (LMMs) developed by consolidating our insights into data, models, and visual representations in the LLaVA-NeXT blog series. Our experimental results demonstrate that LLaVA-OneVision is the first single model that can simultaneously push the performance boundaries of open LMMs in three important computer vision scenarios: single-image, multi-image, and video scenarios. Importantly, the design of LLaVA-OneVision allows strong transfer learning across different modalities/scenarios, yielding new emerging capabilities. In particular, strong video understanding and cross-scenario capabilities are demonstrated through task transfer from images to videos.},
+  urldate    = {2025-05-04},
   publisher  = {arXiv},
-  author     = {Gong, Jihao and Sun, Chaoyi and Ding, Yuxin and Chen, Zhi and Wang, Jinpeng and Chen, Xiangtai and Lu, Huchuan},
-  month      = mar,
-  year       = {2025},
-  note       = {arXiv:2503.19903 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition}
+  author     = {Li, Bo and Zhang, Yuanhan and Guo, Dong and Zhang, Renrui and Li, Feng and Zhang, Hao and Zhang, Kaichen and Zhang, Peiyuan and Li, Yanwei and Liu, Ziwei and Li, Chunyuan},
+  month      = oct,
+  year       = {2024},
+  note       = {arXiv:2408.03326 [cs]},
+  keywords   = {Computer Science - Artificial Intelligence, Computer Science - Computer Vision and Pattern Recognition, Computer Science - Computation and Language},
+  annote     = {Comment: Project Homepage: https://llava-vl.github.io/blog/2024-08-05-llava-onevision/},
+  file       = {Preprint PDF:/home/timur/Zotero/storage/NUVRZEL7/Li и др. - 2024 - LLaVA-OneVision Easy Visual Task Transfer.pdf:application/pdf}
 }
-@misc{gong_veason_r1_2025,
-  title      = {{Veason-R1}: {Reinforcement} {Learning} for {Video} {Reasoning} {Segmentation}},
-  shorttitle = {{Veason-R1}},
-  url        = {http://arxiv.org/abs/2503.21904},
-  doi        = {10.48550/arXiv.2503.21904},
-  abstract   = {We present Veason-R1, the first reinforcement learning-based approach to video reasoning segmentation. Building on recent advances in chain-of-thought reasoning for visual understanding, we introduce Group Relative Policy Optimization (GRPO) augmented with CoT initialization to enable structured reasoning trajectories that bridge video-level semantics with frame-level spatial grounding. Our method addresses the unique challenges of video reasoning segmentation by learning to generate coherent reasoning chains that guide object localization across temporal sequences. Experiments on ReasonVOS demonstrate significant improvements over supervised fine-tuning baselines, while exhibiting enhanced robustness to hallucinations. This work establishes reinforcement learning as a promising paradigm for complex video understanding tasks.},
-  urldate    = {2025-05-15},
-  publisher  = {arXiv},
-  author     = {Gong, Jihao and Sun, Chaoyi and Ding, Yuxin and Wang, Jinpeng and Chen, Xiangtai and Lu, Huchuan},
-  month      = mar,
-  year       = {2025},
-  note       = {arXiv:2503.21904 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition}
+
+
+@misc{zheng_judging_2023,
+  title     = {Judging {LLM}-as-a-{Judge} with {MT}-{Bench} and {Chatbot} {Arena}},
+  url       = {http://arxiv.org/abs/2306.05685},
+  doi       = {10.48550/arXiv.2306.05685},
+  abstract  = {Evaluating large language model (LLM) based chat assistants is challenging due to their broad capabilities and the inadequacy of existing benchmarks in measuring human preferences. To address this, we explore using strong LLMs as judges to evaluate these models on more open-ended questions. We examine the usage and limitations of LLM-as-a-judge, including position, verbosity, and self-enhancement biases, as well as limited reasoning ability, and propose solutions to mitigate some of them. We then verify the agreement between LLM judges and human preferences by introducing two benchmarks: MT-bench, a multi-turn question set; and Chatbot Arena, a crowdsourced battle platform. Our results reveal that strong LLM judges like GPT-4 can match both controlled and crowdsourced human preferences well, achieving over 80\% agreement, the same level of agreement between humans. Hence, LLM-as-a-judge is a scalable and explainable way to approximate human preferences, which are otherwise very expensive to obtain. Additionally, we show our benchmark and traditional benchmarks complement each other by evaluating several variants of LLaMA and Vicuna. The MT-bench questions, 3K expert votes, and 30K conversations with human preferences are publicly available at https://github.com/lm-sys/FastChat/tree/main/fastchat/llm\_judge.},
+  urldate   = {2025-12-24},
+  publisher = {arXiv},
+  author    = {Zheng, Lianmin and Chiang, Wei-Lin and Sheng, Ying and Zhuang, Siyuan and Wu, Zhanghao and Zhuang, Yonghao and Lin, Zi and Li, Zhuohan and Li, Dacheng and Xing, Eric P. and Zhang, Hao and Gonzalez, Joseph E. and Stoica, Ion},
+  month     = dec,
+  year      = {2023},
+  note      = {arXiv:2306.05685 [cs]},
+  keywords  = {Computer Science - Artificial Intelligence, Computer Science - Computation and Language},
+  annote    = {Comment: NeurIPS 2023 Datasets and Benchmarks Track},
+  file      = {Preprint PDF:/home/timur/Zotero/storage/V363IM7B/Zheng и др. - 2023 - Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena.pdf:application/pdf}
 }
-@misc{xu_videoseg_r1_2025,
-  title      = {{VideoSeg-R1}: {Reasoning} {Segmentation} in {Videos} via {Decoupled} {Architecture} and {Reinforcement} {Learning}},
-  shorttitle = {{VideoSeg-R1}},
-  url        = {http://arxiv.org/abs/2504.01343},
-  doi        = {10.48550/arXiv.2504.01343},
-  abstract   = {We introduce VideoSeg-R1, a novel approach for video reasoning segmentation that decouples the task into joint referring image segmentation and video mask propagation. Our framework incorporates a hierarchical text-guided frame sampler that selects representative keyframes based on semantic alignment with the query, and a task difficulty-aware mechanism that adapts the reasoning depth to query complexity. We leverage reinforcement learning with a reward model that jointly considers segmentation quality and reasoning coherence. Experiments on multiple benchmarks demonstrate state-of-the-art performance, particularly on queries requiring complex temporal reasoning.},
-  urldate    = {2025-05-15},
-  publisher  = {arXiv},
-  author     = {Xu, Yiming and Zhang, Lei and Liu, Yu and Wang, Pengfei and Chen, Kai},
-  month      = apr,
-  year       = {2025},
-  note       = {arXiv:2504.01343 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition}
+
+
+@article{hochreiter_long_1997,
+  title    = {Long {Short}-{Term} {Memory}},
+  volume   = {9},
+  issn     = {0899-7667, 1530-888X},
+  url      = {https://direct.mit.edu/neco/article/9/8/1735-1780/6109},
+  doi      = {10.1162/neco.1997.9.8.1735},
+  abstract = {Learning to store information over extended time intervals by recurrent backpropagation takes a very long time, mostly because of insufficient, decaying error backflow. We briefly review Hochreiter's (1991) analysis of this problem, then address it by introducing a novel, efficient, gradient based method called long short-term memory (LSTM). Truncating the gradient where this does not do harm, LSTM can learn to bridge minimal time lags in excess of 1000 discrete-time steps by enforcing constant error flow through constant error carousels within special units. Multiplicative gate units learn to open and close access to the constant error flow. LSTM is local in space and time; its computational complexity per time step and weight is O. 1. Our experiments with artificial data involve local, distributed, real-valued, and noisy pattern representations. In comparisons with real-time recurrent learning, back propagation through time, recurrent cascade correlation, Elman nets, and neural sequence chunking, LSTM leads to many more successful runs, and learns much faster. LSTM also solves complex, artificial long-time-lag tasks that have never been solved by previous recurrent network algorithms.},
+  language = {en},
+  number   = {8},
+  urldate  = {2025-12-24},
+  journal  = {Neural Computation},
+  author   = {Hochreiter, Sepp and Schmidhuber, Jürgen},
+  month    = nov,
+  year     = {1997},
+  pages    = {1735--1780}
 }
-@misc{han_decaf_2025,
-  title      = {{DecAF}: {Training}-{Free} {Decomposed} {Attention} {Fusion} for {Video} {Reasoning} {Segmentation}},
-  shorttitle = {{DecAF}},
-  url        = {http://arxiv.org/abs/2504.02507},
-  doi        = {10.48550/arXiv.2504.02507},
-  abstract   = {We present DecAF, a training-free approach for video reasoning segmentation that achieves competitive performance through decomposed attention fusion. Our method extracts attention maps from vision-language models via attention rollout mechanisms and applies contrastive object-background fusion to generate robust localization signals. These attention-derived prompts are then used to guide SAM 2 for mask generation. Despite requiring no model retraining, DecAF achieves results comparable to training-based methods across multiple benchmarks, suggesting that the rich visual-linguistic alignments learned during MLLM pretraining may be sufficient for many video reasoning segmentation scenarios.},
-  urldate    = {2025-05-15},
+
+
+@misc{oreshkin_n-beats_2020,
+  title      = {N-{BEATS}: {Neural} basis expansion analysis for interpretable time series forecasting},
+  shorttitle = {N-{BEATS}},
+  url        = {http://arxiv.org/abs/1905.10437},
+  doi        = {10.48550/arXiv.1905.10437},
+  abstract   = {We focus on solving the univariate times series point forecasting problem using deep learning. We propose a deep neural architecture based on backward and forward residual links and a very deep stack of fully-connected layers. The architecture has a number of desirable properties, being interpretable, applicable without modification to a wide array of target domains, and fast to train. We test the proposed architecture on several well-known datasets, including M3, M4 and TOURISM competition datasets containing time series from diverse domains. We demonstrate state-of-the-art performance for two configurations of N-BEATS for all the datasets, improving forecast accuracy by 11\% over a statistical benchmark and by 3\% over last year's winner of the M4 competition, a domain-adjusted hand-crafted hybrid between neural network and statistical time series models. The first configuration of our model does not employ any time-series-specific components and its performance on heterogeneous datasets strongly suggests that, contrarily to received wisdom, deep learning primitives such as residual blocks are by themselves sufficient to solve a wide range of forecasting problems. Finally, we demonstrate how the proposed architecture can be augmented to provide outputs that are interpretable without considerable loss in accuracy.},
+  urldate    = {2025-12-24},
   publisher  = {arXiv},
-  author     = {Han, Dongchen and Xia, Zhuofan and Song, Shiji and Huang, Gao},
-  month      = apr,
-  year       = {2025},
-  note       = {arXiv:2504.02507 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition}
+  author     = {Oreshkin, Boris N. and Carpov, Dmitri and Chapados, Nicolas and Bengio, Yoshua},
+  month      = feb,
+  year       = {2020},
+  note       = {arXiv:1905.10437 [cs]},
+  keywords   = {Computer Science - Machine Learning, Statistics - Machine Learning}
 }
-@misc{dang_desa2va_2025,
-  title      = {{DeSa2VA}: {Decoupling}-{Enhanced} {Segmentation} {and} {Grounding} with {Visual} {Assistant}},
-  shorttitle = {{DeSa2VA}},
-  url        = {http://arxiv.org/abs/2504.03360},
-  doi        = {10.48550/arXiv.2504.03360},
-  abstract   = {We propose DeSa2VA, a decoupling-enhanced approach that addresses the feature entanglement problem in vision-language models for segmentation and grounding tasks. Our method employs linear projection to disentangle hidden states into distinct textual and visual feature subspaces, combined with triple supervision from predicted text masks, visual masks, and ground-truth annotations. This decoupling mechanism enables more precise spatial grounding while preserving the model's reasoning capabilities. Experiments demonstrate state-of-the-art performance across diverse segmentation and grounding benchmarks, including video reasoning segmentation, referring expression segmentation, and visual grounding tasks.},
-  urldate    = {2025-05-15},
-  publisher  = {arXiv},
-  author     = {Dang, Rongyao and Zhang, Kai and Liu, Shilong and Li, Feng and Yang, Jianwei},
-  month      = apr,
-  year       = {2025},
-  note       = {arXiv:2504.03360 [cs]},
-  keywords   = {Computer Science - Computer Vision and Pattern Recognition}
+
+
+@misc{vaswani_attention_2023,
+  title     = {Attention {Is} {All} {You} {Need}},
+  url       = {http://arxiv.org/abs/1706.03762},
+  doi       = {10.48550/arXiv.1706.03762},
+  abstract  = {The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-to-German translation task, improving over the existing best results, including ensembles by over 2 BLEU. On the WMT 2014 English-to-French translation task, our model establishes a new single-model state-of-the-art BLEU score of 41.8 after training for 3.5 days on eight GPUs, a small fraction of the training costs of the best models from the literature. We show that the Transformer generalizes well to other tasks by applying it successfully to English constituency parsing both with large and limited training data.},
+  urldate   = {2025-12-24},
+  publisher = {arXiv},
+  author    = {Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N. and Kaiser, Lukasz and Polosukhin, Illia},
+  month     = aug,
+  year      = {2023},
+  note      = {arXiv:1706.03762 [cs]},
+  keywords  = {Computer Science - Computation and Language, Computer Science - Machine Learning},
+  annote    = {Comment: 15 pages, 5 figures},
+  file      = {Preprint PDF:/home/timur/Zotero/storage/L8UDMAXJ/Vaswani и др. - 2023 - Attention Is All You Need.pdf:application/pdf}
+}
+
+@misc{chu_tecogan_2020,
+  title         = {Learning Temporal Coherence via Self-Supervision for {GAN}-based Video Generation},
+  author        = {Chu, Mengyu and Xie, You and Mayer, Jonas and Leal-Taix{\'e}, Laura and Thuerey, Nils},
+  year          = {2020},
+  eprint        = {1811.09393},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {ACM TOG / SIGGRAPH 2020}
+}
+
+@misc{he_mgld_2024,
+  title         = {Motion-Guided Latent Diffusion for Temporally Consistent Real-World Video Super-Resolution},
+  author        = {Yang, Xi and He, Chenhang and Ma, Jianqi and Zhang, Lei},
+  year          = {2023},
+  eprint        = {2312.00853},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {MGLD-VSR; arXiv:2312.00853 (v2 2024)}
+}
+
+@misc{zhou_upscale_2024,
+  title         = {{Upscale-A-Video}: Temporal-Consistent Diffusion Model for Real-World Video Super-Resolution},
+  author        = {Zhou, Shangchen and Yang, Peiqing and Wang, Jianyi and Luo, Yihang and Loy, Chen Change},
+  year          = {2023},
+  eprint        = {2312.06640},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {Upscale-A-Video; CVPR 2024}
+}
+
+@misc{yang_dove_2024,
+  title         = {{DOVE}: Efficient One-Step Diffusion Model for Real-World Video Super-Resolution},
+  author        = {Chen, Zheng and Zou, Zichen and Zhang, Kewei and Su, Xiongfei and Yuan, Xin and Guo, Yong and Zhang, Yulun},
+  year          = {2025},
+  eprint        = {2505.16239},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {DOVE; NeurIPS 2025}
+}
+
+@misc{wang_clipiqa_2023,
+  title         = {Exploring {CLIP} for Assessing the Look and Feel of Images},
+  author        = {Wang, Jianyi and Chan, Kelvin C.K. and Loy, Chen Change},
+  year          = {2022},
+  eprint        = {2207.12396},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {CLIP-IQA; AAAI 2023}
+}
+
+@misc{ke_musiq_2021,
+  title         = {{MUSIQ}: Multi-Scale Image Quality Transformer},
+  author        = {Ke, Junjie and Wang, Qifei and Wang, Yilin and Milanfar, Peyman and Yang, Feng},
+  year          = {2021},
+  eprint        = {2108.05997},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {MUSIQ; ICCV 2021}
+}
+
+@misc{huang_vbench_2024,
+  title         = {{VBench}: Comprehensive Benchmark Suite for Video Generative Models},
+  author        = {Huang, Ziqi and He, Yinan and Yu, Jiashuo and Zhang, Fan and Si, Chenyang and Jiang, Yuming and Zhang, Yuanhan and Wu, Tianxing and Jin, Qingyang and Chanpaisit, Nattapol and Wang, Yaohui and Chen, Xinyuan and Wang, Limin and Lin, Dahua and Qiao, Yu and Liu, Ziwei},
+  year          = {2023},
+  eprint        = {2311.17982},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {VBench; CVPR 2024}
+}
+
+@misc{huang_vbench2_2025,
+  title         = {{VBench-2.0}: Advancing Video Generation Benchmark Suite for Intrinsic Faithfulness},
+  author        = {Huang, Ziqi and others},
+  year          = {2025},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV}
+}
+
+@misc{wu_dover_2023,
+  title         = {Exploring Video Quality Assessment on User Generated Contents from Aesthetic and Technical Perspectives},
+  author        = {Wu, Haoning and Zhang, Erli and Liao, Liang and Chen, Chaofeng and Hou, Jingwen and Wang, Annan and Sun, Wenxiu and Yan, Qiong and Lin, Weisi},
+  year          = {2022},
+  eprint        = {2211.04894},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {DOVER; ICCV 2023}
+}
+
+@misc{po_longcontext_2025,
+  title         = {Long-Context State-Space Video World Models},
+  author        = {Po, Ryan and Nitzan, Yotam and Zhang, Richard and Chen, Berlin and Dao, Tri and Shechtman, Eli and Wetzstein, Gordon and Huang, Xun},
+  year          = {2025},
+  eprint        = {2505.20171},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {SSM-based long-context video world model}
+}
+
+TODO-VERIFY: entries below added for the thesis (2026-07-11). arXiv IDs for
+flashvsr and NTK-aware scaling should be double-checked before submission.
+
+@misc{zhuang_flashvsr_2025,
+  title         = {{FlashVSR}: Towards Real-Time Diffusion-Based Streaming Video Super-Resolution},
+  author        = {Zhuang, Junhao and Guo, Shi and Cai, Xin and Shi, Xiaoyu and Liu, Yihao and Yuan, Chun and Xue, Tianfan},
+  year          = {2025},
+  eprint        = {2510.12747},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {FlashVSR}
+}
+
+@misc{wan_wan_2025,
+  title         = {Wan: Open and Advanced Large-Scale Video Generative Models},
+  author        = {{Wan Team}},
+  year          = {2025},
+  eprint        = {2503.20314},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {Wan2.1 video diffusion foundation model}
+}
+
+@article{su_roformer_2024,
+  title         = {{RoFormer}: Enhanced transformer with rotary position embedding},
+  author        = {Su, Jianlin and Ahmed, Murtadha and Lu, Yu and Pan, Shengfeng and Bo, Wen and Liu, Yunfeng},
+  journal       = {Neurocomputing},
+  volume        = {568},
+  pages         = {127063},
+  year          = {2024},
+  note          = {RoPE; arXiv:2104.09864}
+}
+
+@misc{chen_pi_2023,
+  title         = {Extending Context Window of Large Language Models via Positional Interpolation},
+  author        = {Chen, Shouyuan and Wong, Sherman and Chen, Liangjian and Tian, Yuandong},
+  year          = {2023},
+  eprint        = {2306.15595},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CL},
+  note          = {Position Interpolation (PI)}
+}
+
+@misc{peng_yarn_2023,
+  title         = {{YaRN}: Efficient Context Window Extension of Large Language Models},
+  author        = {Peng, Bowen and Quesnelle, Jeffrey and Fan, Honglu and Shippole, Enrico},
+  year          = {2023},
+  eprint        = {2309.00071},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CL},
+  note          = {YaRN; ICLR 2024}
+}
+
+@misc{bloc97_ntk_2023,
+  title         = {{NTK}-Aware Scaled {RoPE} allows {LLaMA} models to have extended (8k+) context size without any fine-tuning},
+  author        = {{bloc97}},
+  year          = {2023},
+  howpublished  = {Reddit r/LocalLLaMA},
+  note          = {NTK-aware RoPE scaling}
+}
+
+@misc{chan_basicvsrpp_2022,
+  title         = {{BasicVSR++}: Improving Video Super-Resolution with Enhanced Propagation and Alignment},
+  author        = {Chan, Kelvin C.K. and Zhou, Shangchen and Xu, Xiangyu and Loy, Chen Change},
+  year          = {2021},
+  eprint        = {2104.13371},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {CVPR 2022}
+}
+
+@misc{chan_realbasicvsr_2022,
+  title         = {Investigating Tradeoffs in Real-World Video Super-Resolution},
+  author        = {Chan, Kelvin C.K. and Zhou, Shangchen and Xu, Xiangyu and Loy, Chen Change},
+  year          = {2021},
+  eprint        = {2111.12704},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {RealBasicVSR; CVPR 2022}
+}
+
+@misc{liang_vrt_2022,
+  title         = {{VRT}: A Video Restoration Transformer},
+  author        = {Liang, Jingyun and Cao, Jiezhang and Fan, Yuchen and Zhang, Kai and Ranjan, Rakesh and Li, Yawei and Timofte, Radu and Van Gool, Luc},
+  year          = {2022},
+  eprint        = {2201.12288},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {IEEE TIP 2024}
+}
+
+@misc{liang_rvrt_2022,
+  title         = {Recurrent Video Restoration Transformer with Guided Deformable Attention},
+  author        = {Liang, Jingyun and Fan, Yuchen and Xiang, Xiaoyu and Ranjan, Rakesh and Ilg, Eddy and Green, Simon and Cao, Jiezhang and Zhang, Kai and Timofte, Radu and Van Gool, Luc},
+  year          = {2022},
+  eprint        = {2206.02146},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {RVRT; NeurIPS 2022}
+}
+
+@misc{wang_stablesr_2024,
+  title         = {Exploiting Diffusion Prior for Real-World Image Super-Resolution},
+  author        = {Wang, Jianyi and Yue, Zongsheng and Zhou, Shangchen and Chan, Kelvin C.K. and Loy, Chen Change},
+  year          = {2023},
+  eprint        = {2305.07015},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {StableSR; IJCV 2024}
+}
+
+@misc{zhang_lpips_2018,
+  title         = {The Unreasonable Effectiveness of Deep Features as a Perceptual Metric},
+  author        = {Zhang, Richard and Isola, Phillip and Efros, Alexei A. and Shechtman, Eli and Wang, Oliver},
+  year          = {2018},
+  eprint        = {1801.03924},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {LPIPS; CVPR 2018}
+}
+
+@article{wang_ssim_2004,
+  title         = {Image quality assessment: from error visibility to structural similarity},
+  author        = {Wang, Zhou and Bovik, Alan C. and Sheikh, Hamid R. and Simoncelli, Eero P.},
+  journal       = {IEEE Transactions on Image Processing},
+  volume        = {13},
+  number        = {4},
+  pages         = {600--612},
+  year          = {2004},
+  note          = {SSIM}
+}
+
+@misc{ding_dists_2020,
+  title         = {Image Quality Assessment: Unifying Structure and Texture Similarity},
+  author        = {Ding, Keyan and Ma, Kede and Wang, Shiqi and Simoncelli, Eero P.},
+  year          = {2020},
+  eprint        = {2004.07728},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {DISTS; IEEE TPAMI 2022}
+}
+
+@misc{teed_raft_2020,
+  title         = {{RAFT}: Recurrent All-Pairs Field Transforms for Optical Flow},
+  author        = {Teed, Zachary and Deng, Jia},
+  year          = {2020},
+  eprint        = {2003.12039},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {ECCV 2020}
+}
+
+@misc{deng_arcface_2019,
+  title         = {{ArcFace}: Additive Angular Margin Loss for Deep Face Recognition},
+  author        = {Deng, Jiankang and Guo, Jia and Xue, Niannan and Zafeiriou, Stefanos},
+  year          = {2019},
+  eprint        = {1801.07698},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {CVPR 2019}
+}
+
+@misc{deng_retinaface_2020,
+  title         = {{RetinaFace}: Single-stage Dense Face Localisation in the Wild},
+  author        = {Deng, Jiankang and Guo, Jia and Zhou, Yuxiang and Yu, Jinke and Kotsia, Irene and Zafeiriou, Stefanos},
+  year          = {2019},
+  eprint        = {1905.00641},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {CVPR 2020}
+}
+
+@misc{oquab_dinov2_2023,
+  title         = {{DINOv2}: Learning Robust Visual Features without Supervision},
+  author        = {Oquab, Maxime and Darcet, Timoth{\'e}e and Moutakanni, Th{\'e}o and Vo, Huy and Szafraniec, Marc and Khalidov, Vasil and others},
+  year          = {2023},
+  eprint        = {2304.07193},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  note          = {TMLR 2024}
+}
+
+@inproceedings{nah_reds_2019,
+  title         = {{NTIRE} 2019 Challenge on Video Deblurring and Super-Resolution: Dataset and Study},
+  author        = {Nah, Seungjun and Baik, Sungyong and Hong, Seokil and Moon, Gyeongsik and Son, Sanghyun and Timofte, Radu and Lee, Kyoung Mu},
+  booktitle     = {CVPR Workshops},
+  year          = {2019},
+  note          = {REDS dataset}
+}
+
+@article{xue_vimeo90k_2019,
+  title         = {Video Enhancement with Task-Oriented Flow},
+  author        = {Xue, Tianfan and Chen, Baian and Wu, Jiajun and Wei, Donglai and Freeman, William T.},
+  journal       = {International Journal of Computer Vision},
+  volume        = {127},
+  number        = {8},
+  pages         = {1106--1125},
+  year          = {2019},
+  note          = {Vimeo-90K dataset}
+}
+
+@article{liu_vid4_2014,
+  title         = {On Bayesian Adaptive Video Super Resolution},
+  author        = {Liu, Ce and Sun, Deqing},
+  journal       = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume        = {36},
+  number        = {2},
+  pages         = {346--360},
+  year          = {2014},
+  note          = {Vid4 benchmark}
+}
+
+@inproceedings{yi_pfnl_2019,
+  title         = {Progressive Fusion Video Super-Resolution Network via Exploiting Non-Local Spatio-Temporal Correlations},
+  author        = {Yi, Peng and Wang, Zhongyuan and Jiang, Kui and Jiang, Junjun and Ma, Jiayi},
+  booktitle     = {ICCV},
+  year          = {2019},
+  note          = {UDM10 benchmark}
+}
+
+@inproceedings{tao_spmcs_2017,
+  title         = {Detail-Revealing Deep Video Super-Resolution},
+  author        = {Tao, Xin and Gao, Hongyun and Liao, Renjie and Wang, Jue and Jia, Jiaya},
+  booktitle     = {ICCV},
+  year          = {2017},
+  note          = {SPMCS benchmark}
 }

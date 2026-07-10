@@ -50,9 +50,17 @@ This pairs naturally with the thesis's existing asset: **LR-VCC** already
   from the same runs (cheap "why", not a separate study).
 
 **Deferred (explicitly out, revisit only if H1 confirmed):**
-- **SparkVSR** (CogVideoX1.5-5B-I2V, also 3D RoPE, keyframe-conditioned). Round-2
-  contrast: does keyframe re-anchoring mask extrapolation drift? Heavier (5B) and
-  a positional confound — not the place to start.
+- **SeedVR2** (ByteDance-Seed/SeedVR, Apache 2.0; 3B and 7B one-step DiT).
+  Primary round-2 contrast (decided 2026-07-02): uses **adaptive window
+  attention** (window sized to output resolution) — a window-local positional
+  regime, vs FlashVSR's absolute ever-growing streaming positions. Question:
+  does window-local position handling avoid long-video positional drift?
+  Caveats: official inference targets H100-80G (use the 3B and/or the
+  community ComfyUI port's FP8/BlockSwap optimizations on our 40 GB A100s);
+  RoPE-within-windows to confirm from code.
+- **SparkVSR** (CogVideoX1.5-5B-I2V, also 3D RoPE, keyframe-conditioned).
+  Secondary contrast: does keyframe re-anchoring mask extrapolation drift?
+  Heavier (5B) and a positional confound — lowest priority.
 - **Mitigation levers:** RoPE θ-rescale / NTK-aware scaling / position
   interpolation. These are the "can we fix it" follow-up, not part of the probe.
 - **Spatial RoPE perturbation** (crop/resolution/tiling seams). Different question.

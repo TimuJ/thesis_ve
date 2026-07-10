@@ -1,151 +1,206 @@
-\chapter{Methodology}
+% Chapter 4: LR-VCC
+\chapter{The Long-Range Video Consistency Composite}
+\label{ch:method}
 
-This chapter presents the proposed hybrid sparse-sampling architecture for reasoning video segmentation.
-The framework operates in three stages: (1) keyframe selection based on inter-frame motion analysis,
-(2) semantic segmentation of selected keyframes using a multimodal large language model, and
-(3) mask reconstruction for non-keyframe frames via Universal Kriging interpolation on contour-vectorized
-representations.
+This chapter specifies the proposed Long-Range Video Consistency Composite (LR-VCC)
+metric, its design rationale, and the iterative protocol under which the production
+version was derived. The metric is constructed directly from the failure modes
+characterised in Chapter~\ref{ch:problem} --- plus one further failure mode discovered
+during validation itself (Section~\ref{sec:method:iterations}); each sub-metric closes a
+specific gap, and the composition layer downweights any sub-metric whose calibration
+assumptions are violated on the video under evaluation.
 
-\section{System Overview}
+\section{Architecture}
+\label{sec:method:architecture}
 
-Given a video sequence $V = \{f_1, f_2, \ldots, f_N\}$ of $N$ frames and a natural language query $q$,
-the goal is to produce a binary segmentation mask $m_t$ for each frame $t \in \{1, \ldots, N\}$ that
-corresponds to the object described by $q$. Rather than applying the semantic model to every frame,
-our method selects a sparse subset of keyframes $K \subset \{1, \ldots, N\}$ with $|K| \ll N$,
-processes only these frames through the expensive semantic model, and reconstructs the remaining
-masks through geostatistical interpolation.
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\textwidth]{fig4_lr_vcc_architecture.png}
+\caption{LR-VCC architecture: a super-resolved video as input; sub-metrics computed in
+parallel, each emitting a (score, reliability) pair in $[0,1]\times[0,1]$; a
+reliability-weighted softmax-log-mean composition produces the final LR-VCC score in
+$[0,1]$.}
+% TODO(Ch4 pass): regenerate architecture figure for seven sub-metrics (v5); the current
+% figure shows the five-sub-metric proposal version.
+\label{fig:method:architecture}
+\end{figure}
 
-The overall pipeline is:
-\begin{enumerate}
-    \item \textbf{Keyframe Selection:} Compute inter-frame motion magnitudes and select a subset
-          $K$ of keyframes at a target sampling rate $r$ (e.g., $r = 0.2$).
-    \item \textbf{Semantic Segmentation:} Apply the reasoning segmentation model (e.g., VideoLISA)
-          to keyframes $\{f_k : k \in K\}$ to obtain ground-truth-quality masks $\{m_k : k \in K\}$.
-    \item \textbf{Contour Vectorization:} Convert each binary keyframe mask $m_k$ to a fixed-length
-          polygon representation $\mathbf{v}_k \in \mathbb{R}^{P \times 2}$ with $P$ vertices.
-    \item \textbf{Kriging Interpolation:} For each vertex $i \in \{1, \ldots, P\}$, perform
-          1D Ordinary Kriging along the time axis to predict vertex positions at non-keyframe times.
-    \item \textbf{Rasterization:} Convert interpolated polygon vertices back to binary masks.
-\end{enumerate}
-
-\section{Keyframe Selection}
-\label{sec:keyframe-selection}
-
-The keyframe selector identifies frames where significant visual change occurs, ensuring that
-the semantic model is applied at temporally informative moments.
-
-\subsection{Motion Estimation}
-
-For each consecutive frame pair $(f_t, f_{t+1})$, we compute a scalar motion magnitude $\phi_t$.
-Three motion estimation backends are supported:
+Seven sub-metrics, indexed by $s \in \{A, T, I, D, D', D'', E\}$, are computed in
+parallel from a super-resolved video $V$:
 
 \begin{itemize}
-    \item \textbf{Farneback optical flow}: Dense optical flow via polynomial expansion~\cite{farneback_2003}.
-          The magnitude is the mean pixel-wise flow norm:
-          $\phi_t = \frac{1}{HW} \sum_{x,y} \|\mathbf{u}_{t}(x,y)\|_2$
-          where $\mathbf{u}_t$ is the flow field between frames $t$ and $t+1$.
-    \item \textbf{DIS optical flow}: Dense Inverse Search~\cite{kroeger_dis_2016}, offering faster
-          computation at comparable accuracy.
-    \item \textbf{Pixel difference}: Mean absolute grayscale difference,
-          $\phi_t = \frac{1}{HW} \sum_{x,y} |g_t(x,y) - g_{t+1}(x,y)|$,
-          where $g_t$ is the grayscale conversion of $f_t$. This serves as a GPU-free fallback.
+    \item \textbf{Sub-metric A --- Appearance stability.} Per-frame CLIP-IQA
+          \cite{wang_clipiqa_2023} is computed over the video. The score is the mean
+          per-frame quality minus a small multiple of its standard deviation across
+          frames, rewarding outputs that are not only high-quality on average but
+          consistently so across minutes of footage.
+
+    \item \textbf{Sub-metric T --- Temporal stability.} Optical-flow warping error (tOF
+          \cite{chu_tecogan_2020}) is computed at multiple temporal lags
+          $k \in \{1, 5, 10, 30, 60, 120\}$ using RAFT-based optical flow with
+          forward-backward consistency masking. The aggregate is a weighted mean over
+          $k$; uniform weighting is adopted as the production setting because the
+          empirical temporal-scale crossover (Section~\ref{sec:problem:tof}) shows that
+          no single $k$ is sufficient. The score is one minus the (normalised) weighted
+          mean warping error. Reliability is gated by RAFT
+          forward--backward mask coverage at long lags.
+
+    \item \textbf{Sub-metric I --- Identity preservation.} The slow-fast Human\_Identity
+          adapter (RetinaFace + ArcFace face embedding stability across $2$-second clips
+          with both within-clip and cross-clip first-frame components) provides the
+          score, with reliability gated by the face-detection rate and by a close-up
+          content indicator (the trigger identified in Section~\ref{sec:problem:regime})
+          that downweights the sub-metric on videos in the regime where the underlying
+          anomaly classifiers exhibit content-dependent calibration shifts.
+
+    \item \textbf{Sub-metric D --- Colour stability (pairwise).} Per-frame Lab-channel
+          histograms are compared at L1 distance over multi-scale frame pairs
+          $k \in \{60, 120\}$. The score is an exponential decay in the mean
+          pair-distance, with the decay constant calibrated empirically. Reliability is
+          gated by histogram entropy.
+
+    \item \textbf{Sub-metric D$'$ --- Anchored colour stability.} Lab-channel histograms
+          of each frame are compared against a fixed \emph{anchor} established at the
+          start of the video, rather than against other frames pairwise. Slow drift away
+          from the anchor accumulates in this distance even when consecutive-frame
+          distances remain small --- and, critically, a corruption that makes frames
+          \emph{converge} toward a static appearance still registers as anchor-distance
+          growth, closing the convergence-rewarding pathology of sub-metric D
+          (Section~\ref{sec:method:iterations}).
+          % TODO(Ch4 pass): exact anchor-window definition and dprime_beta from
+          % scripts/lr_vcc source.
+
+    \item \textbf{Sub-metric D$''$ --- Semantic trajectory stability.} CLIP image
+          embeddings of per-frame patches form a semantic trajectory across the video;
+          the score is an exponential decay in the drift of this trajectory away from
+          its anchor. Because CLIP embeddings respond to semantic content rather than
+          colour statistics, D$''$ detects drift invisible to histogram measures ---
+          e.g.\ progressive background replacement with stable colour distribution.
+          % TODO(Ch4 pass): exact patch layout, anchor, and dprime2_beta from
+          % scripts/lr_vcc source.
+
+    \item \textbf{Sub-metric E --- Colour trajectory slope.} Per-frame Lab-channel means
+          are fit by linear regression as a function of frame index. The score is an
+          exponential decay in the maximum absolute slope across channels. Reliability is
+          the maximum coefficient of determination ($R^2$) across the three channels,
+          gated by an $R^2$ floor. A drifting video has high $R^2$ (the slope is real, so
+          the metric speaks confidently); a flickering video has $R^2$ near zero
+          (sinusoidal residuals dominate, so the metric correctly abstains); a clean
+          video has near-zero slope (the score is near one regardless of reliability).
 \end{itemize}
 
-\subsection{Selection Strategies}
+Each sub-metric outputs a score $s_i \in [0, 1]$ and a reliability $r_i \in [0, 1]$. The
+composition is a reliability-weighted log-mean:
+\begin{align}
+    w_i &= \frac{\exp(r_i / \tau)}{\sum_j \exp(r_j / \tau)}, \\
+    \text{LR-VCC}(V) &= \exp\!\left(\sum_{i} w_i \log(s_i + \varepsilon)\right),
+\end{align}
+with temperature $\tau = 0.2$ (a sharp softmax: the most reliable sub-metric dominates)
+and $\varepsilon = 10^{-6}$ for numerical stability. A video for which all reliabilities
+fall below a low-confidence threshold is flagged in the output and excluded from
+per-method aggregates by default.
 
-Given the motion magnitudes $\{\phi_1, \ldots, \phi_{N-1}\}$ and a target sampling rate $r$,
-the selector chooses $k = \lceil r \cdot N \rceil$ keyframes. We propose three strategies:
+The log-mean composition preserves the no-compensation property across sub-metrics: a
+sub-metric scoring near zero pulls the composite down unless the other sub-metrics carry
+overwhelming weight, which in turn requires the failing sub-metric's reliability to be
+near zero. A weighted arithmetic mean would not have this property: a single sub-metric
+failure could be diluted away by averaging.
 
-\paragraph{Top-K (baseline).} Select the $k$ frames with the highest preceding motion magnitude.
-This approach clusters keyframes around motion bursts, leaving long static stretches without
-temporal support for interpolation.
+\section{Design Iterations: Closing Characterised Failure Modes}
+\label{sec:method:iterations}
 
-\paragraph{Segment-based (proposed).} Divide the video into $k - 2$ equal temporal segments
-(excluding the always-included first and last frames). Within each segment, select the frame
-with the highest motion magnitude. This ensures even temporal coverage while still capturing
-local motion peaks within each segment.
+LR-VCC was developed under an explicit protocol: every design iteration must close a
+specific failure mode characterised on the validation set, not apply an unmotivated
+parameter tweak. The version history is:
 
-\paragraph{Local maxima.} Identify local maxima in the motion signal $\{\phi_t\}$ and greedily
-select the strongest peaks subject to a minimum gap constraint
-$\Delta_{\min} = \lfloor N / (k + 1) \rfloor$ between any two selected keyframes. This prevents
-clustering while preferring perceptually meaningful transition points.
+\begin{description}
+    \item[v1 (A, T, I).] Three sub-metrics with per-video reliability tests. Passed
+        perceptual-ordering validation on the real-SR test set but blind to colour-drift
+        artefacts.
+    \item[v2 (+D).] Added the pairwise colour-histogram sub-metric to target colour
+        drift; detection remained incomplete.
+    \item[v3.] Recalibrated D's exponential decay constant against chunk-boundary
+        empirics.
+    \item[v3+slope (+E).] Added the trajectory-slope sub-metric with $R^2$-gated
+        reliability, closing the colour-drift blind spot (Finding~1 of
+        Section~\ref{sec:problem:battery}).
+    \item[v4.] Scaled validation from two to five base videos and from four to six
+        artefact families (adding progressive identity drift and progressive background
+        replacement). The expanded verdict matrix revealed a new pathology:
+        \textbf{sub-metric D systematically rewards convergence-type corruptions}.
+        Replacing a dynamic background with a static reference makes per-frame colour
+        distributions \emph{more} stable over time, so a pairwise-stability score
+        improves as the corruption gets worse; the softmax composition then amplifies
+        D's confident, perverse signal. Background-drift rankings inverted on four of
+        five base videos.
+    \item[v5 (+D$'$, +D$''$; production).] Replaced pairwise stability with
+        anchor-referenced measures on two complementary channels: colour statistics
+        (D$'$) and CLIP semantics (D$''$). Background-drift inversions dropped from four
+        of five bases to one (a cartoon-content base, with halved magnitude), and a
+        six-transform flip ablation family was added as a designed control battery for
+        sub-metric attribution (Chapter~\ref{ch:experiments}).
+\end{description}
 
-In all strategies, the first frame ($t = 1$) and last frame ($t = N$) are always included
-to provide boundary conditions for interpolation.
+The v4 lesson generalises beyond this metric: \emph{stability-oriented consistency
+metrics have a structural failure class on convergence-type corruptions}, where the
+corrupted video is more ``stable'' than the clean one. Anchor-referenced trajectory
+measures are the systematic fix.
 
-\section{Contour Vectorization}
-\label{sec:contour-vectorization}
+\section{Reliability Gating as the Core Design Pattern}
+\label{sec:method:reliability}
 
-Binary segmentation masks must be converted to a representation amenable to continuous
-interpolation. We adopt a contour-based approach: each mask is represented as a fixed-length
-polygon with $P$ vertices (default $P = 64$).
+The central design hypothesis is that every existing learned-representation video metric
+is reliable on some content and unreliable on other content; rather than discard failed
+metrics or attempt to train new bias-free metrics, the composition uses existing metrics
+honestly and controls their influence per video through reliability scores derived from
+the regime indicators that predict their failure mechanisms.
 
-\subsection{Contour Extraction and Resampling}
+Each per-sub-metric reliability is computed from regime indicators using smooth sigmoid
+penalties (sharpness fixed at $10$, producing smooth transitions rather than sharp
+threshold cliffs). The thresholds were selected from the regime characterisations in
+Chapter~\ref{ch:problem}; they are not tuned to the validation set.
 
-Given a binary mask $m_k$, we extract the largest connected contour using boundary tracing.
-The raw contour is then resampled to exactly $P$ vertices by linear interpolation along the
-arc-length parameterization:
-\begin{equation}
-    s_j = \frac{j}{P} \cdot L, \quad j = 0, 1, \ldots, P-1
-\end{equation}
-where $L$ is the total perimeter of the contour. The resampled vertex at arc-length $s_j$ is
-obtained by linear interpolation between the two nearest original contour points.
+A sharp softmax over reliabilities ensures that when one sub-metric is substantially more
+trustworthy than the others on a given video, that sub-metric clearly dominates the
+composition. This is the mechanism that makes the composite resistant to the
+content-dependent ranking flips of Section~\ref{sec:problem:regime}: on a video in the
+close-up regime, where the Identity-pathway anomaly classifier is known to misbehave, the
+Identity sub-metric's reliability is downweighted by the close-up gate, allowing the
+other sub-metrics to determine the composite outcome.
 
-\subsection{Centroid-Aligned Vertex Ordering}
+\section{Validation Strategy}
+\label{sec:method:validation}
 
-To ensure consistent vertex correspondence across keyframes, we apply centroid-aligned ordering.
-After resampling, the vertex list is cyclically rotated so that vertex 0 is the point closest
-to the 12 o'clock position relative to the contour centroid (maximum $-\Delta y / \|\Delta\|$
-direction). This prevents rotational drift in the vertex indexing across frames, ensuring that
-vertex $i$ at keyframe $k_1$ corresponds to approximately the same physical location as vertex
-$i$ at keyframe $k_2$.
+The composite is validated at three layers; results are presented in
+Chapter~\ref{ch:experiments}.
 
-\section{Universal Kriging Interpolation}
-\label{sec:kriging-interpolation}
+\textbf{Layer~1 --- perceptual agreement on the real-SR test set.} The composite must
+rank the detail-preserving baseline above the text-conditioned smoother on the per-method
+mean and on every per-video comparison.
 
-Kriging is a geostatistical interpolation method that provides the Best Linear Unbiased
-Prediction (BLUP) by exploiting spatial correlation structure through variogram modeling.
-We apply it to temporal interpolation of contour vertices.
+\textbf{Layer~2 --- flip-resistance on the regime-shift case.} The composite must not
+flip on the close-up video where Human\_Anatomy and Human\_Identity both flip against
+visual judgement.
 
-\subsection{Per-Vertex 1D Kriging}
+\textbf{Layer~3 --- severity-response on the synthetic artefact benchmark.} For each
+artefact family, the composite should respond monotonically to severity, with any
+non-monotonic cells attributable to a \emph{named} failure mechanism rather than
+unexplained noise.
 
-For each vertex index $i \in \{1, \ldots, P\}$, we treat the $x$-coordinate time series
-$\{v^{(i)}_x(k) : k \in K\}$ and $y$-coordinate time series $\{v^{(i)}_y(k) : k \in K\}$
-as independent 1D spatial processes along the time axis. For target frame $t \notin K$, the
-Kriging predictor is:
-\begin{equation}
-    \hat{v}^{(i)}_x(t) = \sum_{j=1}^{|K|} \lambda_j(t) \cdot v^{(i)}_x(k_j)
-\end{equation}
-where the weights $\lambda_j(t)$ are determined by solving the Kriging system:
-\begin{equation}
-    \begin{bmatrix} \gamma(k_1, k_1) & \cdots & \gamma(k_1, k_{|K|}) & 1 \\
-                    \vdots & \ddots & \vdots & \vdots \\
-                    \gamma(k_{|K|}, k_1) & \cdots & \gamma(k_{|K|}, k_{|K|}) & 1 \\
-                    1 & \cdots & 1 & 0 \end{bmatrix}
-    \begin{bmatrix} \lambda_1 \\ \vdots \\ \lambda_{|K|} \\ \mu \end{bmatrix} =
-    \begin{bmatrix} \gamma(k_1, t) \\ \vdots \\ \gamma(k_{|K|}, t) \\ 1 \end{bmatrix}
-\end{equation}
-where $\gamma(h)$ is the variogram function and $\mu$ is the Lagrange multiplier enforcing
-unbiasedness.
+\section{Reproducibility and Decomposability}
+\label{sec:method:repro}
 
-\subsection{Variogram Models}
+The metric is fully decomposable. Each sub-metric is computed independently, and the
+result is cached per video. Hyperparameter studies and re-tuning of the per-sub-metric
+decay constants and weighting choices do not require re-scanning videos; the cached
+per-video values are re-aggregated through the composition layer in seconds. Additional
+sub-metrics can be added to the composition without disturbing the cached values of the
+existing sub-metrics.
 
-The variogram $\gamma(h) = \frac{1}{2} \text{Var}[Z(t+h) - Z(t)]$ describes the spatial
-correlation structure. We evaluate four standard models:
-
-\begin{itemize}
-    \item \textbf{Gaussian:} $\gamma(h) = c \left[1 - \exp\left(-\frac{h^2}{a^2}\right)\right]$
-    \item \textbf{Exponential:} $\gamma(h) = c \left[1 - \exp\left(-\frac{h}{a}\right)\right]$
-    \item \textbf{Spherical:} $\gamma(h) = c \left[\frac{3h}{2a} - \frac{h^3}{2a^3}\right]$ for $h \leq a$, $c$ otherwise
-    \item \textbf{Linear:} $\gamma(h) = c \cdot \frac{h}{a}$ for $h \leq a$, $c$ otherwise
-\end{itemize}
-where $c$ is the sill (total variance) and $a$ is the range parameter. The variogram parameters
-are fitted automatically from the observed keyframe data. Based on our ablation study
-(Section~\ref{sec:variogram-ablation}), the exponential model is used as the default.
-
-\subsection{Rasterization}
-
-After Kriging interpolation, the predicted vertices $\hat{\mathbf{v}}_t \in \mathbb{R}^{P \times 2}$
-for each non-keyframe $t$ are rasterized back to a binary mask using polygon fill operations.
-Keyframe masks are passed through unchanged, preserving the original semantic model output at
-those frames.
+The output of the composite on a given video is the LR-VCC score, the per-sub-metric
+$(\text{score}, \text{reliability})$ pairs, the softmax-derived sub-metric weights, the
+low-confidence flag, and a set of per-sub-metric diagnostic indicators (close-up
+indicator, face-detection rate, mean mask coverage at long temporal lags, regression
+$R^2$, histogram entropy). The per-video per-sub-metric matrix is always reported
+alongside the headline composite, so a reviewer can see where the composite is driven
+from on each video. There is no black-box aggregation.

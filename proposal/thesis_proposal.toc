@@ -1,18 +1,32 @@
-\contentsline {section}{\numberline {1}Introduction and Background of the Study}{2}{section.1}%
-\contentsline {subsection}{\numberline {1.1}The Evolution of Video Understanding: From Perception to Reasoning}{2}{subsection.1.1}%
-\contentsline {subsection}{\numberline {1.2}The Technological Backbone: Multimodal LLMs and Vision Transformers}{2}{subsection.1.2}%
-\contentsline {subsection}{\numberline {1.3}The Theoretical Conflict: Stochastic Deep Learning vs. Deterministic Kinematics}{3}{subsection.1.3}%
-\contentsline {subsection}{\numberline {1.4}The Resource Crisis in Edge Computing}{3}{subsection.1.4}%
-\contentsline {section}{\numberline {2}Statement of the Problem}{3}{section.2}%
-\contentsline {subsection}{\numberline {2.1}Problem 1: The Computational Inefficiency of Dense Sampling}{4}{subsection.2.1}%
-\contentsline {subsection}{\numberline {2.2}Problem 2: Temporal Jitter and Semantic Flickering}{4}{subsection.2.2}%
-\contentsline {subsection}{\numberline {2.3}Problem 3: Tracking Failure During Occlusion (The "Object Permanence" Deficit)}{4}{subsection.2.3}%
-\contentsline {section}{\numberline {3}Research Aim and Hypothesis}{5}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Research Aim}{5}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}Research Hypothesis}{5}{subsection.3.2}%
-\contentsline {section}{\numberline {4}Research Objectives}{6}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Objective 1: To Design a Sparse-Sampling Framework for Reasoning Segmentation}{6}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Objective 2: To Develop a Lightweight Trajectory Forecasting Module}{6}{subsection.4.2}%
-\contentsline {subsection}{\numberline {4.3}Objective 3: To Adapt Geostatistical Kriging for Efficient Mask Reconstruction}{6}{subsection.4.3}%
-\contentsline {subsection}{\numberline {4.4}Objective 4: To Validate the System via Comprehensive Benchmarking}{7}{subsection.4.4}%
-\contentsline {section}{\numberline {5}Main References}{7}{section.5}%
+\contentsline {section}{\numberline {1}Background and Motivation}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Video Super-Resolution for Long Videos}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Existing Metric Landscape}{3}{subsection.1.2}%
+\contentsline {section}{\numberline {2}Literature Review}{4}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Video Super-Resolution Methods}{4}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Temporal Consistency Metrics}{5}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}No-Reference Perceptual Metrics}{5}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Identified Literature Gap}{6}{subsection.2.4}%
+\contentsline {section}{\numberline {3}Statement of the Problem}{6}{section.3}%
+\contentsline {subsection}{\numberline {3.1}A Content-Dependent Regime Shift in VBench-2.0 Metrics}{7}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}The tOF Temporal-Scale Crossover}{7}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}A Synthetic Artefact Battery Exposes Categorical Blind Spots}{9}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Why the Gaps Are Structural}{11}{subsection.3.4}%
+\contentsline {section}{\numberline {4}Research Aim and Hypothesis}{12}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Research Aim}{12}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Research Hypotheses}{12}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Success Criteria}{13}{subsection.4.3}%
+\contentsline {section}{\numberline {5}Research Objectives, Content, and Preliminary Work}{13}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Objective 1: Characterise the Failure Modes of Existing Long-Video SR Metrics}{13}{subsection.5.1}%
+\contentsline {paragraph}{Real-SR test set.}{14}{paragraph*.1}%
+\contentsline {paragraph}{Established findings.}{14}{paragraph*.2}%
+\contentsline {subsection}{\numberline {5.2}Objective 2: Design a No-Reference Composite Metric with Per-Sub-Metric Reliability Gates}{14}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Objective 3: Validate the Composite Against a Controlled Synthetic Test Set and the Real-SR Test Set}{15}{subsection.5.3}%
+\contentsline {section}{\numberline {6}Methodology and Technical Route}{15}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Architecture}{15}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Reliability Gating as the Core Design Pattern}{17}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Validation Strategy}{17}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Reproducibility and Decomposability}{18}{subsection.6.4}%
+\contentsline {section}{\numberline {7}Expected Outcomes and Innovations}{19}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Primary Deliverables}{19}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Scientific Innovations}{19}{subsection.7.2}%
+\contentsline {section}{\numberline {8}Main References}{20}{section.8}%

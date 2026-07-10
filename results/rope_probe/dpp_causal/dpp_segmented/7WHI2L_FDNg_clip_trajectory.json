@@ -1,0 +1,20 @@
+{
+  "video_path": "/home/timur/results/flashvsr_synthetic_mp4/7WHI2L_FDNg.mp4",
+  "score": 0.16796050534551274,
+  "reliability": 1.0,
+  "details": {
+    "anchor_len_frames": 60,
+    "anchor_count_sampled": 7,
+    "post_anchor_count_sampled": 618,
+    "stride": 8,
+    "beta": 5.0,
+    "mean_cos_dist_to_anchor": 0.3568052828890606,
+    "max_cos_dist_to_anchor": 0.5667251348495483,
+    "trajectory_mean_per_quarter": [
+      0.3296073894346914,
+      0.31835159793976814,
+      0.3977140933275223,
+      0.3819743598049337
+    ]
+  }
+}

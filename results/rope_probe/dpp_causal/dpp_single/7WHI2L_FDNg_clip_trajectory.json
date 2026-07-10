@@ -1,0 +1,20 @@
+{
+  "video_path": "/home/timur/results/rope_probe/dpp_causal/single/7WHI2L_FDNg.mp4",
+  "score": 0.16709422307469357,
+  "reliability": 1.0,
+  "details": {
+    "anchor_len_frames": 60,
+    "anchor_count_sampled": 7,
+    "post_anchor_count_sampled": 618,
+    "stride": 8,
+    "beta": 5.0,
+    "mean_cos_dist_to_anchor": 0.3578394831287822,
+    "max_cos_dist_to_anchor": 0.5754775702953339,
+    "trajectory_mean_per_quarter": [
+      0.3276073551947071,
+      0.3217042176954208,
+      0.4000916395868574,
+      0.3823856771379322
+    ]
+  }
+}

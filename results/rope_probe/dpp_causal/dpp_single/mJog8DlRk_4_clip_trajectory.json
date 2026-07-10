@@ -1,0 +1,20 @@
+{
+  "video_path": "/home/timur/results/rope_probe/dpp_causal/single/mJog8DlRk_4.mp4",
+  "score": 0.21611110810388987,
+  "reliability": 1.0,
+  "details": {
+    "anchor_len_frames": 60,
+    "anchor_count_sampled": 7,
+    "post_anchor_count_sampled": 618,
+    "stride": 8,
+    "beta": 5.0,
+    "mean_cos_dist_to_anchor": 0.30639252283619445,
+    "max_cos_dist_to_anchor": 0.638608306646347,
+    "trajectory_mean_per_quarter": [
+      0.32904271021966014,
+      0.3103517397757499,
+      0.2930875103194992,
+      0.29291534269010866
+    ]
+  }
+}
