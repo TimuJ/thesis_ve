@@ -46,9 +46,20 @@ def center_crop(img, hw):
     return img[t:t + h, l:l + w]
 
 
-def score_pair_lists(preds, refs, metrics, device):
+def resize_to(img, hw):
+    """Bicubic-resize an HxWxC array to (H, W) — for cross-resolution scoring
+    (e.g. 1440x1440 output vs 1080x1080 GT). Documented confound: resizing
+    the prediction before scoring measures resized-output quality."""
+    h, w = hw
+    return cv2.resize(img, (w, h), interpolation=cv2.INTER_CUBIC)
+
+
+def score_pair_lists(preds, refs, metrics, device, resize_pred=False):
     assert len(preds) == len(refs) and preds, (len(preds), len(refs))
-    preds = [center_crop(p, refs[0].shape[:2]) for p in preds]
+    if resize_pred:
+        preds = [resize_to(p, refs[0].shape[:2]) for p in preds]
+    else:
+        preds = [center_crop(p, refs[0].shape[:2]) for p in preds]
     per = {name: [] for name in metrics}
     with torch.no_grad():
         for p, r in zip(preds, refs):
@@ -69,6 +80,9 @@ def main():
     ap.add_argument("--sweep_dir", required=True)
     ap.add_argument("--gt_dir", default=None)
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--resize_to_ref", action="store_true",
+                    help="bicubic-resize predictions to the reference size "
+                         "instead of center-cropping (cross-resolution rungs)")
     args = ap.parse_args()
 
     import pyiqa
@@ -95,7 +109,8 @@ def main():
         payload = json.load(open(jpath))
         payload["vs_baseline"] = (None if cid == BASELINE_ID else
                                   score_pair_lists(frames, baseline, metrics, device))
-        payload["vs_gt"] = (score_pair_lists(frames, gt[:len(frames)], metrics, device)
+        payload["vs_gt"] = (score_pair_lists(frames, gt[:len(frames)], metrics, device,
+                                             resize_pred=args.resize_to_ref)
                             if gt else None)
         with open(jpath, "w") as f:
             json.dump(payload, f, indent=2)

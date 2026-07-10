@@ -200,3 +200,10 @@ def test_axes_compose_and_restore_in_reverse():
     assert dit.freqs[2] is t2
     r_h(); r_t()
     assert dit.freqs == (t0, t1, t2)
+
+
+def test_resize_to_for_cross_resolution_scoring():
+    import numpy as np
+    from scripts.rope_probe.score_conditions import resize_to
+    pred = np.zeros((1440, 1440, 3), dtype=np.uint8)
+    assert resize_to(pred, (1080, 1080)).shape == (1080, 1080, 3)
