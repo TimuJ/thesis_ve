@@ -1,0 +1,115 @@
+% Chapter 2: Foundational Technologies
+\chapter{Foundational Technologies}
+\label{ch:foundations}
+
+This chapter describes the models, position-encoding machinery, and measurement toolkit
+that the rest of the thesis builds on: the three evaluated diffusion VSR methods
+(Section~\ref{sec:found:vsr}), rotary position embeddings and their extrapolation
+behaviour (Section~\ref{sec:found:rope}), the perceptual and temporal quality measures
+from which LR-VCC's sub-metrics are constructed (Section~\ref{sec:found:toolkit}), and
+the DOVE evaluation protocol under which all ground-truth comparisons are performed
+(Section~\ref{sec:found:dove}).
+
+\section{Diffusion-Based Video Super-Resolution and the Evaluated Baselines}
+\label{sec:found:vsr}
+
+% TODO(Ch2 pass): 1 paragraph on latent diffusion for restoration (SD prior, VAE latent
+% space, tile-based inference for large frames) before the per-model subsections.
+
+\subsection{MGLD-VSR}
+MGLD-VSR \cite{he_mgld_2024} (ECCV 2024) applies motion-guided latent diffusion to
+progressively refine super-resolved frames, using optical-flow cues to steer the latent
+denoising trajectory toward temporal coherence. It is characterised by sharp,
+detail-preserving output. In this thesis it also serves as the numerically validated
+anchor of the evaluation environment: it reproduces the published DOVE benchmark numbers
+on UDM10 exactly (PSNR 24.23, with SSIM and LPIPS matching to four decimal places).
+
+\subsection{Upscale-A-Video}
+Upscale-A-Video (UAV) \cite{zhou_upscale_2024} (CVPR 2024) is a text-conditioned temporal
+diffusion model inspired by text-to-video generation. It produces smoother, perceptually
+cleaner output at the cost of some high-frequency detail. UAV reproduces DOVE UDM10
+results within a consistent $+1.33$~dB PSNR offset attributable to a degradation-pipeline
+configuration difference rather than a setup defect; the offset is consistent across test
+sets ($+1.68$~dB on SPMCS), confirming the evaluation environment.
+
+\subsection{FlashVSR}
+FlashVSR \cite{zhuang_flashvsr_2025} is a one-step streaming VSR model distilled from the
+Wan2.1 video diffusion transformer \cite{wan_wan_2025}. Frames are processed in a
+causal streaming fashion with a KV cache carrying context across chunk boundaries, which
+makes the method applicable to arbitrarily long input in principle. Its position encoding
+is a three-axis factorised RoPE over (time, height, width), with the temporal index
+growing monotonically over the whole stream --- the property that motivates the
+extrapolation study of Chapter~\ref{ch:rope}.
+% TODO(Ch6 prep): expand from docs/notes/2026-07-02-flashvsr-rope-site.md — DiT block
+% structure, block-sparse attention with adaptive topk, TC decoder, distillation recipe,
+% trained temporal window (21 latent frames ~ 81 video frames), spatial trained extent
+% (48 latent), stock 1024-row frequency tables.
+
+\section{Rotary Position Embeddings and Length Extrapolation}
+\label{sec:found:rope}
+
+Rotary position embeddings \cite{su_roformer_2024} encode a token's position $m$ by
+rotating each two-dimensional channel pair of its query and key vectors by an angle
+$m\theta_i$, where $\theta_i$ is a per-pair frequency drawn from a geometric schedule.
+The attention logit between positions $m$ and $n$ then depends on positions only through
+the relative offset $(m-n)$, giving translation invariance in expectation while retaining
+absolute-position information within each head.
+
+Video diffusion transformers factorise RoPE over three axes: the channel dimension is
+partitioned into a temporal group and two spatial groups (height, width), each with its
+own position index and frequency table. In Wan2.1-derived models such as FlashVSR the
+tables are precomputed to a fixed number of rows; positions beyond the table are
+unreachable at inference time unless the table is extended.
+
+When a model is evaluated at positions or relative distances outside its trained range,
+quality can degrade. The language-modelling literature offers three main remedies:
+\emph{linear position interpolation} (PI) \cite{chen_pi_2023} compresses positions by a
+constant factor so relative distances remain in-range; \emph{NTK-aware scaling}
+\cite{bloc97_ntk_2023} rescales the frequency schedule non-uniformly, preserving
+high-frequency (local) resolution; and \emph{YaRN} \cite{peng_yarn_2023} combines
+frequency-dependent interpolation with attention-temperature correction. All three were
+developed for one-dimensional text and validated on perplexity; their applicability to
+three-axis video RoPE under streaming inference is one of the questions
+Chapter~\ref{ch:rope} answers empirically.
+
+\section{Perceptual and Temporal Quality Measurement Toolkit}
+\label{sec:found:toolkit}
+
+Three families of measures used throughout the thesis are described here.
+
+\paragraph{No-reference perceptual measures.} CLIP-IQA \cite{wang_clipiqa_2023} evaluates
+per-frame image quality using CLIP \cite{radford_learning_2021} embeddings. Unlike LPIPS
+or DINOv2, CLIP-IQA does not systematically penalise high-frequency detail in
+diffusion-style SR outputs, making it a suitable appearance component for a no-reference
+composite. MUSIQ \cite{ke_musiq_2021} is a multi-scale image-quality transformer; DOVER
+\cite{wu_dover_2023} predicts video quality through disentangled aesthetic and technical
+branches.
+
+\paragraph{Temporal consistency measures.} tOF and tLP \cite{chu_tecogan_2020} measure
+optical-flow warping error and LPIPS-based perceptual warping error between frame pairs.
+Conventionally both are evaluated at adjacent-frame lag $k{=}1$; this thesis extends them
+to lags $k \in \{1, 5, 10, 30, 60, 120\}$ using RAFT \cite{teed_raft_2020} optical flow
+with forward--backward consistency masking applied uniformly across all $k$.
+
+\paragraph{Identity measures.} VBench-2.0's Human\_Identity dimension tracks face
+embedding stability using RetinaFace \cite{deng_retinaface_2020} detection and ArcFace
+\cite{deng_arcface_2019} embeddings. For long videos this thesis uses a slow-fast
+adaptation: a \emph{slow} component fused within 2-second clips and a \emph{fast}
+component comparing first-frame embeddings across clips, so that cross-clip identity
+drift is measured rather than averaged away.
+% TODO(Ch2 pass): mention the six upstream VBench-2.0 patches and the fps-override
+% correction (hard-coded 30fps output tag) — one paragraph, with pointer to Ch3.
+
+\section{The DOVE Evaluation Protocol}
+\label{sec:found:dove}
+
+All ground-truth comparisons in this thesis follow the DOVE \cite{yang_dove_2024}
+protocol: low-resolution inputs are produced by the RealBasicVSR
+\cite{chan_realbasicvsr_2022} degradation pipeline (bicubic downscale by a factor of
+four, sensor noise injection, codec compression), and full-reference metrics are computed
+in the DOVE RGB convention. The DOVE test suites used here are UDM10 \cite{yi_pfnl_2019}
+and SPMCS \cite{tao_spmcs_2017} with realistic degradation, and YouHQ40
+\cite{zhou_upscale_2024} for the resolution-extrapolation ladder of
+Chapter~\ref{ch:rope}. Validating against DOVE's published numbers anchors every
+experiment chapter: conclusions are drawn only on top of a numerically verified
+inference environment.

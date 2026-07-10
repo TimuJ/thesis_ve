@@ -1,0 +1,43 @@
+% Chapter 7: Discussion and Conclusion
+\chapter{Discussion and Conclusion}
+\label{ch:conclusion}
+
+\section{Significance}
+\label{sec:conclusion:significance}
+
+% TODO(Ch7 pass):
+% - Long-video SR evaluation now has a no-reference, multi-time-scale, reliability-gated
+%   instrument whose every design decision traces to a characterised failure mode.
+% - The failure-mode characterisations stand alone: smoother-output bias across three
+%   independent learned representations; tOF k=1 as a spatial-smoothness measurement;
+%   convergence-rewarding pathology of stability metrics.
+% - The RoPE study contributes both verdicts (position magnitude free; geometry bites;
+%   drift not positional) and method (bit-exact position injection; self-consistency
+%   insufficiency) to the emerging study of position encodings in video DiTs.
+
+\section{Limitations}
+\label{sec:conclusion:limitations}
+
+% TODO(Ch7 pass): condensed cross-thesis limitations — 5-base benchmark scale; cartoon
+% content; flip_horizontal blindness; single-model RoPE study; within-window GT.
+
+\section{Future Work}
+\label{sec:conclusion:future}
+
+% TODO(Ch7 pass): from the documented directions —
+% 1. Adaptive/content-aware anchoring for scene-cut-heavy content (cartoon fix).
+% 2. Mirror-sensitive sub-metric (pixel-correlation or pose-based) for flip_horizontal.
+% 3. Slow-fast pooling recalibration on a larger base set (dispersion gate).
+% 4. Long-context SSM temporal backbones for VSR (po_longcontext_2025) with LR-VCC as
+%    consistency loss signal.
+% 5. Benchmark broadening (50+ videos, human-judgement calibration, public release).
+% 6. RoPE round 2: SeedVR2 contrast (window-local vs absolute streaming positions);
+%    deep-length GT acquisition; 1440^2 decomposition (pin topk_ratio).
+
+\section{Conclusion}
+\label{sec:conclusion:conclusion}
+
+% TODO(Ch7 pass): closing summary — the evaluation gap is real and structural; LR-VCC
+% closes the characterised portion of it with an extensible, decomposable design; the
+% metric's own findings redirected the improvement agenda for streaming diffusion VSR
+% away from position encoding and toward generation mechanics.
