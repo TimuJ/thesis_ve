@@ -1,6 +1,6 @@
 # Biweekly Report — Timur Iakshibaev
 
-## Period: June 29 – July 12, 2026 (first biweekly; IN PROGRESS — finalise July 12)
+## Period: June 29 – July 12, 2026 (first biweekly)
 
 > New cadence: biweekly reports aggregate the weekly ones. Sources for this
 > period: `Timur_Iakshibaev_2026-06-29_to_2026-07-01.md` (extended through
@@ -68,11 +68,18 @@
       stock frame ceiling proven removable in production.
 - [x] vs-GT quality verdict on DOVE-UDM10 (10 clips × 22 conditions);
       continuous-PI tool built and validated.
+- [x] **Comprehensive time×space sensitivity matrix — done** (group ask,
+      July 10): spatial (h/w) label sweeps on UDM10 + a real
+      resolution-extrapolation ladder on YouHQ40 (grids 45²→72²→90², stock
+      vs spatial-PI). Headlines: translation invariance universal across all
+      3 RoPE axes; the PI-free zone exists on every axis; space ~2.5× more
+      sensitive than time at extreme geometry distortion; real 1.5× grid
+      extension costs only −0.15 dB (RoPE exonerated again) while spatial-PI
+      there *hurts* (−0.56); the 1440² rung collapses for non-positional
+      reasons (adaptive sparsity / input confound — follow-up defined).
+      Full matrix: `reports/figures/rope_sensitivity_matrix.md`.
 - [ ] Extended-window experiment with the window-extension student —
-      predictions + tool handed over; next: their runs. NEW (group feedback
-      July 10): also characterise the **spatial (h/w) RoPE axes**
-      separately from time — our sweeps so far perturb the temporal axis
-      only; the hook generalises directly.
+      predictions + tool handed over; next: their runs.
 - [ ] Task 8 analysis curves + Task 10 findings note; whole-branch review.
 - [ ] Long-video GT: YouTube re-download from an unflagged network (parked).
 - [x] PAT lapsed ~July 9 as planned; remaining artefact traffic is
@@ -80,4 +87,12 @@
 - [ ] **Methodology + experiments chapter drafts** (thesis, July 25) — the
       foreground from here.
 
-_Finalise on July 12: fill any spatial-axis first results + week-2 wrap._
+## One-line summary for the meeting
+
+FlashVSR's RoPE extrapolates benignly in every dimension we can measure —
+offsets are free on all three axes, moderate real extension (temporal
+single-pass ×2.5 length, spatial ×1.5 grid) costs ≲0.15 dB, and the failure
+modes that do exist (long-video drift, ≥1440² collapse) are demonstrably not
+positional. Position-side fixes (PI) help only in narrow regimes and can
+hurt; effort should target streaming cache/generation and
+resolution-scaling mechanics instead.
