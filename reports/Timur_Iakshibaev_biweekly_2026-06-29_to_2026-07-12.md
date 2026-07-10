@@ -80,8 +80,14 @@
       Full matrix: `reports/figures/rope_sensitivity_matrix.md`.
 - [ ] Extended-window experiment with the window-extension student —
       predictions + tool handed over; next: their runs.
-- [ ] Task 8 analysis curves + Task 10 findings note; whole-branch review.
-- [ ] Long-video GT: YouTube re-download from an unflagged network (parked).
+- [x] Task 10 findings note — probe capstone written
+      (`docs/notes/2026-07-11-rope-extrapolation-findings.md`); sensitivity
+      tables serve as the Task-8 deliverable. Remaining: whole-branch review
+      before merging `rope-probe`.
+- [x] Long-video GT via YouTube: **exhausted and closed** — platform-side
+      enforcement blocks all clients on all networks tried (campus, mobile,
+      cookies, PO-token provider). Path forward: lab-provided long HR
+      footage (group ask) via `make_long_gt.py` — cleaner GT anyway.
 - [x] PAT lapsed ~July 9 as planned; remaining artefact traffic is
       JSON-sized (scp suffices).
 - [ ] **Methodology + experiments chapter drafts** (thesis, July 25) — the
