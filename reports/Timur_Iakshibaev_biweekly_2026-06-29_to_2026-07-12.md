@@ -15,12 +15,19 @@
    showing the worst long-range-drift cell (D″), exactly the signature the
    new research arc investigates.
 2. **The RoPE-extrapolation probe went from idea to verified instrument to
-   first quality verdicts in five days:** spec → 10-task plan → bit-exact
+   completed causal verdicts:** spec → 10-task plan → bit-exact
    position-injection hook (no-op drift 0.0 on a 0.0 floor) → shift/stretch/
-   continuous-PI sweeps → vs-GT run on DOVE-UDM10. Verdicts: absolute
-   position magnitude is quality-free even 50× beyond the trained window;
-   mild PI-compression (s=0.75) is quality-free; dilation damages
-   monotonically; self-consistency provably fails to predict quality.
+   continuous-PI sweeps → vs-GT run on DOVE-UDM10 → the D″ causal check.
+   Verdicts: absolute position magnitude is quality-free even 50× beyond
+   the trained window; mild PI-compression (s=0.75) is quality-free;
+   dilation damages monotonically (with the important caveat that the small
+   costs at s≤2 are still *inside* the trained distance range under
+   streaming's ~8-latent span — the first out-of-window point, s=3, costs
+   −0.95 dB); self-consistency provably fails to predict quality; and
+   **FlashVSR's long-video CLIP-trajectory drift is NOT positional** (three
+   arms — segmented / single-pass / magnitude-bounded — indistinguishable,
+   < 1 % relative spread), exonerating RoPE and pointing long-video drift
+   fixes at the streaming/caching mechanism instead.
 3. **Infrastructure held despite two crises** (server disk at 100%, twice;
    Google-Drive and YouTube transfer walls) thanks to the GitHub-bridge
    pattern — now bidirectional via a scoped 7-day PAT — and everything is
@@ -37,6 +44,8 @@
 | PI-compression s=0.75 GT cost | **+0.01 dB — free** |
 | Dilation s=1.25 / 2.0 / 3.0 GT cost | −0.12 / −0.25 / −0.95 dB |
 | Stock FlashVSR single-pass ceiling | 4089 frames (~2.3 min) — RoPE table limit |
+| …removed by the probe's extended table | 5009-frame single pass, 11.6 GiB VRAM, works |
+| D″ causal check (segmented / single / mod336) | indistinguishable, < 1 % — **drift not positional** |
 | Probe faithfulness gate | bit-exact (floor 0.0, no-op 0.0) |
 
 ## Decisions and framing this period
@@ -52,14 +61,23 @@
 - Evaluation stays on the DOVE protocol (April decision honoured for the
   probe's GT set choice: UDM10 with realistic degradation over REDS bicubic).
 
-## Open items into week 2 (July 7–12)
+## Week-2 outcomes (July 7–12)
 
-- [ ] Extended-window experiment with the window-extension student
-      (predictions + tool ready).
-- [ ] D″ causal check (position-reset vs stock on a long video, LR-VCC-scored).
+- [x] **D″ causal check — done, decisive:** drift is not positional
+      (`reports/figures/dpp_causal_verdict.md`); benchmark row fair;
+      stock frame ceiling proven removable in production.
+- [x] vs-GT quality verdict on DOVE-UDM10 (10 clips × 22 conditions);
+      continuous-PI tool built and validated.
+- [ ] Extended-window experiment with the window-extension student —
+      predictions + tool handed over; next: their runs. NEW (group feedback
+      July 10): also characterise the **spatial (h/w) RoPE axes**
+      separately from time — our sweeps so far perturb the temporal axis
+      only; the hook generalises directly.
 - [ ] Task 8 analysis curves + Task 10 findings note; whole-branch review.
 - [ ] Long-video GT: YouTube re-download from an unflagged network (parked).
-- [ ] PAT expiry ~July 9: finish bulk transfers or mint a successor.
-- [ ] **Methodology + experiments chapter drafts** (thesis, July 25).
+- [x] PAT lapsed ~July 9 as planned; remaining artefact traffic is
+      JSON-sized (scp suffices).
+- [ ] **Methodology + experiments chapter drafts** (thesis, July 25) — the
+      foreground from here.
 
-_To be finalised with week-2 outcomes on July 12._
+_Finalise on July 12: fill any spatial-axis first results + week-2 wrap._
