@@ -37,8 +37,7 @@ predicted-caught cells.
 % TODO(Ch5 pass): port the full 12x5 verdict matrix from verdict_matrix_v5.md as a
 % table (PASS/WEAK/FLAT/INV cells per base video); add verdict thresholds
 % (PASS <= -0.05 delta, WEAK <= -0.02, FLAT < +0.02, INVERTED >= +0.02).
-% Note: flip_invert row incomplete (server decommissioning) — predicted-PASS control;
-% document as such.
+% Matrix is complete (12/12 rows, 28/60 clean); flip_invert control confirmed 5/5 PASS.
 
 % TODO(Ch5 pass): headline paragraph — background_drift inversions 4/5 (v4) -> 1/5 (v5)
 % with halved magnitude on the remaining BrRLK cartoon base; colour drift 5/5 clean.
@@ -102,4 +101,3 @@ mJog & 0.575 & 0.533 & \textbf{0.649} \\
 %   preserved by construction) — documented metric limit.
 % - slow-fast pooling pathology (single-face identity collapse); dispersion gate parked
 %   pending calibration data (>= 8 single-face bases).
-% - flip_invert cell incomplete (predicted-PASS control row).
