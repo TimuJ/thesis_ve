@@ -91,14 +91,22 @@ class TemporalFreqTable:
 
 def install_position_hook(dit, override: PositionOverride,
                           table_builder: Optional[Callable[[int], torch.Tensor]] = None,
-                          row_builder: Optional[Callable[[list], torch.Tensor]] = None):
-    """Swap dit.freqs[0] for the wrapped table; returns a restore() callable."""
-    orig = dit.freqs
-    dit.freqs = (TemporalFreqTable(orig[0], override, table_builder, row_builder),
-                 orig[1], orig[2])
+                          row_builder: Optional[Callable[[list], torch.Tensor]] = None,
+                          axis: int = 0):
+    """Swap dit.freqs[axis] for the wrapped table; returns a restore() callable.
+
+    axis: 0 = temporal (default), 1 = height, 2 = width — the three axes of
+    Wan's 3D RoPE. Installs compose (wrap t then h); restore in reverse order.
+    The wrapper is axis-agnostic: shift/stretch/continuous/modulo and the
+    extended-table path all apply to spatial grids exactly as to time.
+    """
+    prev = dit.freqs
+    wrapped = list(prev)
+    wrapped[axis] = TemporalFreqTable(prev[axis], override, table_builder, row_builder)
+    dit.freqs = tuple(wrapped)
 
     def restore():
-        dit.freqs = orig
+        dit.freqs = prev
 
     return restore
 

@@ -176,3 +176,27 @@ def test_modulo_cycles_via_table():
     table = _fake_table(16)
     wrapped = TemporalFreqTable(table, PositionOverride(modulo=8))
     assert torch.equal(wrapped[18:20], table[torch.tensor([2, 3])])
+
+
+def test_axis_selects_spatial_table():
+    t0, t1, t2 = _fake_table(16), _fake_table(16) * 2, _fake_table(16) * 3
+    dit = _StubDit(t0)
+    dit.freqs = (t0, t1, t2)
+    restore = install_position_hook(dit, PositionOverride(shift=1), axis=1)
+    assert dit.freqs[0] is t0 and dit.freqs[2] is t2       # untouched axes
+    assert torch.equal(dit.freqs[1][0:2], t1[1:3])          # H axis shifted
+    restore()
+    assert dit.freqs[1] is t1
+
+
+def test_axes_compose_and_restore_in_reverse():
+    t0, t1, t2 = _fake_table(16), _fake_table(16) * 2, _fake_table(16) * 3
+    dit = _StubDit(t0)
+    dit.freqs = (t0, t1, t2)
+    r_t = install_position_hook(dit, PositionOverride(shift=1), axis=0)
+    r_h = install_position_hook(dit, PositionOverride(shift=2), axis=1)
+    assert torch.equal(dit.freqs[0][0:2], t0[1:3])
+    assert torch.equal(dit.freqs[1][0:2], t1[2:4])
+    assert dit.freqs[2] is t2
+    r_h(); r_t()
+    assert dit.freqs == (t0, t1, t2)

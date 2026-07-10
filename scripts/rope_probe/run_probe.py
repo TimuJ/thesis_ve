@@ -52,6 +52,8 @@ def main():
     ap.add_argument("--continuous", action="store_true",
                     help="true position interpolation: fractional positions, "
                          "rows computed on the fly (no integer rounding)")
+    ap.add_argument("--axis", default="t", choices=["t", "h", "w"],
+                    help="which 3D-RoPE axis to perturb (default: temporal)")
     args = ap.parse_args()
 
     # server-only imports below (torch, cv2, the stock infer script)
@@ -80,9 +82,11 @@ def main():
     for ov in grid:
         cid = cond_id(ov)
         restore = None
+        axis = {"t": 0, "h": 1, "w": 2}[args.axis]
+        ax_dim = dit.freqs[axis].shape[1] * 2
         if not is_noop(ov):
-            restore = install_position_hook(dit, ov, default_table_builder(t_dim),
-                                            default_row_builder(t_dim))
+            restore = install_position_hook(dit, ov, default_table_builder(ax_dim),
+                                            default_row_builder(ax_dim), axis=axis)
         try:
             video = run_once(pipe, LQ, F, th, tw)
         finally:
@@ -96,7 +100,7 @@ def main():
         # match the project's DOVE-convention pyiqa metrics.
         write_condition_json(os.path.join(args.out, cid + ".json"),
                              {"shift": ov.shift, "stretch": ov.stretch,
-                              "continuous": ov.continuous,
+                              "continuous": ov.continuous, "axis": args.axis,
                               "frames": args.frames, "input": args.input},
                              None, None)
         fdir = os.path.join(args.out, cid)
