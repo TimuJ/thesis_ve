@@ -106,14 +106,22 @@ a chunked uint8 conversion in the long-video driver after the first attempt's
 5000-frame runs were OOM-killed *post-inference* by the naive whole-video
 fp32 decode (~120 GB transient).
 
-**Already established:** (1) single-pass inference past the stock 4089-frame
-ceiling **works in production** — 5009 frames, latents to 1252 on the
-extended table, 11.6 GiB VRAM; the ceiling is purely a stock-code artefact,
-removable via positions alone. (2) Preliminary causal data point (hhsz,
-2412 frames): D″ = 0.4216 stock vs 0.4220 with cycled positions —
-**position magnitude does not move drift** on this video. The four
-5000-frame arms (where arm A has a real seam) are re-running with the memory
-fix; final A/B/C table to follow.
+**Verdict (final, `reports/figures/dpp_causal_verdict.md`):** all three
+arms are indistinguishable on every video (spread ≤ 0.0016, < 1 % relative;
+e.g. 7WHI: 0.1680 / 0.1671 / 0.1674). **FlashVSR's D″ drift is not
+positional** — not magnitude, not table-overrun, not the segmentation seam;
+it belongs to the streaming generation/caching mechanism. Corollaries: the
+benchmark's segmented FlashVSR row is fair, and single-pass inference past
+the stock 4089-frame ceiling works in production (5009 frames, latents to
+1252, 11.6 GiB VRAM) — the ceiling is an implementation artefact.
+
+Framing correction from group discussion (July 10): the moderate-dilation
+GT costs (−0.12…−0.25 dB at s=1.25…2.0) were measured where streaming's
+~8-latent attention span keeps distances *inside* the trained 21-latent
+range (8s ≤ 21); the first genuinely out-of-window condition is s=3
+(distances ~24), where damage jumps to −0.95 dB. A real window extension
+exits the trained range immediately — its expected regime is the s≥3 end,
+not s=1.5. The compression-side conclusion (PI s=0.75 free) is unaffected.
 
 ## 6. Next
 
