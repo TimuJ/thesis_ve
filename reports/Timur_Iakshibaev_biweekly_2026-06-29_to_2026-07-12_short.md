@@ -59,7 +59,7 @@ Three arms on the 2412–5000-frame videos — segmented / single-pass / magnitu
 streaming cache/generation mechanism, not position encoding; it also certifies the §1
 benchmark row was fair to FlashVSR.
 
-### 4. Comprehensive time×space sensitivity matrix (group ask, July 10)
+### 4. Comprehensive time×space sensitivity matrix (group ask, July 10) — [standalone report](rope_timespace_sensitivity_matrix.md)
 
 Translation invariance holds on **all three RoPE axes**; a PI-free zone (mild
 compression) exists on every axis; space is ~2.5× more sensitive than time at extreme
