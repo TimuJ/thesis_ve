@@ -60,24 +60,33 @@ genuinely out-of-window condition.
 |---|---|---|---:|---:|---:|
 | 720² | 48×48 (= trained extent) | crop | 24.70 dB | ≡ stock | — |
 | 1152² | 72×72 (1.5×) | native | 24.55 | 24.00 | **−0.56** |
-| 1536² | 96×96 (2.0×) | upsampled ×1.33 | **13.69** | 13.96 | +0.28 |
+| 1280² | 80×80 (1.67×) | upsampled | 24.66 | — | — |
+| 1408² | 88×88 (1.83×) | upsampled | 24.71 | — | — |
+| 1536² | 96×96 (2.0×) | upsampled ×1.33 | **24.78** | — | — |
 
-*(Grids from the run records; earlier drafts mislabelled them 45/72/90 —
-the input padding to multiples of 32 quantises the grid to multiples of 8.)*
+*(Grids from the run records; earlier drafts mislabelled them 45/72/90.
+An earlier version of this table reported 13.69 dB at the top rung — that
+was a scoring-geometry artefact, corrected below.)*
 
 - **1.5× real grid growth costs only −0.15 dB** with stock positions.
 - **Spatial PI at 1.5× hurts** (−0.56 dB vs simply extrapolating) —
   compressing to the trained extent (factor 0.67) sits in the
   compression-cost zone of §3.1.
-- The **1536² collapse (−11 dB) is not positional** (PI recovers only
-  +0.28): prime suspect is FlashVSR's own resolution-adaptive attention
-  sparsity (`topk_ratio` thins 3.8 → 1.5 → 0.83 across the rungs — below
-  the nominal budget at the collapse rung); upsampled-input blur is the
-  secondary candidate. (Window-partition remainders are ruled out: the
-  collapse grid, 96, divides evenly into the 8-latent windows.) Follow-ups
-  running: the 1536² rung with the sparsity ratio pinned to the healthy
-  1152² value; a blur-isolation arm at fixed grid; and intermediate grids
-  80/88 to locate the collapse knee against the sparsity dose.
+- **Correction: the previously reported −11 dB "collapse" at 1536² was a
+  scoring artefact, not a model failure.** The first scoring pass resized
+  the full padded output frame (content = 93.75 % of it) against GT,
+  comparing the two at different effective magnifications — a global
+  misalignment. With content-correct scoring the 2.0× rung scores
+  **24.78 dB — indistinguishable from every other rung.** The
+  decomposition arms confirm all suspects cleared: pinning the attention
+  sparsity to the healthy 1152² value changes nothing (24.74 vs 24.78);
+  intermediate grids 80/88 are flat (24.66/24.71); an upsampled-input arm
+  at fixed grid shows no blur penalty.
+- **Strengthened conclusion: real resolution extrapolation is quality-free
+  to at least 2.0× the trained spatial extent** with stock positions
+  (adaptive sparsity included). The only positional effect on the ladder
+  remains spatial-PI *hurting* at 1.5× (−0.56) — compression, not
+  extrapolation, is the risky direction spatially.
 
 ### 3.3 Long videos (2412–5000 frames): drift is not positional
 

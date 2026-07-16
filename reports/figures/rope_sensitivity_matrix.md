@@ -34,7 +34,7 @@ Readings:
 |---|---|---|---:|---:|---:|
 | 720² | 48×48 (= trained extent) | crop | 24.70 | ≡ stock | — |
 | 1152² | 72×72 (1.5×) | native | 24.55 | 24.00 | **−0.56** |
-| 1536² | 96×96 (2.0×) | upsampled ×1.33 | **13.69** | 13.96 | +0.28 |
+| 1536² | 96×96 (2.0×) | upsampled ×1.33 | **24.78** (corrected; 13.69 was a scoring artefact) | — | — |
 
 Readings (calibrated):
 

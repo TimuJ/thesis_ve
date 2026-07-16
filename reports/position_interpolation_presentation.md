@@ -103,9 +103,11 @@ protocol: 24.23):
 1. **Window extension** (21 → N latents): PI at s = 21/N is predicted
    RoPE-loss-free up to N ≈ 28 (s = 0.75); beyond ~2× the compression cost
    itself appears. Our hook applies this per axis with zero model changes.
-2. **Resolution extension:** measured on real grids — 1.5× spatial growth
-   costs only −0.15 dB *without* PI, and spatial PI there **hurts** (−0.56,
-   factor 0.67 is past the free zone). Do not apply spatial PI at ≤1.5×.
+2. **Resolution extension:** measured on real grids up to **2.0× the
+   trained extent — quality-free with stock positions** (24.55–24.78 dB
+   across grids 72–96, flat), while spatial PI at 1.5× **hurts** (−0.56;
+   factor 0.67 is past the free zone). Let spatial positions extrapolate;
+   do not compress them.
 3. **Absolute position growth** (long streaming) is free everywhere — the
    danger axis is relative-distance geometry, never magnitude.
 

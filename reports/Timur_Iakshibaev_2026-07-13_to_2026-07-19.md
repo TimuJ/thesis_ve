@@ -50,8 +50,12 @@ collapse (−11 dB, PI recovers only +0.28 → not positional):
 | 1280² (grid 80, topk 1.20) | knee location | healthy |
 | 1408² (grid 88, topk 0.99) | knee location | transitional |
 
-Combined with the existing 48/72/96 points this yields a five-point
-quality-vs-sparsity dose curve.
+**Outcome (all 8 clips): the "collapse" was a scoring-geometry artefact**
+— the first pass compared the padded output frame against GT at mismatched
+magnification. Content-correct scoring: grid 96 = **24.78 dB**, the best
+rung; sparsity pinning Δ−0.03 (cleared); grids 80/88 flat; no blur
+penalty. **Strengthened verdict: resolution extrapolation is quality-free
+to ≥2× the trained extent.** All reports corrected transparently.
 
 ## 3. Thesis track
 
