@@ -6,7 +6,9 @@
 % DRAFT SKELETON (Jul 11). Canonical sources for the full write-up:
 %   docs/notes/2026-07-11-rope-extrapolation-findings.md   (capstone verdicts)
 %   docs/notes/2026-07-02-flashvsr-rope-site.md            (architecture + gates)
-%   reports/figures/rope_sensitivity_matrix.md             (time x space matrix)
+%   reports/rope_timespace_sensitivity_matrix.md            (standalone study incl. PI theory)
+%   reports/position_interpolation_presentation.md          (PI figures + argument)
+%   docs/notes/2026-07-16-rope-chapter-notes.md             (corrected canonical numbers)
 %   reports/figures/rope_probe_udm10_gt.md                 (vs-GT verdicts)
 %   reports/figures/dpp_causal_verdict.md                  (D'' causal check)
 %   results/rope_probe/*                                   (raw JSONs)
@@ -60,8 +62,11 @@ active, output drift is $0.0$ against a measured $0.0$ nondeterminism floor; (ii
 % (4) D'' causal check on the 2412–5000-frame real-SR videos: segmented vs single-pass
 %     vs magnitude-bounded (mod 336) arms;
 % (5) spatial axis (h/w) label sweeps on UDM10;
-% (6) real resolution-extrapolation ladder on YouHQ40: latent grids 45^2 -> 72^2 -> 90^2,
-%     stock vs spatial-PI.
+% (6) real resolution-extrapolation ladder on YouHQ40: latent grids 48^2 -> 72^2 -> 96^2
+%     (= 1x/1.5x/2x the trained extent; padding quantises grids to multiples of 8),
+%     stock vs spatial-PI;
+% (7) collapse-decomposition arms (Jul 16): content-correct scoring, pinned topk,
+%     blur-isolation, intermediate grids 80/88 — see corrected Results below.
 % Emphasise the method point: self-consistency scoring alone is insufficient (see
 % Results) — real GT references are required.
 
@@ -101,11 +106,29 @@ active, output drift is $0.0$ against a measured $0.0$ nondeterminism floor; (ii
 % every axis; space is ~2.5x more sensitive than time at extreme geometry distortion.
 
 \subsection{Real Resolution Extrapolation}
-% TODO(Ch6 pass): YouHQ40 ladder — real 1.5x grid growth costs only -0.15 dB stock;
-% spatial-PI there *hurts* (-0.56 dB): do not apply PI at <=1.5x spatial extension.
-% The 1440^2 rung collapses (-11 dB) for non-positional reasons (candidates: adaptive
-% topk sparsity thinning with resolution, upsampled input, window remainders);
-% follow-up: pin topk_ratio.
+% TODO(Ch6 pass): YouHQ40 ladder, grids 48/72/80/88/96 (1x..2x trained extent):
+% quality is FLAT across the whole ladder (24.55–24.78 dB) — real resolution
+% extrapolation is quality-free to at least 2x the trained spatial extent with stock
+% positions. Spatial-PI at 1.5x *hurts* (-0.56 dB; factor 0.67 is past the free zone):
+% let spatial positions extrapolate, do not compress them.
+% METHODS NOTE (write honestly): an early scoring pass reported an -11 dB "collapse"
+% at the top rung; decomposition arms (pinned sparsity delta -0.03, blur arm flat,
+% intermediate grids flat) traced it to a scoring-geometry artefact — the padded
+% output frame was resized against GT at mismatched magnification. Second instance in
+% this work where a scoring-path subtlety flipped a conclusion (cf. self-consistency
+% vs quality); both caught because raw frames + re-scorable JSONs were retained.
+
+\subsection{Why Position Interpolation Works: Interpolation vs.\ Extrapolation}
+% TODO(Ch6 pass): port from reports/rope_timespace_sensitivity_matrix.md §5 and the
+% PI presentation. Core argument: attention consumes relative phase (p-q)·theta;
+% training covers ~20 discrete distances per frequency; PI places new inputs BETWEEN
+% trained points (smooth learned function -> well-behaved), extrapolation places them
+% BEYOND (unconstrained). Killer figure: rotation-change magnitude depends only on
+% |s-1|·d (perfectly symmetric in compression/dilation) yet measured quality is
+% asymmetric -> WHERE phases land matters, not how far they moved. Boundary of
+% zero-shot PI: s=0.5 puts neighbour distances below the minimum trained distance
+% (1.0) — the self-vs-neighbour transition. Figures: reports/figures/pi/fig1–fig4
+% (regenerate as PDF/PGF for LaTeX; script in chapter-notes doc).
 
 \section{Implications}
 \label{sec:rope:implications}
@@ -125,6 +148,5 @@ active, output drift is $0.0$ against a measured $0.0$ nondeterminism floor; (ii
 
 % TODO(Ch6 pass): all vs-GT evidence is temporally within-window (29–31-frame GT
 % clips); deep-length (>81-frame) quality-vs-position curves lack GT (long-HR source
-% acquisition pending). Single model (FlashVSR 1.3B distilled); 1440^2 confounds
-% undecomposed; spatial trained-extent taken from the distillation resolution
-% (48 latents).
+% acquisition pending). Single model (FlashVSR 1.3B distilled); spatial trained-extent
+% taken from the distillation resolution (48 latents).
