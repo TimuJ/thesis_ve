@@ -73,15 +73,19 @@ def prepare(path, n_frames, device="cuda"):
     return vid.to(device), vid.shape[2], (TH, TW)
 
 
-def run_once(pipe, LQ, F, th, tw):
-    """One stock-parameter inference; returns fp32 CPU tensor (1,C,F,H,W)."""
+def run_once(pipe, LQ, F, th, tw, topk_ratio=None):
+    """One stock-parameter inference; returns fp32 CPU tensor (1,C,F,H,W).
+
+    topk_ratio=None uses the stock resolution-adaptive formula; pass a float
+    to pin the attention-sparsity budget (collapse-decomposition arms)."""
     torch.cuda.empty_cache()
     out = pipe(
         prompt="", negative_prompt="", cfg_scale=1.0, num_inference_steps=1,
         seed=0, LQ_video=LQ, num_frames=F, height=th, width=tw,
         is_full_block=False, if_buffer=True,
-        topk_ratio=2.0 * 768 * 1280 / (th * tw), kv_ratio=3.0,
-        local_range=11, color_fix=True,
+        topk_ratio=(topk_ratio if topk_ratio is not None
+                    else 2.0 * 768 * 1280 / (th * tw)),
+        kv_ratio=3.0, local_range=11, color_fix=True,
     )
     return out.detach().to(torch.float32).cpu()
 

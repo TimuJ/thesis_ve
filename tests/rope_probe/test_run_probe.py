@@ -25,3 +25,10 @@ def test_continuous_grid_keeps_integer_baseline_and_suffixes_ids():
     rest = grid[1:]
     assert all(o.continuous for o in rest)
     assert {cond_id(o) for o in rest} == {"shift0_stretch1.0c", "shift0_stretch0.5c"}
+
+
+def test_parse_rung_tokens():
+    from scripts.rope_probe.run_resolution_ladder import parse_rung
+    assert parse_rung("270") == (270, 270)
+    assert parse_rung("270u") == (270, 202)   # crop 202, upscale x4/3
+    assert parse_rung("360") == (360, 360)

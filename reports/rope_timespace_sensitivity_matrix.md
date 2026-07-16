@@ -58,19 +58,26 @@ genuinely out-of-window condition.
 
 | output | latent grid | input | stock vs GT | spatial-PI | PI − stock |
 |---|---|---|---:|---:|---:|
-| 720² | 45×45 (in-regime) | crop | 24.70 dB | ≡ stock | — |
-| 1152² | 72×72 (1.5× H-extent) | native | 24.55 | 24.00 | **−0.56** |
-| 1440² | 90×90 (1.9×) | upsampled | **13.69** | 13.96 | +0.28 |
+| 720² | 48×48 (= trained extent) | crop | 24.70 dB | ≡ stock | — |
+| 1152² | 72×72 (1.5×) | native | 24.55 | 24.00 | **−0.56** |
+| 1536² | 96×96 (2.0×) | upsampled ×1.33 | **13.69** | 13.96 | +0.28 |
+
+*(Grids from the run records; earlier drafts mislabelled them 45/72/90 —
+the input padding to multiples of 32 quantises the grid to multiples of 8.)*
 
 - **1.5× real grid growth costs only −0.15 dB** with stock positions.
 - **Spatial PI at 1.5× hurts** (−0.56 dB vs simply extrapolating) —
   compressing to the trained extent (factor 0.67) sits in the
   compression-cost zone of §3.1.
-- The **1440² collapse (−11 dB) is not positional** (PI recovers only
+- The **1536² collapse (−11 dB) is not positional** (PI recovers only
   +0.28): prime suspect is FlashVSR's own resolution-adaptive attention
-  sparsity (`topk_ratio` thins 3.8→0.95 across the rungs); upsampled-input
-  blur and window-partition remainders are secondary candidates. Follow-up
-  defined: rerun 1440² with the sparsity ratio pinned.
+  sparsity (`topk_ratio` thins 3.8 → 1.5 → 0.83 across the rungs — below
+  the nominal budget at the collapse rung); upsampled-input blur is the
+  secondary candidate. (Window-partition remainders are ruled out: the
+  collapse grid, 96, divides evenly into the 8-latent windows.) Follow-ups
+  running: the 1536² rung with the sparsity ratio pinned to the healthy
+  1152² value; a blur-isolation arm at fixed grid; and intermediate grids
+  80/88 to locate the collapse knee against the sparsity dose.
 
 ### 3.3 Long videos (2412–5000 frames): drift is not positional
 
@@ -103,7 +110,34 @@ identical output *change* (self-PSNR 31.8 both) but opposite GT verdicts
    operating point; the located failure modes are the streaming KV-cache
    (drift) and resolution-scaling mechanics (sparsity/windowing ≥1440²).
 
-## 5. Limitations
+## 5. Why Position Interpolation helps at all (and when it stops)
+
+A fair objection: fractional positions (e.g. 2.5) produce rotary phases the
+model never saw — aren't those out-of-distribution too? The resolution
+(Chen et al., 2023) is the distinction between **interpolation within the
+trained range and extrapolation beyond it**. Attention consumes *relative*
+phase, (p−q)·θ; training taught the model this function at ~20 discrete
+distances per frequency. PI places new inputs *between* those trained
+points, where a learned, smooth function is provably well-behaved;
+extrapolation places them *beyond* the trained interval, where the same
+learned function is unconstrained. "Novel value" is only harmful outside
+the convex hull of training inputs, not merely off the training grid.
+
+Our measurements are this theory's fingerprint — and its boundary:
+interpolated positions at s=0.75 cost **nothing** (+0.01 dB, every axis),
+while extrapolated distances cost up to −2.6 dB; but compression is not
+infinitely safe: at s=0.5, *neighbouring* tokens sit at relative distance
+0.5 — **below the minimum nonzero distance ever trained (1.0)** — i.e.
+interpolation between the "self" point and the "nearest-neighbour" point,
+where attention behaviour changes qualitatively. That is why the PI-free
+zone is narrow (~down to 0.75) in a zero-shot setting, and why the LLM
+literature pairs aggressive PI with fine-tuning. Implementation note: our
+continuous PI evaluates the RoPE formula directly at fractional positions
+(no table indexing, no row interpolation — averaging complex phases would
+be incorrect); evaluated at integer positions it reproduces the stock
+table bit-for-bit in effect (identity condition at the numerics floor).
+
+## 6. Limitations
 
 Single model (FlashVSR 1.3B distilled). All vs-GT clips are temporally
 within-window (29–31 frames); deep-length (>81-frame) quality curves lack
@@ -111,9 +145,3 @@ public GT — lab-provided long HR footage would close this (conversion
 tooling ready). The 1440² confound is not yet decomposed. Spatial trained
 extent inferred from the distillation resolution.
 
-## Provenance
-
-Tables and per-condition JSONs in the repo: `reports/figures/
-{rope_sensitivity_matrix, rope_probe_udm10_gt, dpp_causal_verdict}.md`,
-`results/rope_probe/`, instrument `scripts/rope_probe/`; full narrative:
-`docs/notes/2026-07-11-rope-extrapolation-findings.md`.

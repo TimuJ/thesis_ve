@@ -32,9 +32,9 @@ Readings:
 
 | rung | grid | input | stock GT-PSNR | spatial-PI | PI − stock |
 |---|---|---|---:|---:|---:|
-| 720² | 45×45 (in-regime) | crop | 24.70 | ≡ stock | — |
-| 1152² | 72×72 (1.5× H-extent) | native | 24.55 | 24.00 | **−0.56** |
-| 1440² | 90×90 (1.9×) | upsampled ×1.33 | **13.69** | 13.96 | +0.28 |
+| 720² | 48×48 (= trained extent) | crop | 24.70 | ≡ stock | — |
+| 1152² | 72×72 (1.5×) | native | 24.55 | 24.00 | **−0.56** |
+| 1536² | 96×96 (2.0×) | upsampled ×1.33 | **13.69** | 13.96 | +0.28 |
 
 Readings (calibrated):
 
@@ -51,10 +51,9 @@ Readings (calibrated):
    factor. Confounds to decompose before interpreting: (a) upsampled-input
    blur; (b) FlashVSR's *adaptive* sparsity — the stock
    `topk_ratio = 2·(768·1280)/(th·tw)` formula thins attention as resolution
-   grows (3.8 → 1.5 → 0.95 across the rungs), so the 1440² run attends far
-   more sparsely; (c) possible window-partition remainder effects (90 not
-   divisible by the 8-latent window). Follow-up: rerun 1440² with topk_ratio
-   pinned to the 1152² value.
+   grows (3.8 → 1.5 → 0.83 across the rungs), so the 1536² run attends far
+   more sparsely; (Window remainders ruled out: grid 96 divides evenly by 8.)
+   Follow-up: rerun 1536² with topk_ratio pinned to the 1152² value.
 
 ## 3. Combined verdict for the group
 

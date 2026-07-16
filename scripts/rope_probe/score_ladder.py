@@ -43,10 +43,10 @@ def main():
             continue
         preds = _load_frames(fdir)
         refs = _load_frames(ref_dir)[: len(preds)]
-        # crop rungs: prediction >= ref (pad margin) -> center-crop path;
-        # upsampled rung (pred smaller ref field or larger scale): resize
-        resize = preds[0].shape[0] > refs[0].shape[0] * 1.2
         payload = json.load(open(jpath))
+        mode = payload.get("condition", {}).get("score_mode")
+        resize = (mode == "resize") if mode else (
+            preds[0].shape[0] > refs[0].shape[0] * 1.2)
         payload["vs_gt"] = score_pair_lists(preds, refs, metrics, device,
                                             resize_pred=resize)
         with open(jpath, "w") as f:
