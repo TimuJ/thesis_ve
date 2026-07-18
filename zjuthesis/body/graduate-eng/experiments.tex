@@ -197,6 +197,54 @@ D$''$ (CLIP trajectory) & \textbf{0.893} & 0.884 & 0.862 \\
 % produce this ranking"; also the VBench subject/background-consistency
 % comparison (server task) lands here as the closest-benchmark head-to-head.
 
+\section{Comparison with the Closest Existing Benchmark}
+\label{sec:exp:vbench}
+
+The nearest published instruments to LR-VCC's goal are VBench's
+\cite{huang_vbench_2024} subject-consistency and background-consistency
+dimensions --- DINO-feature cosine similarity between adjacent frames and
+against the first frame, aggregated per video. Table~\ref{tab:exp:vbench}
+evaluates them on the real-SR test set alongside the degraded low-quality
+input itself.
+
+\begin{table}[h]
+\centering
+\caption{VBench consistency dimensions on the real-SR test set (five-video
+means), including the degraded LQ input as a row. Higher is better according
+to the benchmark.}
+\label{tab:exp:vbench}
+\begin{tabular}{lccc}
+\hline
+\textbf{Dimension} & \textbf{LQ input} & \textbf{MGLD-VSR} & \textbf{UAV} \\
+\hline
+subject\_consistency & 0.8936 & 0.8927 & \textbf{0.9031} \\
+background\_consistency & \textbf{0.9333} & 0.9235 & 0.9317 \\
+\hline
+\end{tabular}
+\end{table}
+
+Two readings disqualify these dimensions as long-video SR consistency
+measures, and both follow from the smoother-output bias characterised in
+Chapter~\ref{ch:problem}. First, \textbf{background consistency ranks the
+degraded input above both of its super-resolutions} (and subject consistency
+places it above MGLD): a blurry, detail-poor video produces more stable DINO
+features than any faithful restoration of it, so the benchmark scores the
+degradation as an improvement. A consistency measure that prefers the input
+to its restoration cannot evaluate restoration. Second, \textbf{both
+dimensions order UAV above MGLD-VSR} --- the inverse of human judgement and
+of LR-VCC's ranking --- because feature-space stability mechanically rewards
+the smoother method. LR-VCC's design premises (multi-scale measurement
+against real motion, anchored drift rather than pairwise stability,
+reliability gating) are precisely the deltas that separate it from this
+closest neighbour.
+
+% TODO(server, queued): severity-response head-to-head — run VBench
+% background_consistency on the background_drift artefact family (25 clips).
+% Prediction: it REWARDS the corruption (progressive replacement by a static
+% background stabilises DINO features) — the convergence pathology of
+% Section 4.2 exhibited by the closest published benchmark. Add FlashVSR
+% consistency rows if time allows.
+
 \section{Ablations and Sensitivity}
 \label{sec:exp:ablations}
 
