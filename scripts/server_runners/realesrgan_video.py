@@ -153,8 +153,9 @@ def main():
         log[v] = process_video(model, in_path, out_path, args.device,
                                args.max_frames)
         print(f"[realesrgan] {v} done: {log[v]}", flush=True)
+    tag = "-".join(v.split(".")[0][:4] for v in videos)
     with open(os.path.join(os.path.expanduser(args.output_dir),
-                           "_run_log.json"), "w") as f:
+                           f"_run_log_{tag}.json"), "w") as f:
         json.dump(log, f, indent=2)
 
 

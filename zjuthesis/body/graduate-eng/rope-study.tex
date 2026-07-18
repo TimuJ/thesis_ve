@@ -18,10 +18,10 @@
 \label{sec:rope:motivation}
 
 The real-model evaluation of Chapter~\ref{ch:experiments} left a pointed question open:
-FlashVSR, the best-ranked method under LR-VCC, exhibits the worst long-range semantic
-drift (sub-metric D$''$) of the three methods --- and FlashVSR is precisely the method
-whose streaming design lets its temporal RoPE index grow without bound as the video
-lengthens. Its stock frequency table caps a single pass at 4{,}089 frames
+FlashVSR --- within $0.012$ of the top composite score and the outright winner on
+identity preservation --- exhibits the worst long-range semantic drift (sub-metric
+D$''$) of the three methods --- and FlashVSR is precisely the method whose streaming
+design lets its temporal RoPE index grow without bound as the video lengthens. Its stock frequency table caps a single pass at 4{,}089 frames
 ($\approx 2.3$ minutes), and its trained temporal window covers only $\sim$81 frames.
 Position-encoding extrapolation is therefore the natural suspect for long-video
 degradation, and the same suspicion extends to the spatial axes at high resolution.

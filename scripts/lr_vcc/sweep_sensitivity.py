@@ -122,8 +122,8 @@ def artefact_units():
     return units
 
 
-def compose_unit(unit, cfg, drop=None):
-    """{clip_id: lr_vcc} for every clip_iqa JSON in the unit."""
+def compose_unit(unit, cfg, drop=None, full=False):
+    """{clip_id: (lr_vcc, low_conf)} — or {clip_id: full result} if full."""
     name, u = unit
     out = {}
     for fa in sorted(Path(u["clip_iqa_dir"]).glob("*_clip_iqa.json")):
@@ -149,7 +149,7 @@ def compose_unit(unit, cfg, drop=None):
             temporal_weight=cfg["temporal_weight"],
             drop=drop,
         )
-        out[base] = (r["lr_vcc"], r["low_confidence"])
+        out[base] = r if full else (r["lr_vcc"], r["low_confidence"])
     return out
 
 
@@ -393,10 +393,110 @@ def run_provenance(out_md):
     print("wrote", out_md)
 
 
+SUB_LABELS = [("A (CLIP-IQA appearance)", "appearance"),
+              ("T (tOF temporal)", "temporal"),
+              ("I (slow-fast identity)", "identity"),
+              ("D (histogram stability)", "color_stability"),
+              ("E (colour slope)", "color_slope"),
+              ("D' (anchor histogram)", "color_hist_anchor"),
+              ("D'' (CLIP trajectory)", "clip_trajectory")]
+
+
+def run_canonical():
+    """Option-(b) canonical numbers for the thesis: real models composed with
+    fps-corrected identity + closeup gate on ALL methods; artefact matrix
+    recomposed uniformly with current code (dispersion gate off)."""
+    # --- real models ---
+    outd = LRV / "composite_v5_realmodels_gated"
+    per_method = {}
+    for unit in realmodel_units(identity_variant="corrected", closeup=True):
+        name = unit[0]
+        d = outd / name
+        d.mkdir(parents=True, exist_ok=True)
+        res = compose_unit(unit, PROD, full=True)
+        for base, r in res.items():
+            json.dump(r, open(d / (base + ".json"), "w"), indent=2)
+        high = [r for r in res.values() if not r["low_confidence"]]
+        json.dump({"method": name, "n_videos": len(res),
+                   "n_high_confidence": len(high),
+                   "mean_lr_vcc": mean(r["lr_vcc"] for r in high),
+                   "protocol": "v5 gated-canonical: fps-corrected identity, "
+                               "closeup gate all methods, dispersion gate off",
+                   }, open(d / "_aggregate.json", "w"), indent=2)
+        per_method[name] = res
+    videos = sorted(per_method["mgld"])
+    lines = ["# Real-model LR-VCC v5 — canonical (uniform closeup gating)",
+             "",
+             "Protocol: production v5 flags; identity inputs fps-corrected "
+             "(overrides files); closeup gate applied to ALL methods "
+             "(FlashVSR uses mgld's map — insensitive to the choice); "
+             "dispersion gate off (parked). Recomposed from cached JSONs. "
+             "Supersedes the mixed-gating July-2 table for thesis use; see "
+             "lr_vcc_provenance_check.md for the audit.",
+             "",
+             "## Composite (LR-VCC v5, gated)",
+             "",
+             "| video | MGLD | UAV | FlashVSR | winner |",
+             "|-------|-----:|----:|---------:|:------:|"]
+    for v in videos:
+        row = {m: per_method[m][v]["lr_vcc"] for m in per_method}
+        w = max(row, key=row.get)
+        lines.append(f"| {v} | {row['mgld']:.3f} | {row['uav']:.3f} "
+                     f"| {row['flashvsr']:.3f} | {w} |")
+    means = {m: mean(r["lr_vcc"] for r in per_method[m].values()
+                     if not r["low_confidence"]) for m in per_method}
+    lines.append(f"| **mean** | {means['mgld']:.3f} | {means['uav']:.3f} "
+                 f"| {means['flashvsr']:.3f} "
+                 f"| {max(means, key=means.get)} |")
+    lines += ["", "## Sub-metric means", "",
+              "| sub-metric | MGLD | UAV | FlashVSR |",
+              "|------------|-----:|----:|---------:|"]
+    for label, key in SUB_LABELS:
+        row = {m: mean(r["sub_metrics"][key]["score"]
+                       for r in per_method[m].values())
+               for m in per_method}
+        lines.append(f"| {label} | {row['mgld']:.3f} | {row['uav']:.3f} "
+                     f"| {row['flashvsr']:.3f} |")
+    out_md = REPO / "reports" / "figures" / "realmodel_v5_gated.md"
+    Path(out_md).write_text("\n".join(lines) + "\n")
+    print("wrote", out_md)
+    print("gated means:", {m: round(x, 4) for m, x in means.items()})
+
+    # --- artefacts, uniform recompose ---
+    outd2 = LRV / "composite_artefacts_v5_uniform"
+    for unit in artefact_units():
+        art = unit[0]
+        d = outd2 / art
+        d.mkdir(parents=True, exist_ok=True)
+        for base, r in compose_unit(unit, PROD, full=True).items():
+            json.dump(r, open(d / (base + ".json"), "w"), indent=2)
+    from .build_verdict_matrix import collect_deltas
+    deltas = collect_deltas(outd2)
+    arts = sorted({a for a, _ in deltas})
+    bases = sorted({b for _, b in deltas})
+    lines = ["| artefact | " + " | ".join(bases) + " |",
+             "|---|" + "---|" * len(bases)]
+    for art in arts:
+        cells = []
+        for b in bases:
+            dd = deltas.get((art, b))
+            cells.append("—" if dd is None else f"{dd:+.3f} {verdict(dd)}")
+        lines.append(f"| {art} | " + " | ".join(cells) + " |")
+    n_clean = sum(1 for dd in deltas.values()
+                  if verdict(dd) in ("PASS", "WEAK"))
+    lines.append(f"\nclean (PASS+WEAK): {n_clean}/{len(deltas)} conditions")
+    lines.append("\nUniform current-code recompose (dispersion gate off "
+                 "everywhere) — canonical for the thesis; supersedes the "
+                 "mixed-era verdict_matrix_v5.md.")
+    out_md2 = REPO / "reports" / "figures" / "verdict_matrix_v5_uniform.md"
+    Path(out_md2).write_text("\n".join(lines) + "\n")
+    print("wrote", out_md2, f"(clean {n_clean}/{len(deltas)})")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--mode", choices=["gate", "provenance", "sweep", "loo",
-                                       "all"],
+                                       "canonical", "all"],
                     default="all")
     ap.add_argument("--out_dir", default=str(LRV / "sweeps"))
     args = ap.parse_args()
@@ -409,6 +509,8 @@ def main():
     if args.mode in ("provenance", "all"):
         run_provenance(REPO / "reports" / "figures" /
                        "lr_vcc_provenance_check.md")
+    if args.mode == "canonical":
+        run_canonical()
     if args.mode in ("sweep", "all"):
         run_sweep(out / "sensitivity_sweep.json",
                   REPO / "reports" / "figures" / "sensitivity_sweep_v5.md")

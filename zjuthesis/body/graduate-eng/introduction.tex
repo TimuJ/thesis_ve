@@ -87,10 +87,11 @@ The metric research is organised around three falsifiable hypotheses:
         in the close-up regime-shift case study.
 \end{description}
 
-A second research question arose from applying LR-VCC to real models. The best-ranked
-method under LR-VCC, the streaming one-step diffusion model FlashVSR, simultaneously
-exhibited the worst long-range semantic-drift sub-metric score of the three methods
-evaluated --- precisely the failure signature the metric was designed to expose. Because
+A second research question arose from applying LR-VCC to real models. The streaming
+one-step diffusion model FlashVSR ranks within $0.012$ of the top method overall and
+wins the identity sub-metric outright --- yet simultaneously exhibits the worst
+long-range semantic-drift sub-metric score of the three methods evaluated, precisely
+the failure signature the metric was designed to expose. Because
 FlashVSR's streaming design lets absolute rotary position embedding (RoPE) indices grow
 without bound as video length increases, position encoding is the natural suspect:
 
@@ -128,10 +129,13 @@ This thesis makes five contributions:
           flicker, identity, background, and flip/control families) at five severities
           over five long base videos, with generators verified for zero-severity identity
           and seed reproducibility.
-    \item \textbf{A three-method real-model evaluation} (Chapter~\ref{ch:experiments}):
+    \item \textbf{A multi-method real-model evaluation} (Chapter~\ref{ch:experiments}):
           LR-VCC applied to MGLD-VSR, Upscale-A-Video, and FlashVSR on long real-SR
-          outputs, yielding a ranking (FlashVSR $>$ MGLD-VSR $>$ UAV) that per-frame
-          metrics do not produce, and exposing FlashVSR's long-range semantic drift.
+          outputs, yielding a ranking (MGLD-VSR $0.622 >$ FlashVSR $0.610 >$ UAV
+          $0.589$) that per-frame metrics do not produce, and exposing FlashVSR's
+          distinctive signature: best identity preservation, worst long-range semantic
+          drift. Hyperparameter-sensitivity and leave-one-out studies quantify which
+          parts of the ranking are robust and which sub-metric drives each verdict.
     \item \textbf{A causal analysis of RoPE extrapolation in streaming diffusion VSR}
           (Chapter~\ref{ch:rope}): absolute-position offsets are quality-free even
           50$\times$ beyond the trained window on every axis; relative-distance geometry
