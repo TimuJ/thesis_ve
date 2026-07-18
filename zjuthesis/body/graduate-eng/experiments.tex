@@ -34,17 +34,84 @@ predicted-caught cells.
 \section{Synthetic Artefact Validation}
 \label{sec:exp:synthetic}
 
-% TODO(Ch5 pass): port the full 12x5 verdict matrix from verdict_matrix_v5.md as a
-% table (PASS/WEAK/FLAT/INV cells per base video); add verdict thresholds
-% (PASS <= -0.05 delta, WEAK <= -0.02, FLAT < +0.02, INVERTED >= +0.02).
-% Matrix is complete (12/12 rows, 28/60 clean); flip_invert control confirmed 5/5 PASS.
+For each (artefact family, base video) condition, the composite's
+severity-response is summarised by the score change from the lowest to the
+highest severity, $\Delta = \text{LR-VCC}(\text{sev }0.40) -
+\text{LR-VCC}(\text{sev }0.02)$, classified as \textsc{pass} ($\Delta \leq
+-0.05$), \textsc{weak} ($\Delta \leq -0.02$), \textsc{flat} ($|\Delta| <
+0.02$), or \textsc{inv}erted ($\Delta \geq +0.02$). Table~\ref{tab:exp:verdict}
+presents the full matrix, recomposed uniformly under the canonical
+configuration.
 
-% TODO(Ch5 pass): headline paragraph — background_drift inversions 4/5 (v4) -> 1/5 (v5)
-% with halved magnitude on the remaining BrRLK cartoon base; colour drift 5/5 clean.
+\begin{table}[h]
+\centering
+\caption{LR-VCC v5 severity-response verdict matrix: twelve artefact families
+$\times$ five base videos. Each cell shows the verdict and $\Delta$ (severity
+0.02 $\to$ 0.40). Clean (\textsc{pass}+\textsc{weak}): 29/60 conditions.
+Source: \texttt{verdict\_matrix\_v5\_uniform.md}.}
+\label{tab:exp:verdict}
+\small
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{lccccc}
+\hline
+\textbf{Artefact} & \textbf{7WHI} & \textbf{BrRLK} & \textbf{KZ} & \textbf{hhsz} & \textbf{mJog} \\
+\hline
+colour\_drift & PASS ($-.11$) & PASS ($-.06$) & PASS ($-.15$) & WEAK ($-.05$) & PASS ($-.11$) \\
+chunk\_boundary & PASS ($-.07$) & INV ($+.11$) & PASS ($-.10$) & PASS ($-.11$) & WEAK ($-.04$) \\
+background\_drift & FLAT ($+.00$) & INV ($+.05$) & PASS ($-.07$) & PASS ($-.20$) & FLAT ($+.00$) \\
+flicker & FLAT ($-.00$) & INV ($+.06$) & WEAK ($-.03$) & FLAT ($+.01$) & FLAT ($+.00$) \\
+identity\_degradation & INV ($+.03$) & FLAT ($+.00$) & WEAK ($-.03$) & PASS ($-.05$) & FLAT ($+.01$) \\
+identity\_drift & FLAT ($-.00$) & FLAT ($-.00$) & WEAK ($-.03$) & PASS ($-.07$) & FLAT ($-.00$) \\
+\hline
+flip\_invert & PASS ($-.15$) & PASS ($-.22$) & PASS ($-.35$) & PASS ($-.39$) & PASS ($-.07$) \\
+flip\_channel\_shuffle & WEAK ($-.03$) & PASS ($-.08$) & PASS ($-.31$) & FLAT ($+.00$) & PASS ($-.06$) \\
+flip\_transpose & FLAT ($+.01$) & FLAT ($+.00$) & PASS ($-.05$) & PASS ($-.06$) & WEAK ($-.03$) \\
+flip\_periodic & FLAT ($-.01$) & FLAT ($-.02$) & FLAT ($+.00$) & FLAT ($-.02$) & FLAT ($-.01$) \\
+flip\_elastic & FLAT ($-.00$) & FLAT ($+.00$) & FLAT ($-.00$) & FLAT ($+.01$) & WEAK ($-.02$) \\
+flip\_horizontal & FLAT ($+.02$) & FLAT ($+.01$) & FLAT ($-.00$) & FLAT ($-.01$) & FLAT ($-.02$) \\
+\hline
+\end{tabular}
+\end{table}
 
-% TODO(Ch5 pass): flip-family attribution paragraph — flip_horizontal predicted blind on
-% all bases -> confirmed (CLIP horizontal-flip robustness; histogram invariance by
-% construction); flip_channel_shuffle predicted caught -> confirmed.
+Four observations structure the reading of Table~\ref{tab:exp:verdict}.
+
+\textbf{The colour-drift blind spot is closed.} Colour drift --- invisible to
+every one of the eight baseline metrics in
+Section~\ref{sec:problem:battery} --- is clean on all five bases (four
+\textsc{pass}, one \textsc{weak}), the direct payoff of sub-metrics E and
+D$'$.
+
+\textbf{The v5 anchored redesign fixed the convergence pathology.} Under v4,
+progressive background replacement \emph{inverted} on four of five bases ---
+the composite rewarded the corruption. Under v5 a single inversion remains
+(BrRLK, with halved magnitude), with the two strongest responses
+(\textsc{pass} at $-0.20$ and $-0.07$) on the bases where the anchor is most
+stable. The two \textsc{flat} cells share a mechanism: on content with
+substantial natural scene change, the anchor distance saturates early and the
+injected drift adds little.
+
+\textbf{The flip control battery behaved as designed.} The flip family was
+constructed with \emph{predicted} outcomes: flip\_invert (histogram-destroying
+positive control) should be caught everywhere --- it is, \textsc{pass} on all
+five bases; flip\_horizontal (histogram-preserving, CLIP-robust) should be
+invisible --- it is, \textsc{flat} everywhere, a designed null result that
+confirms the sub-metrics measure what they claim rather than any change
+whatsoever; flip\_channel\_shuffle (marginal-preserving but
+appearance-breaking) should be caught partially --- four of five clean.
+Periodic and elastic transforms, predicted mostly invisible, are mostly
+\textsc{flat}. The battery turns the verdict matrix from a scorecard into a
+falsifiable instrument check.
+
+\textbf{The residual failures are localised and mechanistic.} The BrRLK column
+carries three of the five inversions: cartoon content with frequent hard scene
+cuts, where natural anchor-distance variation dominates any injected signal
+--- a documented content-domain limitation
+(Section~\ref{sec:exp:limitations}). The identity rows are the weakest
+families (the slow-fast pooling pathology of
+Section~\ref{sec:problem:battery}, Finding~4, plus the parked dispersion
+gate); flicker remains largely composite-invisible because the sub-metrics
+that respond to it (T at $k{=}1$) rarely dominate the softmax --- both are
+characterised, named failure modes rather than unexplained noise.
 
 \section{Real-Model Evaluation}
 \label{sec:exp:real}
@@ -75,51 +142,158 @@ mJog & \textbf{0.654} & 0.617 & 0.649 \\
 \end{tabular}
 \end{table}
 
-% TODO(Ch5 pass): prose — MGLD leads FlashVSR narrowly (0.622 vs 0.610; 7WHI and
-% mJog are near-ties at 0.001/0.005); UAV third throughout. Note the protocol history
-% honestly: the interim July-2 table composed without the closeup gate on MGLD/UAV
-% ranked FlashVSR first (0.610 vs 0.589) — the FlashVSR-vs-MGLD comparison depends on
-% the identity sub-metric's weight, which is itself part of the sensitivity story
-% (see ablations). MGLD>UAV is unconditional (50/52 sweep configs, 5/5 videos).
+MGLD-VSR leads on every video and on the mean, though the margins against
+FlashVSR are small (7WHI and mJog are near-ties at $0.001$ and $0.005$); UAV
+is third throughout. The comparison is protocol-honest: an interim table
+composed \emph{without} the close-up gate on two of the three methods ranked
+FlashVSR first ($0.610$ vs $0.589$) --- the FlashVSR-vs-MGLD comparison
+depends on how much weight the identity sub-metric receives, which is itself
+quantified in the ablations below. The MGLD $>$ UAV ordering, by contrast, is
+unconditional: it holds on every video under the canonical protocol and in 50
+of 52 sensitivity configurations (Section~\ref{sec:exp:ablations}).
 
-% TODO(Ch5 pass): sub-metric breakdown table (from realmodel_v5_gated.md): FlashVSR
-% best Identity (0.598 vs MGLD 0.557 vs UAV 0.459) while worst D'' CLIP-trajectory
-% (0.862 vs MGLD 0.893) — the long-range drift signature that motivates Chapter 6.
-% UAV best T (0.942) — smoother-output bias visible even inside the composite's
-% temporal cell.
+Table~\ref{tab:exp:submetrics} decomposes the composite. FlashVSR's
+closeness to the top is driven by identity preservation ($0.598$ vs MGLD's
+$0.557$ and UAV's $0.459$) --- and FlashVSR is simultaneously \emph{worst} on
+D$''$, the sub-metric most sensitive to long-range semantic drift from the
+anchor ($0.862$ vs $0.893$/$0.884$). A streaming model whose temporal
+positions grow without bound, carrying one mid-video seam on four of five
+videos, is exactly the design one would suspect of long-range drift; whether
+position encoding is actually the cause is the question
+Chapter~\ref{ch:rope} answers. UAV's single win is the temporal cell
+($0.942$) --- the smoother-output bias of warping-error measures, visible
+even inside the composite, and the reason T's reliability rarely dominates
+the softmax.
 
-% TODO(Ch5 pass): comparison against per-frame metrics (PSNR/SSIM/LPIPS on DOVE sets;
-% DOVER; MUSIQ) — "complementary, not redundant" framing; per-frame metrics do not
-% produce this ranking.
+\begin{table}[h]
+\centering
+\caption{Per-sub-metric means over the five videos (canonical protocol).
+Bold marks the best method per sub-metric. Source:
+\texttt{realmodel\_v5\_gated.md}.}
+\label{tab:exp:submetrics}
+\begin{tabular}{lccc}
+\hline
+\textbf{Sub-metric} & \textbf{MGLD-VSR} & \textbf{UAV} & \textbf{FlashVSR} \\
+\hline
+A (CLIP-IQA appearance) & \textbf{0.447} & 0.336 & 0.400 \\
+T (tOF temporal) & 0.934 & \textbf{0.942} & 0.939 \\
+I (slow-fast identity) & 0.557 & 0.459 & \textbf{0.598} \\
+D (histogram stability) & 0.505 & \textbf{0.506} & 0.501 \\
+E (colour slope) & 0.339 & \textbf{0.341} & 0.336 \\
+D$'$ (anchor histogram) & \textbf{0.708} & 0.687 & 0.705 \\
+D$''$ (CLIP trajectory) & \textbf{0.893} & 0.884 & 0.862 \\
+\hline
+\end{tabular}
+\end{table}
+
+% TODO(when server rows land): add RealESRGAN frame-wise anchor row and (if
+% standup succeeds) SeedVR2 row to both tables; expected: anchor scores well
+% on per-frame quality but poorly on temporal/drift cells — the
+% "no-temporal-modelling" contrast. SeedVR2 gives the window-local-position
+% D'' contrast against FlashVSR's absolute streaming positions.
+% TODO(Ch5 pass): comparison against per-frame metrics — check
+% results/mgld_synthetic_metrics.md + uav_mgld_evaluation_metrics.md for
+% PSNR/SSIM on the 5-video set before claiming "per-frame metrics do not
+% produce this ranking"; also the VBench subject/background-consistency
+% comparison (server task) lands here as the closest-benchmark head-to-head.
 
 \section{Ablations and Sensitivity}
 \label{sec:exp:ablations}
 
-% DONE (Jul 18) — port from these sources:
-%   reports/figures/sensitivity_sweep_v5.md — 52-config grid over
-%     (dprime_beta, dprime2_beta, tau) + alpha/slope_beta one-at-a-time.
-%     Headlines: MGLD>UAV per-video holds 50/52; 3-method mean order stable in
-%     45/52 with ALL exceptions at tau=0.5 (soft softmax) — sharp reliability
-%     weighting is a load-bearing design choice, discussed honestly.
-%   reports/figures/loo_ablation_v5.md — leave-one-out over 7 sub-metrics.
-%     Headlines: dropping identity flips the FlashVSR-vs-MGLD comparison (its
-%     rank rests on identity); dropping temporal changes nothing (T does not
-%     discriminate on these surfaces); each colour-family drop changes ~10
-%     matrix cells in its designed direction (e.g. D' drop -> background_drift
-%     cells invert) — the direct H1 evidence.
-%   reports/figures/lr_vcc_provenance_check.md — composition-era audit
-%     (dispersion-gate eras, closeup-gating variants, fps-corrected identity);
-%     motivates the canonical uniform protocol used throughout this chapter.
-% Verdict-matrix numbers in this chapter use verdict_matrix_v5_uniform.md
-% (29/60 clean), the uniform current-code recompose.
+Because every sub-metric caches its per-video measurements, the composite can
+be recomposed under alternative hyperparameters or with sub-metrics removed in
+seconds, without re-scanning any video. Two studies exploit this.
+
+\subsection{Hyperparameter Sensitivity}
+\label{sec:exp:sensitivity}
+
+A 52-configuration grid varies the anchored-drift decays $\beta_{D'} \in
+\{0.25, 0.5, 1, 2\}$ and $\beta_{D''} \in \{1, 2, 3, 5\}$ crossed with the
+softmax temperature $\tau \in \{0.1, 0.2, 0.5\}$, plus one-at-a-time
+variations of $\alpha$ and $\beta_E$. Across the grid: the per-video
+MGLD $>$ UAV ordering --- the metric's core perceptual-agreement claim ---
+holds on every video in 50 of 52 configurations; the three-method mean order
+is unchanged in 45 of 52; and the verdict matrix's clean count stays within
+$[26, 32]$ of the production 29/60, with the cells that change class
+concentrated in already-borderline \textsc{weak}/\textsc{flat} boundaries.
+All seven order changes occur at $\tau = 0.5$: softening the softmax dilutes
+the reliability weighting that the design depends on
+(Section~\ref{sec:method:reliability}), collapsing the composition toward an
+ungated mean. Sharp reliability weighting is thus a load-bearing choice, not
+a free parameter --- and within any reasonable neighbourhood of the
+production temperature, the headline results are stable.
+
+\subsection{Leave-One-Out Sub-Metric Ablation}
+\label{sec:exp:loo}
+
+Dropping each of the seven sub-metrics in turn and recomposing tests
+hypothesis H1 directly: does the composite catch what no constituent catches,
+and does each sub-metric earn its place?
+
+\begin{itemize}
+    \item \textbf{Each colour-family sub-metric fails in its designed
+          direction when removed.} Dropping D$'$ flips background-drift cells
+          to \textsc{inverted} (the convergence pathology returns); dropping
+          E degrades the colour-drift row; dropping D$''$ or D moves
+          $10$--$13$ cells each, concentrated in the drift and boundary
+          families they respectively target. No single sub-metric's removal
+          leaves the matrix intact --- the composition is load-bearing, not
+          redundant (H1 supported).
+    \item \textbf{Dropping identity flips the FlashVSR-vs-MGLD comparison.}
+          FlashVSR's proximity to the top of the real-model table rests on
+          the identity sub-metric; with I removed, MGLD leads by a wide
+          margin. Combined with the closeup-gating analysis above, the honest
+          summary is that MGLD-vs-FlashVSR is an identity-weighted
+          comparison, while MGLD $>$ UAV holds under every ablation.
+    \item \textbf{Dropping temporal changes nothing} --- neither the
+          real-model ordering nor a single verdict cell. On these surfaces T
+          rarely dominates the softmax, consistent with its near-tied scores
+          across well-behaved methods
+          (Table~\ref{tab:exp:threemethod}); its value is diagnostic (the
+          $k$-sweep analysis of Chapter~\ref{ch:problem}) rather than
+          discriminative within the composite.
+\end{itemize}
+
+\subsection{Composition Provenance Audit}
+\label{sec:exp:provenance}
+
+Recomposing from cached measurements also enabled a full reproduction audit
+of every published composite. The audit reproduced the production outputs
+bit-exactly and surfaced three composition-era inconsistencies in interim
+tables (a reliability-formula change mid-campaign, a close-up gate applied to
+only one method, and a stale identity input for one method), all corrected in
+the canonical protocol used throughout this chapter. The uniform recompose
+shifts the clean count from 28/60 to 29/60 and changes six cell classes ---
+none affecting any headline claim. The episode reinforces a reproducibility
+practice this thesis adopts throughout: cache raw measurements, re-derive
+scores, and gate every published table on bit-exact reproduction.
 
 \section{Limitations}
 \label{sec:exp:limitations}
 
-% TODO(Ch5 pass): documented limitations with mechanisms:
-% - BrRLK cartoon base: natural scene-cut variation dominates anchor-distance signal;
-%   D'/D'' fail there (adaptive anchor as future work).
-% - flip_horizontal invisible to all 7 sub-metrics (CLIP flip robustness; histograms
-%   preserved by construction) — documented metric limit.
-% - slow-fast pooling pathology (single-face identity collapse); dispersion gate parked
-%   pending calibration data (>= 8 single-face bases).
+Every residual failure in this chapter has a named mechanism, recorded here
+both as honest scope statements and as future-work targets.
+
+\textbf{Cartoon / scene-cut-heavy content.} The BrRLK base carries most of
+the matrix's inversions. Its frequent hard scene cuts mean the opening-window
+anchor of D$'$ and D$''$ does not represent the video: natural
+anchor-distance variation dominates injected corruption. An adaptive,
+scene-cut-aware anchor is the natural fix
+(Chapter~\ref{ch:conclusion}).
+
+\textbf{Pure horizontal mirroring is invisible.} flip\_horizontal preserves
+colour marginals by construction and CLIP embeddings are documented to be
+robust to horizontal flips, so all seven sub-metrics are blind to it --- a
+designed-in null result documented as a metric limit. A mirror-sensitive
+sub-metric (pixel-correlation or pose-based) would close it.
+
+\textbf{Identity families remain the weakest rows.} The slow-fast pooling
+pathology (Section~\ref{sec:problem:battery}, Finding~4) is only partially
+mitigated: the dispersion gate designed for it could not be calibrated
+defensibly on two single-face bases (separation $0.003$) and ships parked.
+Progressive identity drift in particular responds on only two of five bases.
+
+\textbf{Scale of the benchmark.} Five base videos and three (soon five) SR
+methods support the mechanism-level claims made here, but community-benchmark
+claims would need an order of magnitude more content and human-judgement
+calibration --- deliberately deferred (Chapter~\ref{ch:conclusion}).
