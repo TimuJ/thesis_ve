@@ -1,7 +1,52 @@
 \chapter*{Abstract}
 \thispagestyle{previous}
 
-Some abstract text in English.
+Modern diffusion-based video super-resolution (VSR) can process footage that
+runs into minutes, but the field's evaluation instruments cannot: full-reference
+metrics require ground truth that deployment videos lack, adjacent-frame
+temporal metrics reward spatial smoothness rather than consistency, and
+clip-averaged perceptual benchmarks discard the cross-clip drift signal that
+long videos accumulate. This thesis characterises these failures empirically and
+builds the missing instrument.
 
-\textbf{Keywords:} keyword1; keyword2; keyword3
+First, a systematic failure-mode study on a numerically validated evaluation
+environment establishes four structural breakdowns: a content-dependent regime
+shift in which two state-of-the-art learned metrics invert method rankings
+against human judgement on close-up content; a temporal-scale crossover in which
+the conventional tOF metric's winner reverses between adjacent-frame and
+long-range lags; a categorical blind spot in which slow colour drift is
+invisible to eight widely-used metrics; and a smoother-output bias so strong
+that a state-of-the-art consistency benchmark ranks a degraded input above its
+own super-resolutions.
+
+Second, the thesis proposes LR-VCC (Long-Range Video Consistency Composite), a
+no-reference metric composing seven sub-metrics --- appearance, multi-scale
+temporal warping, identity, pairwise and anchored colour stability, semantic
+trajectory drift, and colour-trajectory slope --- through a
+reliability-weighted softmax-log-mean, in which every sub-metric is gated by an
+interpretable regime indicator. Validated on a twelve-family synthetic artefact
+benchmark with designed positive and null controls, LR-VCC closes the
+colour-drift blind spot, fixes a newly characterised convergence-rewarding
+pathology of stability metrics via anchored measurement, and preserves correct
+method rankings where existing metrics flip. Applied to real methods (MGLD-VSR,
+Upscale-A-Video, FlashVSR), it yields a stable ranking with an actionable
+signature: the streaming method wins identity preservation while exhibiting the
+worst long-range semantic drift. Hyperparameter-sensitivity and leave-one-out
+studies quantify the robustness of each claim.
+
+Third, a causal study localises that drift. A bit-exact position-injection
+instrument decomposes rotary position embedding (RoPE) extrapolation into
+absolute magnitude and relative geometry, per axis, scored against real ground
+truth. Absolute position offsets are quality-free even fifty times beyond the
+trained window; relative-distance dilation degrades quality gracefully in time
+but steeply in space; real resolution extrapolation is free to twice the
+trained extent; and the model's long-video drift is demonstrably not
+positional --- exonerating position encoding and redirecting improvement effort
+to streaming generation mechanics. The study also demonstrates that
+self-consistency does not predict quality, and provides an empirical, per-axis
+account of when position interpolation helps and when it hurts.
+
+\textbf{Keywords:} video super-resolution; long video; temporal consistency;
+no-reference video quality assessment; rotary position embedding; diffusion
+models
 \markabstract

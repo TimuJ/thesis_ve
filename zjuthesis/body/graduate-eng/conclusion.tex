@@ -5,39 +5,82 @@
 \section{Significance}
 \label{sec:conclusion:significance}
 
-% TODO(Ch7 pass):
-% - Long-video SR evaluation now has a no-reference, multi-time-scale, reliability-gated
-%   instrument whose every design decision traces to a characterised failure mode.
-% - The failure-mode characterisations stand alone: smoother-output bias across three
-%   independent learned representations; tOF k=1 as a spatial-smoothness measurement;
-%   convergence-rewarding pathology of stability metrics.
-% - The RoPE study contributes both verdicts (position magnitude free; geometry bites;
-%   drift not positional) and method (bit-exact position injection; self-consistency
-%   insufficiency) to the emerging study of position encodings in video DiTs.
+Long-video super-resolution evaluation now has a no-reference, multi-time-scale,
+reliability-gated instrument whose every design decision traces to a
+characterised failure mode --- and whose failure modes are, in turn,
+characterised rather than hidden. That closed loop, more than any single number,
+is the methodological contribution: metrics for generative video are themselves
+measurement instruments that require calibration, control batteries, and
+reproduction gates, and this thesis demonstrates what that discipline looks like
+in practice.
+
+The failure-mode characterisations stand on their own. The smoother-output bias
+--- three independent learned representations all rewarding the blurrier method,
+to the point that a state-of-the-art consistency benchmark ranks a degraded
+input above its restorations --- reframes a whole family of published temporal
+metrics as partial spatial-smoothness measurements. The temporal-scale crossover
+shows that the literature convention of reporting tOF at $k{=}1$ inverts method
+rankings against long-range behaviour. The convergence-rewarding pathology shows
+that stability-style consistency scores have a structural failure class on
+corruptions that make videos \emph{more} static. Each of these is actionable by
+any group building or using video quality metrics, independent of LR-VCC.
+
+The RoPE study contributes both verdicts and method. The verdicts --- absolute
+position magnitude is free at any tested scale on every axis, relative-distance
+geometry is what bites (gracefully in time, steeply in space), long-video drift
+and high-resolution degradation are demonstrably non-positional, and real
+resolution extrapolation is free to twice the trained extent --- redirect
+engineering effort for streaming diffusion VSR away from position encoding. The
+method --- a bit-exact position-injection instrument, ground-truth-referenced
+scoring after demonstrating that self-consistency misleads, and per-axis
+decomposition of extrapolation into magnitude and geometry --- transfers to any
+RoPE-based video model.
 
 \section{Limitations}
 \label{sec:conclusion:limitations}
 
-% TODO(Ch7 pass): condensed cross-thesis limitations — 5-base benchmark scale; cartoon
-% content; flip_horizontal blindness; single-model RoPE study; within-window GT.
+The benchmark's scale supports mechanism-level claims, not community-leaderboard
+claims: five base videos, twelve artefact families, and a handful of SR methods.
+Content with frequent hard scene cuts defeats the fixed opening anchor of the
+drift sub-metrics; pure horizontal mirroring is invisible to all seven
+sub-metrics; the identity families remain the weakest matrix rows, with the
+dispersion gate parked for want of calibration data. The
+FlashVSR-versus-MGLD-VSR comparison depends on the identity sub-metric's weight
+and softmax sharpness, and is reported as such --- only MGLD $>$ UAV is
+unconditional. On the RoPE side, all ground-truth evidence is temporally
+within-window; deep-length quality-versus-position curves await long HR footage;
+and the study covers one model.
 
 \section{Future Work}
 \label{sec:conclusion:future}
 
-% TODO(Ch7 pass): from the documented directions —
-% 1. Adaptive/content-aware anchoring for scene-cut-heavy content (cartoon fix).
-% 2. Mirror-sensitive sub-metric (pixel-correlation or pose-based) for flip_horizontal.
-% 3. Slow-fast pooling recalibration on a larger base set (dispersion gate).
-% 4. Long-context SSM temporal backbones for VSR (po_longcontext_2025) with LR-VCC as
-%    consistency loss signal.
-% 5. Benchmark broadening (50+ videos, human-judgement calibration, public release).
-% 6. RoPE round 2: SeedVR2 contrast (window-local vs absolute streaming positions);
-%    deep-length GT acquisition; 1440^2 decomposition (pin topk_ratio).
+Six directions follow directly from the documented limitations.
+\emph{Adaptive anchoring}: re-establish the D$'$/D$''$ anchor at detected scene
+cuts, converting the cartoon-content failure into a content-aware design.
+\emph{Mirror sensitivity}: a pixel-correlation or pose-based sub-metric to close
+the flip\_horizontal blind spot. \emph{Identity-gate calibration}: an
+8-plus-base single-face corpus to unpark the dispersion gate and repair the
+slow-fast pooling pathology. \emph{Benchmark scale-up}: more bases, more
+methods, and human-judgement calibration toward a public leaderboard.
+\emph{SSM temporal backbones}: the long-context state-space direction
+\cite{po_longcontext_2025} that motivated this work initially --- with LR-VCC
+now available as a consistency-aware evaluation signal, or even a training
+signal. \emph{RoPE round two}: the SeedVR2 window-local-position contrast, the
+extended-window runs with the handed-over instrument, and deep-length
+ground-truth curves once lab HR footage lands.
 
 \section{Conclusion}
 \label{sec:conclusion:conclusion}
 
-% TODO(Ch7 pass): closing summary — the evaluation gap is real and structural; LR-VCC
-% closes the characterised portion of it with an extensible, decomposable design; the
-% metric's own findings redirected the improvement agenda for streaming diffusion VSR
-% away from position encoding and toward generation mechanics.
+This thesis asked whether long-form video super-resolution can be evaluated
+honestly with the instruments the field currently uses, showed empirically that
+it cannot, and built the missing instrument. LR-VCC composes seven
+reliability-gated sub-metrics into a no-reference consistency score that
+catches the long-range failure modes existing metrics are blind to, survives
+the content regimes that flip existing metrics against human judgement, and
+exposes its own remaining blind spots by design. Applied to real methods, it
+produced a ranking per-frame metrics cannot see and a diagnosis --- streaming
+long-range drift --- that its own follow-up study then localised causally:
+position encoding exonerated, generation mechanics implicated. The evaluation
+gap for long videos is real, structural, and closable; this thesis closes the
+characterised part of it and maps the road for the rest.
