@@ -35,7 +35,7 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
                        clip_trajectory_path=None,
                        dprime2_beta=None,
                        temperature=0.2, low_confidence_floor=0.2,
-                       temporal_weight="log"):
+                       temporal_weight="log", drop=None):
     clip_iqa = json.load(open(clip_iqa_path))
     tof_payload = json.load(open(tof_path))
     id_full = json.load(open(identity_results_path))
@@ -136,6 +136,15 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
         rels.append(dpp_score["reliability"])
         sub_metrics["clip_trajectory"] = dpp_score
 
+    # Leave-one-out support: drop named sub-metrics before composition.
+    if drop:
+        for name in drop:
+            sub_metrics.pop(name, None)
+        if not sub_metrics:
+            raise ValueError("all sub-metrics dropped")
+        scores = [v["score"] for v in sub_metrics.values()]
+        rels = [v["reliability"] for v in sub_metrics.values()]
+
     comp = compose_score(scores, rels,
                          temperature=temperature,
                          low_confidence_floor=low_confidence_floor)
@@ -147,6 +156,7 @@ def evaluate_one_video(video_id, clip_iqa_path, tof_path, identity_results_path,
         "low_confidence": comp["low_confidence"],
         "sub_metrics": sub_metrics,
         "diagnostics": {
+            "dropped_sub_metrics": sorted(drop) if drop else [],
             "closeup_bbox_p50": closeup_bbox_p50,
             "color_hist_used": color_hist_path is not None,
             "color_slope_used": color_slope_path is not None,
@@ -195,6 +205,11 @@ def main():
     ap.add_argument("--output_path", required=True)
     ap.add_argument("--temperature", type=float, default=0.2)
     ap.add_argument("--low_confidence_floor", type=float, default=0.2)
+    ap.add_argument("--drop", nargs="*", default=None,
+                    choices=["appearance", "temporal", "identity",
+                             "color_stability", "color_slope",
+                             "color_hist_anchor", "clip_trajectory"],
+                    help="leave-one-out: sub-metrics to exclude from composition")
     args = ap.parse_args()
 
     closeup_map = {}
@@ -246,6 +261,7 @@ def main():
                 temperature=args.temperature,
                 low_confidence_floor=args.low_confidence_floor,
                 temporal_weight=args.temporal_weight,
+                drop=args.drop,
             )
         except Exception as e:
             print("[error] " + base + ": " + str(e))
