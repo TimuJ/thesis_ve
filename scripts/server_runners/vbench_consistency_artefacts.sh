@@ -6,7 +6,7 @@
 # Usage: bash vbench_consistency_artefacts.sh [family ...]
 #   default families: background_drift color_drift
 # Waits for the RealESRGAN battery done-markers before touching the GPUs.
-set -u
+set -u -o pipefail
 H=$HOME
 FAMILIES=${@:-"background_drift color_drift"}
 VB=$H/repos/VBench
