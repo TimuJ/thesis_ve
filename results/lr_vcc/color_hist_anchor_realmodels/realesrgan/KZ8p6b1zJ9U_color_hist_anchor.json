@@ -1,0 +1,21 @@
+{
+  "video_path": "/home/timur/results/realesrgan_synthetic_mp4/KZ8p6b1zJ9U.mp4",
+  "score": 4.561328563291191e-06,
+  "reliability": 1.0,
+  "details": {
+    "anchor_len_frames": 60,
+    "anchor_count_sampled": 60,
+    "post_anchor_count": 4940,
+    "stride": 1,
+    "n_bins": 32,
+    "alpha": 5.0,
+    "mean_l1_dist_to_anchor": 2.459579325054734,
+    "max_l1_dist_to_anchor": 4.926176673276371,
+    "trajectory_mean_per_quarter": [
+      2.6813730028133307,
+      1.8114051399231088,
+      2.8964077624151634,
+      2.4491313950673335
+    ]
+  }
+}

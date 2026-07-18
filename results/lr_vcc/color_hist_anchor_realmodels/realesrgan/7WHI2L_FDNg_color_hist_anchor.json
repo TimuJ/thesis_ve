@@ -1,0 +1,21 @@
+{
+  "video_path": "/home/timur/results/realesrgan_synthetic_mp4/7WHI2L_FDNg.mp4",
+  "score": 2.088405440854005e-05,
+  "reliability": 1.0,
+  "details": {
+    "anchor_len_frames": 60,
+    "anchor_count_sampled": 60,
+    "post_anchor_count": 4940,
+    "stride": 1,
+    "n_bins": 32,
+    "alpha": 5.0,
+    "mean_l1_dist_to_anchor": 2.155304927429093,
+    "max_l1_dist_to_anchor": 3.3659184643359668,
+    "trajectory_mean_per_quarter": [
+      1.9249342738544495,
+      2.069229245434594,
+      2.4844869305651107,
+      2.1425692598622192
+    ]
+  }
+}

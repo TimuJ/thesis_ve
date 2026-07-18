@@ -1,0 +1,129 @@
+{
+  "video": "KZ8p6b1zJ9U_sev0p05",
+  "lr_vcc": 0.7242058407864088,
+  "weights_used": [
+    0.044661498076542856,
+    0.06779735672783528,
+    0.1979866819917707,
+    0.2278937240248435,
+    0.005873291129320625,
+    0.2278937240248435,
+    0.2278937240248435
+  ],
+  "low_confidence": false,
+  "sub_metrics": {
+    "appearance": {
+      "score": 0.4788823789059223,
+      "reliability": 0.6740464784591287,
+      "details": {
+        "mean_quality": 0.5252095923274755,
+        "std_quality": 0.09265442684310657,
+        "drift_penalty": 0.32595352154087137,
+        "saturation_penalty": 0.010478415778994938
+      }
+    },
+    "temporal": {
+      "score": 0.9141181379047569,
+      "reliability": 0.7575287620567638,
+      "details": {
+        "used_ks": [
+          "1",
+          "5",
+          "10",
+          "30",
+          "60"
+        ],
+        "weighted_mean_tof": 0.08588186209524303,
+        "mean_mask_coverage_over_all_k": 0.34566005817656786
+      }
+    },
+    "identity": {
+      "score": 0.6584821698290971,
+      "reliability": 0.9718640736354089,
+      "details": {
+        "face_rate": 0.5542168674698795,
+        "face_penalty": 0.028135926364591033,
+        "closeup_bbox_p50": null,
+        "closeup_penalty": 0.0,
+        "clip_score_dispersion": 0.3370302038927293,
+        "dispersion_penalty": 0.0
+      }
+    },
+    "color_stability": {
+      "score": 0.4280501949635673,
+      "reliability": 1.0,
+      "details": {
+        "mean_hist_dist": 2.153590894224877,
+        "alpha": 0.394,
+        "override": true,
+        "n_frames": 5000
+      }
+    },
+    "color_slope": {
+      "score": 0.7953823665837828,
+      "reliability": 0.26830714970528824,
+      "details": {
+        "slope_L": 0.00022970916625102275,
+        "slope_a": -0.00010106333409930434,
+        "slope_b": 0.0011446615784885463,
+        "r2_L": 0.0002059777521042916,
+        "r2_a": 0.0007763486762989436,
+        "r2_b": 0.04967715827706454,
+        "max_abs_slope": 0.0011446615784885463,
+        "max_r2": 0.04967715827706454,
+        "beta": 200.0,
+        "n_frames": 5000,
+        "beta_override": true
+      }
+    },
+    "color_hist_anchor": {
+      "score": 0.9753323760611272,
+      "reliability": 1.0,
+      "details": {
+        "anchor_len_frames": 60,
+        "anchor_count_sampled": 30,
+        "post_anchor_count": 2470,
+        "stride": 2,
+        "n_bins": 32,
+        "alpha": 5.0,
+        "mean_l1_dist_to_anchor": 2.500386437411313,
+        "max_l1_dist_to_anchor": 4.965140799462146,
+        "trajectory_mean_per_quarter": [
+          2.6190975780360404,
+          1.9082725124140922,
+          2.905799281717384,
+          2.569143642930527
+        ],
+        "beta_override": 0.5
+      }
+    },
+    "clip_trajectory": {
+      "score": 0.9974640068840018,
+      "reliability": 1.0,
+      "details": {
+        "anchor_len_frames": 60,
+        "anchor_count_sampled": 7,
+        "post_anchor_count_sampled": 618,
+        "stride": 8,
+        "beta": 5.0,
+        "mean_cos_dist_to_anchor": 0.3541830321924586,
+        "max_cos_dist_to_anchor": 0.5714791417121887,
+        "trajectory_mean_per_quarter": [
+          0.3520711952640164,
+          0.31485084756728143,
+          0.3988544124287444,
+          0.35122479053286765
+        ],
+        "beta_override": 3.0
+      }
+    }
+  },
+  "diagnostics": {
+    "dropped_sub_metrics": [],
+    "closeup_bbox_p50": null,
+    "color_hist_used": true,
+    "color_slope_used": true,
+    "color_hist_anchor_used": true,
+    "clip_trajectory_used": true
+  }
+}

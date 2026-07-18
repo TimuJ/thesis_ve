@@ -1,0 +1,22 @@
+{
+  "video_path": "/home/timur/results/realesrgan_synthetic_mp4/7WHI2L_FDNg.mp4",
+  "n_frames": 5000,
+  "k_values": [
+    60,
+    120
+  ],
+  "mean_hist_dist": 1.4393296525224673,
+  "score": 0.0007490923662590136,
+  "reliability": 0.8915204593290543,
+  "details": {
+    "mean_l1_dist": 1.4393296525224673,
+    "per_k_mean_dist": {
+      "60": 1.1419216329231345,
+      "120": 1.7367376721218
+    },
+    "mean_entropy": 2.0531833982081378,
+    "alpha": 5.0,
+    "n_frames": 5000,
+    "n_pairs_total": 400
+  }
+}

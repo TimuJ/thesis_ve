@@ -1,0 +1,20 @@
+{
+  "video_path": "/home/timur/results/realesrgan_synthetic_mp4/BrRLKMbBTYQ.mp4",
+  "score": 0.23736760884346203,
+  "reliability": 1.0,
+  "details": {
+    "anchor_len_frames": 60,
+    "anchor_count_sampled": 7,
+    "post_anchor_count_sampled": 618,
+    "stride": 8,
+    "beta": 5.0,
+    "mean_cos_dist_to_anchor": 0.28762904947629636,
+    "max_cos_dist_to_anchor": 0.45065420866012573,
+    "trajectory_mean_per_quarter": [
+      0.2643244535692276,
+      0.3005046425327178,
+      0.29644946270174793,
+      0.2893053598992236
+    ]
+  }
+}

@@ -1,0 +1,215 @@
+{
+  "production_real": {
+    "means": {
+      "mgld": 0.5889,
+      "uav": 0.5523,
+      "flashvsr": 0.6101
+    },
+    "order": "flashvsr>mgld>uav"
+  },
+  "rows": [
+    {
+      "dropped": "(none)",
+      "real": {
+        "means": {
+          "mgld": 0.5889,
+          "uav": 0.5523,
+          "flashvsr": 0.6101
+        },
+        "order": "flashvsr>mgld>uav",
+        "mgld_beats_uav_pervideo": "5/5"
+      },
+      "matrix": {
+        "clean": "29/60",
+        "n_changed_vs_prod": 0,
+        "changed": {}
+      }
+    },
+    {
+      "dropped": "appearance",
+      "real": {
+        "means": {
+          "mgld": 0.5968,
+          "uav": 0.5707,
+          "flashvsr": 0.6272
+        },
+        "order": "flashvsr>mgld>uav",
+        "mgld_beats_uav_pervideo": "4/5"
+      },
+      "matrix": {
+        "clean": "29/60",
+        "n_changed_vs_prod": 5,
+        "changed": {
+          "color_drift/hhszUXL1Cu8": "WEAK->PASS",
+          "flip_periodic/hhszUXL1Cu8": "FLAT->WEAK",
+          "flip_transpose/7WHI2L_FDNg": "FLAT->INVERTED",
+          "flip_transpose/KZ8p6b1zJ9U": "PASS->WEAK",
+          "identity_degradation/KZ8p6b1zJ9U": "WEAK->FLAT"
+        }
+      }
+    },
+    {
+      "dropped": "temporal",
+      "real": {
+        "means": {
+          "mgld": 0.5584,
+          "uav": 0.5308,
+          "flashvsr": 0.5763
+        },
+        "order": "flashvsr>mgld>uav",
+        "mgld_beats_uav_pervideo": "5/5"
+      },
+      "matrix": {
+        "clean": "29/60",
+        "n_changed_vs_prod": 0,
+        "changed": {}
+      }
+    },
+    {
+      "dropped": "identity",
+      "real": {
+        "means": {
+          "mgld": 0.6275,
+          "uav": 0.5957,
+          "flashvsr": 0.6143
+        },
+        "order": "mgld>flashvsr>uav",
+        "mgld_beats_uav_pervideo": "5/5"
+      },
+      "matrix": {
+        "clean": "26/60",
+        "n_changed_vs_prod": 13,
+        "changed": {
+          "background_drift/KZ8p6b1zJ9U": "PASS->WEAK",
+          "background_drift/mJog8DlRk_4": "FLAT->WEAK",
+          "flicker/KZ8p6b1zJ9U": "WEAK->FLAT",
+          "flip_elastic/mJog8DlRk_4": "WEAK->FLAT",
+          "flip_horizontal/7WHI2L_FDNg": "FLAT->INVERTED",
+          "flip_periodic/hhszUXL1Cu8": "FLAT->WEAK",
+          "flip_transpose/KZ8p6b1zJ9U": "PASS->WEAK",
+          "flip_transpose/hhszUXL1Cu8": "PASS->WEAK",
+          "flip_transpose/mJog8DlRk_4": "WEAK->PASS",
+          "identity_degradation/7WHI2L_FDNg": "INVERTED->FLAT",
+          "identity_degradation/hhszUXL1Cu8": "PASS->FLAT",
+          "identity_drift/KZ8p6b1zJ9U": "WEAK->FLAT",
+          "identity_drift/hhszUXL1Cu8": "PASS->FLAT"
+        }
+      }
+    },
+    {
+      "dropped": "color_stability",
+      "real": {
+        "means": {
+          "mgld": 0.6249,
+          "uav": 0.5785,
+          "flashvsr": 0.6744
+        },
+        "order": "flashvsr>mgld>uav",
+        "mgld_beats_uav_pervideo": "5/5"
+      },
+      "matrix": {
+        "clean": "31/60",
+        "n_changed_vs_prod": 10,
+        "changed": {
+          "background_drift/mJog8DlRk_4": "FLAT->WEAK",
+          "chunk_boundary/7WHI2L_FDNg": "PASS->FLAT",
+          "chunk_boundary/KZ8p6b1zJ9U": "PASS->WEAK",
+          "chunk_boundary/mJog8DlRk_4": "WEAK->FLAT",
+          "color_drift/hhszUXL1Cu8": "WEAK->PASS",
+          "flicker/KZ8p6b1zJ9U": "WEAK->PASS",
+          "flip_horizontal/7WHI2L_FDNg": "FLAT->INVERTED",
+          "flip_horizontal/mJog8DlRk_4": "FLAT->WEAK",
+          "flip_periodic/BrRLKMbBTYQ": "FLAT->WEAK",
+          "flip_periodic/hhszUXL1Cu8": "FLAT->WEAK"
+        }
+      }
+    },
+    {
+      "dropped": "color_slope",
+      "real": {
+        "means": {
+          "mgld": 0.6385,
+          "uav": 0.6001,
+          "flashvsr": 0.6626
+        },
+        "order": "flashvsr>mgld>uav",
+        "mgld_beats_uav_pervideo": "5/5"
+      },
+      "matrix": {
+        "clean": "26/60",
+        "n_changed_vs_prod": 10,
+        "changed": {
+          "background_drift/BrRLKMbBTYQ": "INVERTED->WEAK",
+          "background_drift/hhszUXL1Cu8": "PASS->FLAT",
+          "color_drift/BrRLKMbBTYQ": "PASS->FLAT",
+          "flicker/BrRLKMbBTYQ": "INVERTED->FLAT",
+          "flip_channel_shuffle/BrRLKMbBTYQ": "PASS->INVERTED",
+          "flip_channel_shuffle/hhszUXL1Cu8": "FLAT->WEAK",
+          "flip_channel_shuffle/mJog8DlRk_4": "PASS->WEAK",
+          "flip_invert/7WHI2L_FDNg": "PASS->WEAK",
+          "flip_invert/BrRLKMbBTYQ": "PASS->INVERTED",
+          "flip_invert/mJog8DlRk_4": "PASS->FLAT"
+        }
+      }
+    },
+    {
+      "dropped": "color_hist_anchor",
+      "real": {
+        "means": {
+          "mgld": 0.5638,
+          "uav": 0.5218,
+          "flashvsr": 0.5817
+        },
+        "order": "flashvsr>mgld>uav",
+        "mgld_beats_uav_pervideo": "5/5"
+      },
+      "matrix": {
+        "clean": "30/60",
+        "n_changed_vs_prod": 10,
+        "changed": {
+          "background_drift/7WHI2L_FDNg": "FLAT->INVERTED",
+          "background_drift/mJog8DlRk_4": "FLAT->INVERTED",
+          "chunk_boundary/BrRLKMbBTYQ": "INVERTED->FLAT",
+          "chunk_boundary/mJog8DlRk_4": "WEAK->PASS",
+          "flip_channel_shuffle/7WHI2L_FDNg": "WEAK->FLAT",
+          "flip_channel_shuffle/hhszUXL1Cu8": "FLAT->INVERTED",
+          "flip_channel_shuffle/mJog8DlRk_4": "PASS->WEAK",
+          "flip_invert/mJog8DlRk_4": "PASS->WEAK",
+          "flip_periodic/BrRLKMbBTYQ": "FLAT->WEAK",
+          "flip_periodic/hhszUXL1Cu8": "FLAT->WEAK"
+        }
+      }
+    },
+    {
+      "dropped": "clip_trajectory",
+      "real": {
+        "means": {
+          "mgld": 0.5284,
+          "uav": 0.484,
+          "flashvsr": 0.5489
+        },
+        "order": "flashvsr>mgld>uav",
+        "mgld_beats_uav_pervideo": "5/5"
+      },
+      "matrix": {
+        "clean": "27/60",
+        "n_changed_vs_prod": 13,
+        "changed": {
+          "background_drift/KZ8p6b1zJ9U": "PASS->WEAK",
+          "chunk_boundary/mJog8DlRk_4": "WEAK->PASS",
+          "color_drift/BrRLKMbBTYQ": "PASS->WEAK",
+          "color_drift/hhszUXL1Cu8": "WEAK->PASS",
+          "flip_channel_shuffle/7WHI2L_FDNg": "WEAK->FLAT",
+          "flip_channel_shuffle/hhszUXL1Cu8": "FLAT->INVERTED",
+          "flip_channel_shuffle/mJog8DlRk_4": "PASS->WEAK",
+          "flip_invert/mJog8DlRk_4": "PASS->WEAK",
+          "flip_periodic/BrRLKMbBTYQ": "FLAT->WEAK",
+          "flip_transpose/KZ8p6b1zJ9U": "PASS->WEAK",
+          "flip_transpose/hhszUXL1Cu8": "PASS->WEAK",
+          "flip_transpose/mJog8DlRk_4": "WEAK->FLAT",
+          "identity_drift/KZ8p6b1zJ9U": "WEAK->FLAT"
+        }
+      }
+    }
+  ]
+}

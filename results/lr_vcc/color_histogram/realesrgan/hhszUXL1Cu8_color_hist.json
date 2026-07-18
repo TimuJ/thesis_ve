@@ -1,0 +1,22 @@
+{
+  "video_path": "/home/timur/results/realesrgan_synthetic_mp4/hhszUXL1Cu8.mp4",
+  "n_frames": 2412,
+  "k_values": [
+    60,
+    120
+  ],
+  "mean_hist_dist": 1.0840799864472699,
+  "score": 0.004425376443176547,
+  "reliability": 0.8366898419032014,
+  "details": {
+    "mean_l1_dist": 1.0840799864472699,
+    "per_k_mean_dist": {
+      "60": 0.8760582702290987,
+      "120": 1.292101702665441
+    },
+    "mean_entropy": 1.8169011196969655,
+    "alpha": 5.0,
+    "n_frames": 2412,
+    "n_pairs_total": 400
+  }
+}

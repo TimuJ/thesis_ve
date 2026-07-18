@@ -1,0 +1,7 @@
+{
+  "method": "realesrgan",
+  "n_videos": 5,
+  "n_high_confidence": 5,
+  "mean_lr_vcc": 0.604461882619856,
+  "protocol": "v5 gated-canonical: fps-corrected identity, closeup gate all methods, dispersion gate off"
+}
