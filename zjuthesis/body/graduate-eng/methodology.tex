@@ -15,13 +15,12 @@ assumptions are violated on the video under evaluation.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.95\textwidth]{fig4_lr_vcc_architecture.png}
-\caption{LR-VCC architecture: a super-resolved video as input; sub-metrics computed in
-parallel, each emitting a (score, reliability) pair in $[0,1]\times[0,1]$; a
-reliability-weighted softmax-log-mean composition produces the final LR-VCC score in
-$[0,1]$.}
-% TODO(Ch4 pass): regenerate architecture figure for seven sub-metrics (v5); the current
-% figure shows the five-sub-metric proposal version.
+\includegraphics[width=0.95\textwidth]{fig4_lr_vcc_architecture_v5.png}
+\caption{LR-VCC v5 architecture: a super-resolved video as input; seven sub-metrics
+computed in parallel, each emitting a (score, reliability) pair in
+$[0,1]\times[0,1]$; a reliability-weighted softmax-log-mean composition produces the
+final LR-VCC score in $[0,1]$. Dark arrows carry scores (the geometric-mean path);
+light arrows carry reliabilities (the softmax-weight path).}
 \label{fig:method:architecture}
 \end{figure}
 
@@ -30,10 +29,13 @@ parallel from a super-resolved video $V$:
 
 \begin{itemize}
     \item \textbf{Sub-metric A --- Appearance stability.} Per-frame CLIP-IQA
-          \cite{wang_clipiqa_2023} is computed over the video. The score is the mean
-          per-frame quality minus a small multiple of its standard deviation across
-          frames, rewarding outputs that are not only high-quality on average but
-          consistently so across minutes of footage.
+          \cite{wang_clipiqa_2023} is computed over the video. The score is
+          $\mathrm{mean}(q) - \lambda \cdot \mathrm{std}(q)$ with $\lambda = 0.5$,
+          rewarding outputs that are not only high-quality on average but
+          consistently so across minutes of footage. Reliability is gated on two
+          regimes in which the signal stops discriminating: a near-constant quality
+          trace ($\mathrm{std}(q) < 0.02$) and quality saturation
+          ($\mathrm{mean}(q) > 0.98$).
 
     \item \textbf{Sub-metric T --- Temporal stability.} Optical-flow warping error (tOF
           \cite{chu_tecogan_2020}) is computed at multiple temporal lags
@@ -42,42 +44,62 @@ parallel from a super-resolved video $V$:
           $k$; uniform weighting is adopted as the production setting because the
           empirical temporal-scale crossover (Section~\ref{sec:problem:tof}) shows that
           no single $k$ is sufficient. The score is one minus the (normalised) weighted
-          mean warping error. Reliability is gated by RAFT
-          forward--backward mask coverage at long lags.
+          mean warping error, where lags whose RAFT forward--backward mask coverage
+          falls below $0.10$ are excluded; reliability is the mean, over all lags, of
+          the smooth coverage gate --- a video whose long-lag flow is mostly
+          unreliable yields a low-confidence temporal signal rather than a spurious
+          score.
 
     \item \textbf{Sub-metric I --- Identity preservation.} The slow-fast Human\_Identity
           adapter (RetinaFace + ArcFace face embedding stability across $2$-second clips
           with both within-clip and cross-clip first-frame components) provides the
-          score, with reliability gated by the face-detection rate and by a close-up
-          content indicator (the trigger identified in Section~\ref{sec:problem:regime})
-          that downweights the sub-metric on videos in the regime where the underlying
-          anomaly classifiers exhibit content-dependent calibration shifts.
+          score. Reliability is a product of independent gates: a face-detection-rate
+          gate (below a $0.20$ clip rate there is no identity signal) and a close-up
+          gate on the median face/hand bounding-box fraction (threshold $0.05$ of
+          frame area --- the trigger identified in
+          Section~\ref{sec:problem:regime}), which downweights the sub-metric
+          precisely on the content where the underlying classifiers exhibit
+          calibration shifts. A third, dispersion-based gate (abstaining when
+          per-clip scores are erratic) is implemented but ships disabled: its
+          threshold could not be calibrated defensibly on two single-face base
+          videos (separation $0.003$), so it is parked pending a larger calibration
+          set.
 
     \item \textbf{Sub-metric D --- Colour stability (pairwise).} Per-frame Lab-channel
           histograms are compared at L1 distance over multi-scale frame pairs
-          $k \in \{60, 120\}$. The score is an exponential decay in the mean
-          pair-distance, with the decay constant calibrated empirically. Reliability is
-          gated by histogram entropy.
+          $k \in \{60, 120\}$. The score is $\exp(-\alpha \cdot
+          \overline{d}_{\mathrm{hist}})$ with $\alpha$ calibrated on chunk-boundary
+          empirics. Reliability is gated by sequence length (at least 240 frames are
+          required for the $k{=}120$ pairs to be meaningful). D is retained in v5
+          alongside its anchored replacements because pairwise stability still
+          carries complementary signal on boundary-type artefacts.
 
-    \item \textbf{Sub-metric D$'$ --- Anchored colour stability.} Lab-channel histograms
-          of each frame are compared against a fixed \emph{anchor} established at the
-          start of the video, rather than against other frames pairwise. Slow drift away
-          from the anchor accumulates in this distance even when consecutive-frame
-          distances remain small --- and, critically, a corruption that makes frames
-          \emph{converge} toward a static appearance still registers as anchor-distance
-          growth, closing the convergence-rewarding pathology of sub-metric D
-          (Section~\ref{sec:method:iterations}).
-          % TODO(Ch4 pass): exact anchor-window definition and dprime_beta from
-          % scripts/lr_vcc source.
+    \item \textbf{Sub-metric D$'$ --- Anchored colour stability.} Each frame is
+          summarised by a Lab-space descriptor (a 32-bin per-channel histogram
+          concatenated with normalised per-channel means, giving sub-bin sensitivity
+          to small shifts). The \emph{anchor} is the mean descriptor over the first
+          60 frames ($\approx 2$ seconds); every subsequent frame contributes its L1
+          distance to the anchor. The distance sequence is summarised by quarter
+          means $q_1, \dots, q_4$, and the score is an exponential decay in the
+          trajectory's net drift, $\exp(-\beta_{D'} \, |q_4 - q_1|)$. Measuring drift
+          \emph{away from a fixed anchor} rather than between frame pairs closes the
+          convergence-rewarding pathology of sub-metric D
+          (Section~\ref{sec:method:iterations}): a corruption that makes frames
+          converge toward a static appearance still walks away from the opening
+          anchor.
 
-    \item \textbf{Sub-metric D$''$ --- Semantic trajectory stability.} CLIP image
-          embeddings of per-frame patches form a semantic trajectory across the video;
-          the score is an exponential decay in the drift of this trajectory away from
-          its anchor. Because CLIP embeddings respond to semantic content rather than
-          colour statistics, D$''$ detects drift invisible to histogram measures ---
-          e.g.\ progressive background replacement with stable colour distribution.
-          % TODO(Ch4 pass): exact patch layout, anchor, and dprime2_beta from
-          % scripts/lr_vcc source.
+    \item \textbf{Sub-metric D$''$ --- Semantic trajectory stability.} The same
+          anchored-trajectory construction as D$'$, but in CLIP
+          \cite{radford_learning_2021} image-embedding space (ViT-B/32, one embedding
+          per 8th frame) with cosine distance in place of histogram L1: the anchor is
+          the mean embedding of the first 60 frames, and the score is
+          $\exp(-\beta_{D''} \, |q_4 - q_1|)$ over the quarter means of the
+          anchor-distance sequence. Because CLIP embeddings respond to scene
+          \emph{content} rather than colour statistics, D$''$ registers semantic
+          drift invisible to histogram measures --- progressive background
+          replacement with a stable colour distribution, or the slow content drift
+          of a streaming super-resolver --- and is robust to the camera motion that
+          perturbs D$'$.
 
     \item \textbf{Sub-metric E --- Colour trajectory slope.} Per-frame Lab-channel means
           are fit by linear regression as a function of frame index. The score is an
@@ -105,6 +127,33 @@ sub-metric scoring near zero pulls the composite down unless the other sub-metri
 overwhelming weight, which in turn requires the failing sub-metric's reliability to be
 near zero. A weighted arithmetic mean would not have this property: a single sub-metric
 failure could be diluted away by averaging.
+
+Table~\ref{tab:method:config} lists the canonical configuration. All decay constants
+were calibrated on characterised regimes (chunk-boundary empirics for $\alpha$;
+colour-drift severity response for $\beta_E$), not tuned to validation outcomes; the
+sensitivity of every headline result to these choices is quantified in
+Chapter~\ref{ch:experiments}.
+
+\begin{table}[h]
+\centering
+\caption{Canonical LR-VCC v5 configuration.}
+\label{tab:method:config}
+\begin{tabular}{lll}
+\hline
+\textbf{Parameter} & \textbf{Value} & \textbf{Role} \\
+\hline
+$\lambda$ & 0.5 & A: std-deviation weight \\
+temporal weighting & uniform over $k$ & T: no single scale suffices \\
+$\alpha$ & 0.394 & D: histogram-distance decay \\
+$\beta_E$ & 200 & E: slope decay \\
+$\beta_{D'}$ & 0.5 & D$'$: anchor-drift decay \\
+$\beta_{D''}$ & 3.0 & D$''$: semantic-drift decay \\
+$\tau$ & 0.2 & composition softmax temperature \\
+$\varepsilon$ & $10^{-6}$ & log-mean stabiliser \\
+low-confidence floor & 0.2 & all-reliabilities-below flag \\
+\hline
+\end{tabular}
+\end{table}
 
 \section{Design Iterations: Closing Characterised Failure Modes}
 \label{sec:method:iterations}
@@ -156,9 +205,12 @@ honestly and controls their influence per video through reliability scores deriv
 the regime indicators that predict their failure mechanisms.
 
 Each per-sub-metric reliability is computed from regime indicators using smooth sigmoid
-penalties (sharpness fixed at $10$, producing smooth transitions rather than sharp
-threshold cliffs). The thresholds were selected from the regime characterisations in
-Chapter~\ref{ch:problem}; they are not tuned to the validation set.
+penalties: an indicator value $v$ against a threshold $t$ incurs penalty
+$\sigma\!\big(s \cdot (v - t)\big)$ (or its mirror for below-threshold regimes), with
+sharpness $s = 10$ producing smooth transitions rather than hard cliffs, and
+reliabilities formed as products of $(1 - \text{penalty})$ factors. The thresholds
+were selected from the regime characterisations in Chapter~\ref{ch:problem}; they are
+not tuned to the validation set.
 
 A sharp softmax over reliabilities ensures that when one sub-metric is substantially more
 trustworthy than the others on a given video, that sub-metric clearly dominates the
