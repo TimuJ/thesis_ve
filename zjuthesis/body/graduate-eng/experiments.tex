@@ -200,12 +200,14 @@ D$''$ (CLIP trajectory) & \textbf{0.893} & 0.884 & 0.862 \\
 \section{Comparison with the Closest Existing Benchmark}
 \label{sec:exp:vbench}
 
-The nearest published instruments to LR-VCC's goal are VBench's
-\cite{huang_vbench_2024} subject-consistency and background-consistency
-dimensions --- DINO-feature cosine similarity between adjacent frames and
-against the first frame, aggregated per video. Table~\ref{tab:exp:vbench}
-evaluates them on the real-SR test set alongside the degraded low-quality
-input itself.
+The nearest published instruments to LR-VCC's goal --- the two
+state-of-the-art baselines for video consistency assessment --- are VBench's
+\cite{huang_vbench_2024} subject-consistency dimension (DINO-feature cosine
+similarity between adjacent frames and against the first frame) and
+background-consistency dimension (the same construction on CLIP features),
+aggregated per video via the long-video clip protocol.
+Table~\ref{tab:exp:vbench} evaluates both on the real-SR test set alongside
+the degraded low-quality input itself.
 
 \begin{table}[h]
 \centering
@@ -238,12 +240,15 @@ against real motion, anchored drift rather than pairwise stability,
 reliability gating) are precisely the deltas that separate it from this
 closest neighbour.
 
-% TODO(server, queued): severity-response head-to-head — run VBench
-% background_consistency on the background_drift artefact family (25 clips).
-% Prediction: it REWARDS the corruption (progressive replacement by a static
-% background stabilises DINO features) — the convergence pathology of
-% Section 4.2 exhibited by the closest published benchmark. Add FlashVSR
-% consistency rows if time allows.
+% TODO(server, queued & running): severity-response head-to-head — BOTH SOTA
+% dimensions (subject_consistency DINO, background_consistency CLIP) run over
+% the background_drift and color_drift artefact families (25 clips each; clips
+% regenerated on the server via seed-reproducible gen_subset). Same Δ(sev
+% 0.02→0.40) verdict protocol as Table 5.2. Predictions: background_drift is
+% REWARDED (convergence pathology — progressive replacement by a static
+% background stabilises features); color_drift is invisible (per-pair shifts
+% below feature sensitivity). Either outcome extends Table 5.2 with two SOTA
+% baseline rows. Runner: scripts/server_runners/vbench_consistency_artefacts.sh.
 
 \section{Ablations and Sensitivity}
 \label{sec:exp:ablations}
