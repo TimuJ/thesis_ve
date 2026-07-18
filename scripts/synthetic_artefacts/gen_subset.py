@@ -24,7 +24,11 @@ def _run(task):
     out = OUT_DIR / family / out_name
     if out.is_file() and out.stat().st_size > 0:
         return f"SKIP {family}/{out_name}"
-    process_one(src, out, family, sev, base=base)
+    try:
+        process_one(src, out, family, sev, base=base)
+    except Exception as e:  # noqa: BLE001 — one bad input must not kill the pool
+        out.unlink(missing_ok=True)
+        return f"ERROR {family}/{out_name}: {type(e).__name__} {str(e)[:120]}"
     return f"DONE {family}/{out_name}"
 
 
