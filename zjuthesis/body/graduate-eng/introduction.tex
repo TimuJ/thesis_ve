@@ -224,10 +224,21 @@ Chapter~\ref{ch:rope} provides such a study for a production streaming VSR model
 decomposing extrapolation into absolute-position magnitude and relative-distance geometry
 and measuring each against real ground truth.
 
-% TODO(related-work pass, Jul 19-21): 1-2 paragraphs on long-video generation/world
-% models (po_longcontext_2025) as the original motivating direction; brief long-video
-% benchmark discussion (DOVE datasets); position-encoding behaviour studies in video DiTs
-% if any exist by submission time.
+\subsection{Long-Video Modelling and Evaluation Infrastructure}
+\label{sec:related:longvideo}
+
+Long-horizon video modelling is an active frontier: state-space world models
+\cite{po_longcontext_2025} extend temporal memory to thousands of frames with
+linear-cost scanning, and streaming diffusion designs such as FlashVSR bring
+arbitrary-length processing to restoration. Evaluation infrastructure has not
+kept pace: the DOVE suite \cite{yang_dove_2024} standardises realistic
+degradation and full-reference scoring but on short clips, and VBench's
+long-video mode re-aggregates clip-level scores, discarding cross-clip drift.
+The gap between long-video \emph{generation} capability and long-video
+\emph{evaluation} capability is precisely where this thesis operates: LR-VCC
+supplies the missing multi-scale consistency instrument, and the RoPE study
+supplies the first per-axis positional-extrapolation characterisation of a
+production streaming VSR model.
 
 \section{Thesis Organisation}
 \label{sec:intro:organisation}

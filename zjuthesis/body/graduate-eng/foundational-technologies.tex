@@ -13,8 +13,17 @@ the DOVE evaluation protocol under which all ground-truth comparisons are perfor
 \section{Diffusion-Based Video Super-Resolution and the Evaluated Baselines}
 \label{sec:found:vsr}
 
-% TODO(Ch2 pass): 1 paragraph on latent diffusion for restoration (SD prior, VAE latent
-% space, tile-based inference for large frames) before the per-model subsections.
+Diffusion-based restoration adapts a generative prior --- typically a
+text-to-image or text-to-video latent diffusion model --- to the inverse
+problem of super-resolution: the degraded input conditions a denoising process
+that runs in the compressed latent space of a variational autoencoder, and the
+decoded result inherits the prior's ability to synthesise plausible
+high-frequency detail that no per-pixel regression objective would dare commit
+to \cite{wang_stablesr_2024}. The price is a new axis of failure: the
+synthesised detail must stay \emph{consistent} --- across tiles within a frame
+(large frames are processed in overlapping tiles), across frames within a clip,
+and across the minutes of a long video. The three evaluated methods make three
+different trades along this axis.
 
 \subsection{MGLD-VSR}
 MGLD-VSR \cite{he_mgld_2024} (ECCV 2024) applies motion-guided latent diffusion to
@@ -33,17 +42,25 @@ configuration difference rather than a setup defect; the offset is consistent ac
 sets ($+1.68$~dB on SPMCS), confirming the evaluation environment.
 
 \subsection{FlashVSR}
-FlashVSR \cite{zhuang_flashvsr_2025} is a one-step streaming VSR model distilled from the
-Wan2.1 video diffusion transformer \cite{wan_wan_2025}. Frames are processed in a
-causal streaming fashion with a KV cache carrying context across chunk boundaries, which
-makes the method applicable to arbitrarily long input in principle. Its position encoding
-is a three-axis factorised RoPE over (time, height, width), with the temporal index
-growing monotonically over the whole stream --- the property that motivates the
-extrapolation study of Chapter~\ref{ch:rope}.
-% TODO(Ch6 prep): expand from docs/notes/2026-07-02-flashvsr-rope-site.md — DiT block
-% structure, block-sparse attention with adaptive topk, TC decoder, distillation recipe,
-% trained temporal window (21 latent frames ~ 81 video frames), spatial trained extent
-% (48 latent), stock 1024-row frequency tables.
+FlashVSR \cite{zhuang_flashvsr_2025} is a one-step streaming VSR model distilled
+from the Wan2.1 video diffusion transformer \cite{wan_wan_2025}. A causal video
+VAE compresses time $4\times$ (and space $16\times$ per axis after patchify), so
+81 pixel frames become 21 latent frames --- the DiT's trained temporal window.
+Inference streams the video in chunks: the first chunk processes six latent
+frames, and every subsequent chunk processes two, attending over a short KV
+cache (two current latents plus three cached windows, $\sim$8 latents
+$\approx$ 30 pixel frames of effective span) with block-sparse attention whose
+sparsity ratio adapts to resolution; a lightweight decoder reconstructs pixels
+in one denoising step. Crucially for this thesis, its position encoding is a
+three-axis factorised RoPE with per-axis precomputed frequency tables of 1{,}024
+rows, and \textbf{the temporal RoPE index is the absolute latent index of the
+stream} --- it grows monotonically and never resets, while the short cache keeps
+\emph{relative} distances small. Absolute positions therefore extrapolate
+without bound on long videos (the stock table caps a single pass at 4{,}089
+pixel frames), the trained spatial extent is 48 latent rows (from the
+$768\times1408$ distillation resolution), and the model becomes a natural
+laboratory for separating absolute-magnitude from relative-geometry
+extrapolation --- the decomposition Chapter~\ref{ch:rope} exploits.
 
 \section{Rotary Position Embeddings and Length Extrapolation}
 \label{sec:found:rope}
@@ -97,8 +114,16 @@ embedding stability using RetinaFace \cite{deng_retinaface_2020} detection and A
 adaptation: a \emph{slow} component fused within 2-second clips and a \emph{fast}
 component comparing first-frame embeddings across clips, so that cross-clip identity
 drift is measured rather than averaged away.
-% TODO(Ch2 pass): mention the six upstream VBench-2.0 patches and the fps-override
-% correction (hard-coded 30fps output tag) — one paragraph, with pointer to Ch3.
+
+Applying these tools to long real-SR content required engineering care that is
+part of the evaluation's reproducibility story: six patches to the upstream
+VBench-2.0 stack (multi-face frames, late reference-frame initialisation, a
+zero-face division guard, and packaging/configuration fixes), and an
+fps-override correction --- both evaluated SR pipelines hard-code their output
+frame-rate tag regardless of the source fps, which silently shifts clip
+boundaries in any per-second protocol and biased the cross-clip identity branch
+until corrected (the mechanism is characterised in
+Chapter~\ref{ch:problem}).
 
 \section{The DOVE Evaluation Protocol}
 \label{sec:found:dove}
