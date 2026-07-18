@@ -186,16 +186,25 @@ D$''$ (CLIP trajectory) & \textbf{0.893} & 0.884 & 0.862 \\
 \end{tabular}
 \end{table}
 
+\paragraph{Relation to per-frame quality metrics.} Per-frame no-reference
+quality measures agree with LR-VCC's MGLD-vs-UAV ordering --- CLIP-IQA
+($0.496$ vs $0.391$), MUSIQ ($65.1$ vs $56.3$), NIQE, BRISQUE, and DOVER
+($73.8$ vs $65.1$) all favour the detail-preserving method --- but they carry
+no consistency signal at all: Chapter~\ref{ch:problem}'s battery shows them
+blind to every long-range artefact family, and they would score a
+colour-drifting or identity-collapsing video identically to a stable one. The
+division of labour is therefore sharp: per-frame metrics measure quality
+without consistency; the SOTA consistency dimensions measure a
+smoothness-confounded consistency that inverts against perception
+(Table~\ref{tab:exp:vbench}); LR-VCC is the instrument that supplies a
+consistency signal which is simultaneously perception-aligned.
+
 % TODO(when server rows land): add RealESRGAN frame-wise anchor row and (if
 % standup succeeds) SeedVR2 row to both tables; expected: anchor scores well
 % on per-frame quality but poorly on temporal/drift cells — the
 % "no-temporal-modelling" contrast. SeedVR2 gives the window-local-position
-% D'' contrast against FlashVSR's absolute streaming positions.
-% TODO(Ch5 pass): comparison against per-frame metrics — check
-% results/mgld_synthetic_metrics.md + uav_mgld_evaluation_metrics.md for
-% PSNR/SSIM on the 5-video set before claiming "per-frame metrics do not
-% produce this ranking"; also the VBench subject/background-consistency
-% comparison (server task) lands here as the closest-benchmark head-to-head.
+% D'' contrast against FlashVSR's absolute streaming positions. The SOTA
+% severity verdicts (analyze_vbench_consistency output) extend §5.4.
 
 \section{Comparison with the Closest Existing Benchmark}
 \label{sec:exp:vbench}
