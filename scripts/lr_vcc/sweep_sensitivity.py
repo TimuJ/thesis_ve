@@ -64,7 +64,8 @@ def _artefact_identity(art):
     raise FileNotFoundError(d)
 
 
-def realmodel_units(identity_variant="production", closeup="production"):
+def realmodel_units(identity_variant="production", closeup="production",
+                    methods=("mgld", "uav", "flashvsr")):
     """[(unit_name, kwargs_common)] — one unit per method.
 
     Production provenance (verified bit-exact against stored composites):
@@ -75,16 +76,20 @@ def realmodel_units(identity_variant="production", closeup="production"):
 
     identity_variant: "production" (fps_fixed) | "corrected" (fps_overrides)
     closeup: "production" (only flashvsr gated) | True (all gated) | False
+    methods: which method rows to build. Methods beyond the original three
+    (e.g. "realesrgan", "seedvr2") follow the flashvsr layout: identity under
+    EVAL/identity/<m>/, colour anchors under *_realmodels/<m>, mgld's closeup
+    map when gating is on (map-choice insensitivity established ≤0.001).
     """
     units = []
-    for m in ("mgld", "uav", "flashvsr"):
-        if m == "flashvsr":
-            identity = _newest(EVAL / "identity" / "flashvsr" /
+    for m in methods:
+        if m not in ("mgld", "uav"):
+            identity = _newest(EVAL / "identity" / m /
                                "results_*_eval_results.json")
             gated = closeup in ("production", True)
             closeup_map = (json.load(open(LRV / "closeup_map" / "mgld.json"))
                            if gated else {})
-            slope_dir = LRV / "color_slope" / "flashvsr"
+            slope_dir = LRV / "color_slope" / m
         else:
             idir = ("identity_fps_fixed" if identity_variant == "production"
                     else "identity_fps_overrides")
@@ -402,14 +407,15 @@ SUB_LABELS = [("A (CLIP-IQA appearance)", "appearance"),
               ("D'' (CLIP trajectory)", "clip_trajectory")]
 
 
-def run_canonical():
+def run_canonical(methods=("mgld", "uav", "flashvsr")):
     """Option-(b) canonical numbers for the thesis: real models composed with
     fps-corrected identity + closeup gate on ALL methods; artefact matrix
     recomposed uniformly with current code (dispersion gate off)."""
     # --- real models ---
     outd = LRV / "composite_v5_realmodels_gated"
     per_method = {}
-    for unit in realmodel_units(identity_variant="corrected", closeup=True):
+    for unit in realmodel_units(identity_variant="corrected", closeup=True,
+                                methods=methods):
         name = unit[0]
         d = outd / name
         d.mkdir(parents=True, exist_ok=True)
@@ -424,39 +430,39 @@ def run_canonical():
                                "closeup gate all methods, dispersion gate off",
                    }, open(d / "_aggregate.json", "w"), indent=2)
         per_method[name] = res
-    videos = sorted(per_method["mgld"])
+    videos = sorted(per_method[methods[0]])
+    header = " | ".join(m.upper() for m in methods)
     lines = ["# Real-model LR-VCC v5 — canonical (uniform closeup gating)",
              "",
              "Protocol: production v5 flags; identity inputs fps-corrected "
-             "(overrides files); closeup gate applied to ALL methods "
-             "(FlashVSR uses mgld's map — insensitive to the choice); "
-             "dispersion gate off (parked). Recomposed from cached JSONs. "
-             "Supersedes the mixed-gating July-2 table for thesis use; see "
-             "lr_vcc_provenance_check.md for the audit.",
+             "(overrides files where available); closeup gate applied to ALL "
+             "methods (non-mgld/uav methods use mgld's map — insensitive to "
+             "the choice); dispersion gate off (parked). Recomposed from "
+             "cached JSONs. Supersedes the mixed-gating July-2 table for "
+             "thesis use; see lr_vcc_provenance_check.md for the audit.",
              "",
              "## Composite (LR-VCC v5, gated)",
              "",
-             "| video | MGLD | UAV | FlashVSR | winner |",
-             "|-------|-----:|----:|---------:|:------:|"]
+             f"| video | {header} | winner |",
+             "|---" * (len(methods) + 2) + "|"]
     for v in videos:
         row = {m: per_method[m][v]["lr_vcc"] for m in per_method}
         w = max(row, key=row.get)
-        lines.append(f"| {v} | {row['mgld']:.3f} | {row['uav']:.3f} "
-                     f"| {row['flashvsr']:.3f} | {w} |")
+        cells = " | ".join(f"{row[m]:.3f}" for m in methods)
+        lines.append(f"| {v} | {cells} | {w} |")
     means = {m: mean(r["lr_vcc"] for r in per_method[m].values()
                      if not r["low_confidence"]) for m in per_method}
-    lines.append(f"| **mean** | {means['mgld']:.3f} | {means['uav']:.3f} "
-                 f"| {means['flashvsr']:.3f} "
-                 f"| {max(means, key=means.get)} |")
+    mean_cells = " | ".join(f"{means[m]:.3f}" for m in methods)
+    lines.append(f"| **mean** | {mean_cells} | {max(means, key=means.get)} |")
     lines += ["", "## Sub-metric means", "",
-              "| sub-metric | MGLD | UAV | FlashVSR |",
-              "|------------|-----:|----:|---------:|"]
+              f"| sub-metric | {header} |",
+              "|---" * (len(methods) + 1) + "|"]
     for label, key in SUB_LABELS:
         row = {m: mean(r["sub_metrics"][key]["score"]
                        for r in per_method[m].values())
                for m in per_method}
-        lines.append(f"| {label} | {row['mgld']:.3f} | {row['uav']:.3f} "
-                     f"| {row['flashvsr']:.3f} |")
+        cells = " | ".join(f"{row[m]:.3f}" for m in methods)
+        lines.append(f"| {label} | {cells} |")
     out_md = REPO / "reports" / "figures" / "realmodel_v5_gated.md"
     Path(out_md).write_text("\n".join(lines) + "\n")
     print("wrote", out_md)
@@ -499,6 +505,9 @@ def main():
                                        "canonical", "all"],
                     default="all")
     ap.add_argument("--out_dir", default=str(LRV / "sweeps"))
+    ap.add_argument("--methods", nargs="+",
+                    default=["mgld", "uav", "flashvsr"],
+                    help="method rows for canonical mode (e.g. add realesrgan)")
     args = ap.parse_args()
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -510,7 +519,7 @@ def main():
         run_provenance(REPO / "reports" / "figures" /
                        "lr_vcc_provenance_check.md")
     if args.mode == "canonical":
-        run_canonical()
+        run_canonical(methods=tuple(args.methods))
     if args.mode in ("sweep", "all"):
         run_sweep(out / "sensitivity_sweep.json",
                   REPO / "reports" / "figures" / "sensitivity_sweep_v5.md")
