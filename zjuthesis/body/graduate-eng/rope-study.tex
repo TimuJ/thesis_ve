@@ -2,17 +2,10 @@
 \chapter{RoPE Extrapolation in Streaming Diffusion Video Super-Resolution}
 \label{ch:rope}
 
-% =========================================================================
-% DRAFT SKELETON (Jul 11). Canonical sources for the full write-up:
-%   docs/notes/2026-07-11-rope-extrapolation-findings.md   (capstone verdicts)
-%   docs/notes/2026-07-02-flashvsr-rope-site.md            (architecture + gates)
-%   reports/rope_timespace_sensitivity_matrix.md            (standalone study incl. PI theory)
-%   reports/position_interpolation_presentation.md          (PI figures + argument)
-%   docs/notes/2026-07-16-rope-chapter-notes.md             (corrected canonical numbers)
-%   reports/figures/rope_probe_udm10_gt.md                 (vs-GT verdicts)
-%   reports/figures/dpp_causal_verdict.md                  (D'' causal check)
-%   results/rope_probe/*                                   (raw JSONs)
-% =========================================================================
+% Canonical sources: docs/notes/2026-07-16-rope-chapter-notes.md (numbers),
+% docs/notes/2026-07-11-rope-extrapolation-findings.md (verdicts),
+% reports/rope_timespace_sensitivity_matrix.md (standalone study incl. PI theory),
+% reports/figures/{rope_probe_udm10_gt,dpp_causal_verdict}.md, results/rope_probe/*.
 
 \section{Motivation and Research Questions}
 \label{sec:rope:motivation}
@@ -21,132 +14,331 @@ The real-model evaluation of Chapter~\ref{ch:experiments} left a pointed questio
 FlashVSR --- within $0.012$ of the top composite score and the outright winner on
 identity preservation --- exhibits the worst long-range semantic drift (sub-metric
 D$''$) of the three methods --- and FlashVSR is precisely the method whose streaming
-design lets its temporal RoPE index grow without bound as the video lengthens. Its stock frequency table caps a single pass at 4{,}089 frames
-($\approx 2.3$ minutes), and its trained temporal window covers only $\sim$81 frames.
-Position-encoding extrapolation is therefore the natural suspect for long-video
-degradation, and the same suspicion extends to the spatial axes at high resolution.
+design lets its temporal RoPE index grow without bound as the video lengthens. Its
+stock frequency table caps a single pass at 4{,}089 frames ($\approx 2.3$ minutes),
+and its trained temporal window covers only 81 frames (21 latent frames after
+$4\times$ VAE compression); its trained spatial extent is 48 latent rows (from the
+$768\times1408$ distillation resolution). Position-encoding extrapolation is
+therefore the natural suspect for long-video degradation, and the same suspicion
+extends to the spatial axes at high resolution.
 
-The study decomposes extrapolation into two hypotheses:
+The study decomposes positional extrapolation into two falsifiable hypotheses:
 
 \begin{description}
-    \item[H0 (Magnitude).] Absolute position offsets beyond the trained window degrade
-        quality.
+    \item[H0 (Magnitude).] Absolute position offsets beyond the trained window
+        degrade quality.
     \item[H1 (Geometry).] Distortion of relative-distance geometry (dilation or
         compression of position spacing) degrades quality.
 \end{description}
 
+The decomposition matters because streaming inference stresses exactly the
+magnitude axis (indices grow forever) while window extension stresses the geometry
+axis (more positions inside one attention span). Which one costs quality determines
+where engineering effort should go.
+
 \section{The Position-Injection Instrument}
 \label{sec:rope:instrument}
 
-A runtime position-injection hook swaps any of the three RoPE frequency tables (t/h/w)
-for a wrapper that transforms baseline positions --- shift ($p \mapsto p + k$), stretch
-($p \mapsto s \cdot p$), continuous-position interpolation (non-integer positions,
-resolving the integer-rounding confound), and modulo bounding --- with on-demand table
-extension past the stock 1{,}024 rows. The instrument satisfies three faithfulness
-gates: (i) \emph{bit-exact when idle} --- with the hook installed but no transform
-active, output drift is $0.0$ against a measured $0.0$ nondeterminism floor; (ii)
-\emph{engagement-checked} --- every run asserts the transform actually fired; (iii)
-\emph{repository-pristine} --- zero modification of the tagged FlashVSR codebase, with
-48 unit tests covering the hook.
-% TODO(Ch6 pass): hook mechanism detail (which module attribute is swapped), axis
-% parameter (t/h/w), extended-table construction.
+A runtime position-injection hook swaps any one of the three RoPE frequency tables
+(t/h/w) --- a duck-typed replacement of the DiT's per-axis frequency-table
+attribute --- for a wrapper that transforms baseline positions: shift
+($p \mapsto p + k$), stretch ($p \mapsto s \cdot p$), continuous-position
+interpolation, and modulo bounding, with on-demand table extension past the stock
+1{,}024 rows. Continuous interpolation evaluates the RoPE formula directly at
+fractional positions rather than interpolating table rows (averaging complex
+phases would be incorrect); evaluated at integer positions it reproduces the stock
+table's effect bit-for-bit, providing an identity condition at the numerics floor.
+
+The instrument satisfies three faithfulness gates: (i) \emph{bit-exact when idle}
+--- with the hook installed but no transform active, output drift against stock is
+$0.0$ on a measured $0.0$ nondeterminism floor; (ii) \emph{engagement-checked} ---
+every run asserts the transform actually fired; (iii) \emph{repository-pristine}
+--- zero modification of the tagged FlashVSR codebase, with 48 unit tests covering
+the hook. Content and compute are identical across conditions; only the position
+labels change, which is what makes the comparisons causal.
 
 \section{Experimental Design}
 \label{sec:rope:design}
 
-% TODO(Ch6 pass): describe the arms —
-% (1) temporal shift sweep k in {2..996} on hhsz (85 frames), self-consistency scoring;
-% (2) stretch sweep s in {2..64} (self) and fine/continuous sweeps;
-% (3) vs-GT verdicts: DOVE-UDM10, 10 clips x 22 conditions, pyiqa in the DOVE RGB
-%     convention; baseline FlashVSR 24.02 dB (MGLD verified at 24.23 on same protocol);
-% (4) D'' causal check on the 2412–5000-frame real-SR videos: segmented vs single-pass
-%     vs magnitude-bounded (mod 336) arms;
-% (5) spatial axis (h/w) label sweeps on UDM10;
-% (6) real resolution-extrapolation ladder on YouHQ40: latent grids 48^2 -> 72^2 -> 96^2
-%     (= 1x/1.5x/2x the trained extent; padding quantises grids to multiples of 8),
-%     stock vs spatial-PI;
-% (7) collapse-decomposition arms (Jul 16): content-correct scoring, pinned topk,
-%     blur-isolation, intermediate grids 80/88 — see corrected Results below.
-% Emphasise the method point: self-consistency scoring alone is insufficient (see
-% Results) — real GT references are required.
+Seven experimental arms cover the two hypotheses per axis:
+(1)~temporal shift sweeps up to position 996; (2)~temporal stretch sweeps,
+integer and continuous, $s \in [0.5, 250]$; (3)~ground-truth scoring on
+DOVE-UDM10 (10 clips $\times$ 29 frames, realistic degradation; PSNR/SSIM/LPIPS
+via pyiqa in the DOVE RGB convention, on the protocol whose stock score ---
+24.02~dB beside MGLD's verified 24.23 --- anchors every number); (4)~the D$''$
+causal check on the 2{,}412--5{,}000-frame real-SR videos: stock segmented vs
+true single-pass vs magnitude-bounded (positions cycled mod 336) arms;
+(5)~spatial (h/w) label sweeps on UDM10; (6)~a real resolution-extrapolation
+ladder on YouHQ40 (8 clips, $1080^2$ GT): latent grids
+$48^2 \to 72^2 \to 80^2 \to 88^2 \to 96^2$, i.e.\ $1\times$ to $2\times$ the
+trained spatial extent (input padding quantises grids to multiples of 8), stock
+vs spatial-PI positions; and (7)~collapse-decomposition arms for the ladder's top
+rung: content-correct scoring, sparsity pinned to the healthy $72^2$ value,
+blur-isolation at fixed grid, and the intermediate grids.
+
+A design principle throughout: \emph{score against real ground truth}. As
+Section~\ref{sec:rope:selfconsistency} shows, self-consistency (similarity of
+perturbed output to stock output) actively misleads --- a finding that
+retroactively justifies the expense of GT-referenced scoring for every headline
+claim.
 
 \section{Results}
 \label{sec:rope:results}
 
 \subsection{Absolute-Position Offsets Are Free}
-% TODO(Ch6 pass): shift +996 (50x beyond trained window) costs +0.001 dB vs GT — H0
-% rejected on every axis (temporal to position 996; spatial offsets 8/24), in every
-% interaction tested. The stock 4089-frame ceiling is an implementation artefact of the
-% fixed table: the extended table sustains a 5009-frame single pass (11.6 GiB VRAM).
+\label{sec:rope:offsets}
+
+H0 is rejected on every axis. A temporal shift of $+996$ latent positions ---
+$\approx 50\times$ beyond the trained window --- costs $+0.001$~dB against ground
+truth; spatial offsets of 8 and 24 latent rows cost $\pm 0.003$~dB; and offsets
+remain free at every stretch level tested (no interaction). Translation
+invariance holds empirically on all three RoPE axes, as the relative-position
+algebra of RoPE predicts but distilled, finite-precision practice did not
+guarantee. Two engineering consequences follow: the streaming design's unbounded
+index growth is harmless \emph{per se}, and the stock 4{,}089-frame single-pass
+ceiling is an implementation artefact of the fixed table --- with the extended
+table, a 5{,}009-frame single pass ran to completion at 11.6~GiB VRAM.
 
 \subsection{Relative-Distance Geometry Is What Bites}
-% TODO(Ch6 pass): dilation costs monotonically: -0.12 dB @ s=1.25, -0.22 @ 1.5,
-% -0.25 @ 2.0, -0.95 @ 3.0; compression s=0.5 costs -0.66 dB; mild compression s=0.75
-% (the PI zone) is free (+0.01 dB). Under streaming, relative distances stay in-range
-% until s ~ 2.6, so small s<=2 costs are within-window geometry effects; s=3 is the
-% first genuinely out-of-window point. Continuous-PI builder validated (identity
-% 53.39 dB); continuous compression genuinely cheaper than integer-rounded by
-% +0.5–1.5 dB.
+\label{sec:rope:geometry}
+
+Table~\ref{tab:rope:stretch} sweeps position-label stretch per axis with content
+and compute fixed. Dilation costs monotonically on the temporal axis
+($-0.12$~dB at $s{=}1.25$ through $-0.95$ at $s{=}3$); strong compression costs
+on every axis ($s{=}0.5$: $-0.66$ to $-1.00$~dB); and mild compression ---
+$s{=}0.75$, the position-interpolation zone --- is \emph{free on every axis}
+($+0.01$/$+0.02$/$-0.03$~dB). A temporal caveat calibrates the small $s \leq 2$
+costs: under streaming, FlashVSR's attention span is $\sim$8 latents, so relative
+distances remain inside the trained 21-latent range until $s \approx 2.6$ ---
+those costs are within-window geometry effects, and $s{=}3$ is the first
+genuinely out-of-window point.
+
+\begin{table}[h]
+\centering
+\caption{$\Delta$PSNR (dB) vs stock under position-label stretch $s$, per RoPE
+axis (DOVE-UDM10 vs ground truth; content and compute fixed).}
+\label{tab:rope:stretch}
+\begin{tabular}{lrrr}
+\hline
+\textbf{stretch $s$} & \textbf{time (t)} & \textbf{height (h)} & \textbf{width (w)} \\
+\hline
+0.5 (compression) & $-0.66$ & $-1.00$ & $-0.83$ \\
+\textbf{0.75 (PI zone)} & $\mathbf{+0.01}$ & $\mathbf{+0.02}$ & $\mathbf{-0.03}$ \\
+1.25 & $-0.12$ & $-0.05$ & $-0.02$ \\
+1.5 & $-0.22$ & $-0.07$ & $-0.03$ \\
+2.0 & $-0.25$ & $-0.15$ & $-0.07$ \\
+3.0 (extreme) & $-0.95$ & $\mathbf{-2.55}$ & $\mathbf{-2.30}$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{time_vs_space_stretch.png}
+\caption{Per-axis sensitivity to position-label stretch. The PI zone
+($s{=}0.75$) is free on every axis; dilation costs grow monotonically, with the
+spatial axes $\sim$2.5$\times$ more sensitive than time at extreme distortion.}
+\label{fig:rope:stretch}
+\end{figure}
+
+At extreme geometry distortion the axes separate sharply: space is
+$\sim$2.5$\times$ more sensitive than time ($-2.3$/$-2.6$~dB vs $-0.95$ at
+$s{=}3$). The continuous-position builder that underlies these numbers was
+validated by its identity condition (53.4~dB self-PSNR $=$ the numerics floor)
+and revealed that genuine fractional-position interpolation is cheaper than
+integer-rounded approximations by $+0.5$--$1.5$~dB --- integer rounding had been
+silently inflating compression costs.
 
 \subsection{Self-Consistency Does Not Predict Quality}
-% TODO(Ch6 pass): s=0.75 and s=1.5 share identical self-PSNR (31.8) but have opposite
-% GT verdicts (+0.01 vs -0.22 dB). Methodological finding for the field:
-% position-perturbation studies need real references.
+\label{sec:rope:selfconsistency}
+
+Conditions $s{=}0.75$ and $s{=}1.5$ produce \emph{identical} output change
+relative to stock (self-PSNR 31.8 for both) yet have opposite ground-truth
+verdicts ($+0.01$ vs $-0.22$~dB). How much a perturbation changes the output
+says nothing about whether the change damages quality. This is a methodological
+finding for the field: position-perturbation studies that score only against the
+unperturbed model's output --- the cheaper and common protocol --- cannot
+distinguish benign from harmful interventions.
 
 \subsection{Long-Video Drift Is Not Positional}
-% TODO(Ch6 pass): D'' causal check — segmented vs single-pass vs magnitude-bounded arms
-% indistinguishable (<1% relative spread) on 2412–5000-frame videos. FlashVSR's worst
-% benchmark cell belongs to the streaming KV-cache/generation mechanism, not position
-% encoding. This also certifies the Chapter 5 benchmark row was fair (segmentation did
-% not disadvantage FlashVSR).
+\label{sec:rope:drift}
 
-\subsection{The Time--Space Sensitivity Matrix}
-% TODO(Ch6 pass): port matrix from rope_sensitivity_matrix.md — translation invariance
-% universal across all three RoPE axes; a PI-free zone (mild compression) exists on
-% every axis; space is ~2.5x more sensitive than time at extreme geometry distortion.
+The D$''$ causal check runs three arms on the full-length real-SR videos: stock
+segmented inference, a true single pass (positions reaching latent 1{,}252 on the
+extended table), and a magnitude-bounded arm (positions cycled mod 336). If
+positional magnitude drove the long-video semantic drift measured in
+Chapter~\ref{ch:experiments}, these arms would separate. They are
+\textbf{indistinguishable --- under 1\% relative spread on every video}.
+FlashVSR's weakest benchmark cell belongs to its streaming KV-cache/generation
+mechanism, not to position encoding. The check also certifies retroactively that
+the Chapter~\ref{ch:experiments} benchmark row was fair: segmented processing did
+not disadvantage FlashVSR.
+
+\subsection{Extreme Retrieval Distances}
+\label{sec:rope:extreme}
+
+Two questions posed by the research group --- ``test extreme stretches'' and
+``what does it cost when a late frame retrieves an early one at its \emph{true}
+large relative distance, rather than a re-based small one?'' --- reduce to the
+same experiment. FlashVSR already uses true absolute indices (it never re-bases);
+what keeps realised relative distances small is the $\sim$8-latent KV cache,
+which evicts old keys long before a distance-1{,}000 attention edge could form.
+(The re-based, window-local alternative is exactly SeedVR2's design --- the
+planned round-2 contrast model.) Holding content fixed and inflating only the
+position label isolates what that latent danger would cost
+(Table~\ref{tab:rope:extreme}).
+
+\begin{table}[h]
+\centering
+\caption{Temporal extrapolation at extreme effective distances (DOVE-UDM10 vs
+ground truth, continuous positions; the stock table is bypassed by the
+continuous builder).}
+\label{tab:rope:extreme}
+\begin{tabular}{lllr}
+\hline
+\textbf{stretch $s$} & \textbf{eff.\ distance} & \textbf{vs window ($\sim$20)} & \textbf{$\Delta$PSNR} \\
+\hline
+2 & $\sim$16 & window edge & $-0.25$ \\
+5 & $\sim$40 & $2\times$ & $-1.34$ \\
+10 & $\sim$80 & $4\times$ & $-1.03$ \\
+20 & $\sim$160 & $8\times$ & $-0.31$ \\
+50 & $\sim$400 & $20\times$ & $-1.57$ \\
+125 & $\sim$1000 & $50\times$ (``frame 0 from frame 1000'') & $-1.33$ \\
+250 & $\sim$2000 & $100\times$ & $-1.56$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{extreme_distance_temporal.png}
+\caption{Temporal retrieval-distance dose-response: bounded, graceful, and
+non-monotonic. Even 100$\times$ the trained window plateaus at $\sim$$-1.5$~dB.}
+\label{fig:rope:extreme}
+\end{figure}
+
+Three readings. First, \textbf{the loss is bounded and saturates --- no
+collapse}: even at 50--100$\times$ the trained window, quality sits at $-1.3$ to
+$-1.6$~dB, barely worse than $s{=}3$'s $-0.95$; temporal extrapolation degrades
+gracefully, the opposite of the spatial axes' steep $-2.3$/$-2.6$~dB at $s{=}3$
+alone. Second, \textbf{the curve is non-monotonic}: $s{=}20$ recovers to
+$-0.31$~dB between $\sim$$-1$~dB neighbours, because rotary phases are periodic
+and certain large stretches accidentally re-align fast frequencies near
+trained-like configurations --- \emph{where the phases land}, not how far they
+moved, sets the damage. Third, the group's answer: the true-index design costs a
+bounded $\sim$1.3~dB at distance 1{,}000 --- and FlashVSR never pays even that,
+because its short cache prevents the far edge from forming. Absolute index plus
+short cache is safe by construction, which is also why long-video drift is not
+positional.
 
 \subsection{Real Resolution Extrapolation}
-% TODO(Ch6 pass): YouHQ40 ladder, grids 48/72/80/88/96 (1x..2x trained extent):
-% quality is FLAT across the whole ladder (24.55–24.78 dB) — real resolution
-% extrapolation is quality-free to at least 2x the trained spatial extent with stock
-% positions. Spatial-PI at 1.5x *hurts* (-0.56 dB; factor 0.67 is past the free zone):
-% let spatial positions extrapolate, do not compress them.
-% METHODS NOTE (write honestly): an early scoring pass reported an -11 dB "collapse"
-% at the top rung; decomposition arms (pinned sparsity delta -0.03, blur arm flat,
-% intermediate grids flat) traced it to a scoring-geometry artefact — the padded
-% output frame was resized against GT at mismatched magnification. Second instance in
-% this work where a scoring-path subtlety flipped a conclusion (cf. self-consistency
-% vs quality); both caught because raw frames + re-scorable JSONs were retained.
+\label{sec:rope:resolution}
 
-\subsection{Why Position Interpolation Works: Interpolation vs.\ Extrapolation}
-% TODO(Ch6 pass): port from reports/rope_timespace_sensitivity_matrix.md §5 and the
-% PI presentation. Core argument: attention consumes relative phase (p-q)·theta;
-% training covers ~20 discrete distances per frequency; PI places new inputs BETWEEN
-% trained points (smooth learned function -> well-behaved), extrapolation places them
-% BEYOND (unconstrained). Killer figure: rotation-change magnitude depends only on
-% |s-1|·d (perfectly symmetric in compression/dilation) yet measured quality is
-% asymmetric -> WHERE phases land matters, not how far they moved. Boundary of
-% zero-shot PI: s=0.5 puts neighbour distances below the minimum trained distance
-% (1.0) — the self-vs-neighbour transition. Figures: reports/figures/pi/fig1–fig4
-% (regenerate as PDF/PGF for LaTeX; script in chapter-notes doc).
+The label sweeps above manipulate positions at fixed content; the resolution
+ladder extrapolates for real, growing the latent grid from the trained extent
+($48^2$, output $720^2$) to double it ($96^2$, output $1536^2$) on YouHQ40
+(Table~\ref{tab:rope:ladder}).
+
+\begin{table}[h]
+\centering
+\caption{YouHQ40 resolution ladder: PSNR vs ground truth per latent grid, stock
+positions vs spatial-PI.}
+\label{tab:rope:ladder}
+\begin{tabular}{lllrr}
+\hline
+\textbf{output} & \textbf{latent grid} & \textbf{vs trained} & \textbf{stock} & \textbf{spatial-PI} \\
+\hline
+$720^2$ & $48^2$ & $1\times$ (trained) & 24.70 & $\equiv$ stock \\
+$1152^2$ & $72^2$ & $1.5\times$ & 24.55 & 24.00 \\
+$1280^2$ & $80^2$ & $1.67\times$ & 24.66 & --- \\
+$1408^2$ & $88^2$ & $1.83\times$ & 24.71 & --- \\
+$1536^2$ & $96^2$ & $2\times$ & \textbf{24.78} & --- \\
+\hline
+\end{tabular}
+\end{table}
+
+The ladder is \textbf{flat}: real resolution extrapolation is quality-free to at
+least $2\times$ the trained spatial extent with stock positions --- adaptive
+attention sparsity included (pinning the sparsity ratio to the healthy $72^2$
+value changes the top rung by only $-0.03$~dB). The only positional effect on
+the ladder is that \textbf{spatial-PI at $1.5\times$ hurts} ($-0.56$~dB versus
+simply extrapolating): compressing positions by factor 0.67 lands in the
+compression-cost zone of Table~\ref{tab:rope:stretch}. Spatially, compression
+--- not extrapolation --- is the risky direction.
+
+\paragraph{A methods note, recorded honestly.} An early scoring pass reported an
+$-11$~dB ``collapse'' at the top rung. Decomposition arms cleared every
+model-side suspect (sparsity pinning $\Delta$$-0.03$; intermediate grids flat;
+no blur penalty from the upsampled input), tracing the number to a
+scoring-geometry artefact: the padded output frame (content occupying 93.75\%)
+had been resized against ground truth at mismatched magnification. This is the
+second instance in this thesis where a scoring-path subtlety flipped a
+conclusion (cf.\ Section~\ref{sec:rope:selfconsistency}); both were caught
+because raw frames and re-scorable outputs were retained --- a reproducibility
+practice worth stating as such.
+
+\subsection{Why Position Interpolation Works --- and Where It Stops}
+\label{sec:rope:pitheory}
+
+A fair objection to the PI results: fractional positions produce rotary phases
+the model never saw --- are those not out-of-distribution too? The resolution
+\cite{chen_pi_2023} is the distinction between \emph{interpolation within} the
+trained range and \emph{extrapolation beyond} it. Attention consumes relative
+phase $(p - q)\,\theta_k$; training taught the model this function at roughly 20
+discrete distances per frequency. PI places new inputs \emph{between} trained
+points, where a learned smooth function is well-behaved; dilation places them
+\emph{beyond} the trained interval, where the same function is unconstrained.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{fig2_kernel.png}
+\caption{The learned relative-phase kernel: PI queries it between trained
+points (interpolation); dilation queries it beyond them (extrapolation).}
+\label{fig:rope:kernel}
+\end{figure}
+
+The measurements above are this theory's per-axis fingerprint --- apparently the
+first in a video diffusion model --- sharpened by a symmetry argument: the
+rotation-change magnitude of a stretch depends only on $|s - 1| \cdot d$, which
+is \emph{symmetric} between compression and dilation, yet measured quality is
+strongly asymmetric ($s{=}0.75$ free everywhere; extrapolation up to
+$-2.6$~dB). \emph{Where} phases land decides damage, not how far they moved.
+The theory also predicts its own boundary: at $s{=}0.5$, neighbouring tokens sit
+at relative distance $0.5$ --- below the minimum nonzero trained distance
+($1.0$), inside the qualitatively different self-vs-neighbour transition ---
+which is why the zero-shot PI-free zone is narrow ($\sim$0.75) and why the LLM
+literature pairs aggressive PI with fine-tuning.
 
 \section{Implications}
 \label{sec:rope:implications}
 
-% TODO(Ch6 pass):
-% - Position encoding is exonerated: improvement effort for long-video quality should
-%   target the streaming KV-cache/generation mechanism and resolution-scaling mechanics
-%   (sparsity/windowing), not RoPE.
-% - Window-extension guidance: temporal extension to ~1.33x (21 -> 28 latents) with
-%   continuous-PI positions is predicted RoPE-loss-free; beyond that, geometry costs
-%   grow. Instrument + predictions handed to the window-extension effort.
-% - PI helps only in narrow regimes and can hurt (spatial <=1.5x); blanket application
-%   of LLM context-extension recipes to video DiTs is not supported.
+\textbf{Position encoding is exonerated.} Offsets are free on every axis at any
+magnitude tested; realistic geometry costs are small; the two failure modes that
+motivated the study --- long-video drift and high-resolution degradation --- are
+both demonstrably non-positional. Long-video improvement effort should target
+the streaming KV-cache/generation mechanism; the resolution path is already free
+to $2\times$.
+
+\textbf{Guidance for window extension.} Temporal extension to $\sim$$1.33\times$
+(21 $\to$ 28 latents) with continuous-PI positions is predicted RoPE-loss-free;
+beyond that, temporal geometry costs grow but stay bounded and graceful --- even
+$100\times$ the window plateaus at $\sim$$-1.5$~dB, so RoPE will not be the wall
+a window extension hits. The validated instrument transfers directly: comparing
+stock vs PI positions in extended-window runs isolates RoPE's causal share.
+
+\textbf{Do not transplant LLM context-extension recipes blindly.} PI helps only
+in its narrow zero-shot zone and actively hurts at $\leq$$1.5\times$ spatial
+extension, where stock extrapolation is cheaper. Per-axis measurement, not
+one-dimensional intuition, is the transferable practice.
 
 \section{Limitations}
 \label{sec:rope:limitations}
 
-% TODO(Ch6 pass): all vs-GT evidence is temporally within-window (29–31-frame GT
-% clips); deep-length (>81-frame) quality-vs-position curves lack GT (long-HR source
-% acquisition pending). Single model (FlashVSR 1.3B distilled); spatial trained-extent
-% taken from the distillation resolution (48 latents).
+All ground-truth evidence is temporally within-window (29--31-frame GT clips);
+deep-length ($>$81-frame) quality-vs-position curves lack ground truth, as
+re-acquisition of long HR sources is blocked platform-side --- the path forward
+is lab-provided long HR footage, for which conversion tooling is ready. The
+study covers a single model (FlashVSR 1.3B distilled); SeedVR2, with
+window-local positions, is the designated contrast for a second round. The
+spatial trained extent is inferred from the distillation resolution rather than
+training logs.
