@@ -231,9 +231,14 @@ state-of-the-art baselines for video consistency assessment --- are VBench's
 \cite{huang_vbench_2024} subject-consistency dimension (DINO-feature cosine
 similarity between adjacent frames and against the first frame) and
 background-consistency dimension (the same construction on CLIP features),
-aggregated per video via the long-video clip protocol.
-Table~\ref{tab:exp:vbench} evaluates both on the real-SR test set alongside
-the degraded low-quality input itself.
+aggregated per video via the long-video clip protocol. A protocol note for
+fairness: long-video SR input is not an officially supported configuration
+for these dimensions (Section~\ref{sec:found:toolkit}) --- they are run here
+through the \texttt{vbench2\_beta\_long} extension in custom-input mode,
+i.e.\ the published method with documented adjustments, at its default
+long-video weighting ($w_{\mathrm{inclip}}{=}1$,
+$w_{\mathrm{clip2clip}}{=}0$). Table~\ref{tab:exp:vbench} evaluates both on
+the real-SR test set alongside the degraded low-quality input itself.
 
 \begin{table}[h]
 \centering

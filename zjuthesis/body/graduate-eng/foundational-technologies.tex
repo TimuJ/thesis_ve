@@ -115,8 +115,21 @@ adaptation: a \emph{slow} component fused within 2-second clips and a \emph{fast
 component comparing first-frame embeddings across clips, so that cross-clip identity
 drift is measured rather than averaged away.
 
-Applying these tools to long real-SR content required engineering care that is
-part of the evaluation's reproducibility story: six patches to the upstream
+A scope caveat applies to everything VBench-derived in this thesis:
+\textbf{neither VBench nor VBench-2.0 officially supports long-video
+super-resolution evaluation.} VBench-2.0 targets prompt-conditioned
+text-to-video generation (thirteen of its eighteen dimensions require text
+prompts and are inapplicable to SR), and the long-video mode used here is the
+\texttt{vbench2\_beta\_long} extension --- a beta add-on to the VBench-1.x
+dimension suite, not a released VBench-2.0 configuration. All long-video
+VBench results in this thesis therefore rest on documented adjustments to the
+published method: the slow-fast Human\_Identity adaptation
+(2-second clips, within-clip and cross-clip-first-frame branches), custom-input
+operation without prompts, and the beta long protocol for the consistency
+dimensions.
+
+Beyond that scope adaptation, engineering care was required that is part of
+the evaluation's reproducibility story: six patches to the upstream
 VBench-2.0 stack (multi-face frames, late reference-frame initialisation, a
 zero-face division guard, and packaging/configuration fixes), and an
 fps-override correction --- both evaluated SR pipelines hard-code their output
