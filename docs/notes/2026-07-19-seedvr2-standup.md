@@ -48,6 +48,15 @@ reusable as-is when a freer GPU is available.
 
 ## Why the row is deferred
 
+**Addendum (Jul 19 afternoon):** sequence parallelism does not rescue it.
+A 17-frame chunk at sp\_size=2 across both A100s OOMs on the same
+**7.88 GiB `rotary_embedding_torch.get_axial_freqs` allocation** as the
+single-GPU run: the axial frequency tensor is built on the full spatial grid
+per rank (resolution-bound, ~independent of clip length) and is not sharded
+by SP. Fixing it means patching the library (build freqs in bf16 and/or on
+CPU with chunked transfer) — real engineering, out of scope pre-deadline.
+
+
 SeedVR2 processes the whole clip in one shot (no streaming): at 720×1280
 output, a 33-frame clip peaked ~30 GiB and then tried to allocate a further
 7.9 GiB inside `rotary_embedding_torch.get_axial_freqs`; a 17-frame clip
