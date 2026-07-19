@@ -271,15 +271,51 @@ against real motion, anchored drift rather than pairwise stability,
 reliability gating) are precisely the deltas that separate it from this
 closest neighbour.
 
-% TODO(server, queued & running): severity-response head-to-head — BOTH SOTA
-% dimensions (subject_consistency DINO, background_consistency CLIP) run over
-% the background_drift and color_drift artefact families (25 clips each; clips
-% regenerated on the server via seed-reproducible gen_subset). Same Δ(sev
-% 0.02→0.40) verdict protocol as Table 5.2. Predictions: background_drift is
-% REWARDED (convergence pathology — progressive replacement by a static
-% background stabilises features); color_drift is invisible (per-pair shifts
-% below feature sensitivity). Either outcome extends Table 5.2 with two SOTA
-% baseline rows. Runner: scripts/server_runners/vbench_consistency_artefacts.sh.
+\paragraph{Severity response of the SOTA dimensions.} The ranking inversion
+above could in principle be excused if the dimensions at least \emph{detected}
+long-range corruption. They do not. Both dimensions were run over the
+background-drift and colour-drift artefact families --- fifty full-length
+clips regenerated bit-reproducibly --- under the identical
+$\Delta(\text{sev } 0.02 \to 0.40)$ verdict protocol as
+Table~\ref{tab:exp:verdict}. The result is universal insensitivity
+(Table~\ref{tab:exp:sotaseverity}): \textbf{0 of 20 (dimension, family, base)
+cells respond} --- every cell is \textsc{flat}, including
+background-consistency on background drift, the dimension's namesake failure
+mode --- and 14 of the 20 sub-threshold drifts run in the \emph{rewarding}
+direction. LR-VCC is clean on 7 of the same 10 (family, base) conditions.
+
+\begin{table}[h]
+\centering
+\caption{Severity response of the SOTA consistency dimensions on the
+long-range artefact families (five bases each), versus LR-VCC on the same
+clips. Full per-base tables: \texttt{vbench\_sota\_verdicts.md}.}
+\label{tab:exp:sotaseverity}
+\small
+\begin{tabular}{llccc}
+\hline
+\textbf{Dimension} & \textbf{Artefact} & \textbf{Clean} & \textbf{$\Delta$ range} & \textbf{LR-VCC clean} \\
+\hline
+background\_consistency & background\_drift & 0/5 & $[-0.012, +0.004]$ & 2/5 \\
+background\_consistency & colour\_drift & 0/5 & $[+0.000, +0.006]$ & 5/5 \\
+subject\_consistency & background\_drift & 0/5 & $[-0.010, +0.010]$ & 2/5 \\
+subject\_consistency & colour\_drift & 0/5 & $[+0.000, +0.005]$ & 5/5 \\
+\hline
+\end{tabular}
+\end{table}
+
+The mechanism is designed in, not incidental. The long-video protocol these
+dimensions ship with weights the cross-clip component to zero
+($w_{\mathrm{clip2clip}}{=}0$): the reported score is within-2-second-clip
+feature consistency, re-aggregated. A corruption that develops \emph{across}
+clips --- colour ramping over minutes, a background walking toward a
+replacement --- changes each 2-second window almost nothing and is therefore
+invisible \emph{by construction}. This is the empirical form of the
+structural argument in Chapter~\ref{ch:problem}: clip-level re-aggregation
+removes exactly the signal that long-video consistency assessment requires.
+Combined with the ranking result above --- degraded input scored above its
+restorations --- the two SOTA dimensions fail both requirements of a
+long-video consistency measure on this benchmark: they do not rank
+perceptually, and they do not detect.
 
 \section{Ablations and Sensitivity}
 \label{sec:exp:ablations}
