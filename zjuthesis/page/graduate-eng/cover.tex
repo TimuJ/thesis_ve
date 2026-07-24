@@ -1,8 +1,21 @@
-\inputpage{cover-chn}
-\inputpage{cover-eng-custom}
-\inputpage{title-chn}
-\inputpage{title-eng}
-\inputpage{auth-claim}
-\inputpage{auth-claim-eng}
-\inputpage{declaration-eng}
-\inputpage{certification-eng}
+% Front matter switches with BlindReview:
+%  - true:  送审稿 format matching examples/thesis_example.pdf — single
+%           English cover, Chinese declaration/authorization, English
+%           declaration + release certificate.
+%  - false: full front matter (Chinese cover, title pages, all declarations).
+\ifthenelse{\equal{\BlindReview}{true}}
+{
+    \inputpage{cover-eng-custom}
+    \inputpage{auth-claim}
+    \inputpage{auth-claim-eng}
+}
+{
+    \inputpage{cover-chn}
+    \inputpage{cover-eng-custom}
+    \inputpage{title-chn}
+    \inputpage{title-eng}
+    \inputpage{auth-claim}
+    \inputpage{auth-claim-eng}
+    \inputpage{declaration-eng}
+    \inputpage{certification-eng}
+}

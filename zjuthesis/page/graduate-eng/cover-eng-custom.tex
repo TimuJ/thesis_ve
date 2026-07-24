@@ -1,5 +1,6 @@
 \cleardoublepage
 \thispagestyle{cover}
+\begingroup\linespreadsingle\selectfont
 
 
 \begin{center}
@@ -14,10 +15,10 @@
 
 
 \begin{center}
-    \includegraphics[width=0.5\paperwidth]{logo/zjuchar.pdf}
+    \includegraphics[width=0.44\paperwidth]{logo/zjuchar.pdf}
 \end{center}
 
-\vspace{-40pt}
+\vspace{-10pt}
 
 \begin{center}
     \zihao{-1} \songti%
@@ -27,7 +28,7 @@
 \ifthenelse{\equal{\DepartmentLines}{1}}
 {
     %   DepartmentLines == 1
-    \vskip 20pt
+    \vskip 16pt
 }
 {
     %   DepartmentLines == 2
@@ -35,13 +36,13 @@
 }
 
 \begin{center}
-    \includegraphics[width=0.15\paperwidth]{logo/zju.pdf}
+    \includegraphics[width=0.12\paperwidth]{logo/zju.pdf}
 \end{center}
 
 \ifthenelse{\equal{\DepartmentLines}{1}}
 {
     %   DepartmentLines == 1
-    \vskip 20pt
+    \vskip 16pt
 }
 {
     %   DepartmentLines == 2
@@ -87,7 +88,7 @@
 \ifthenelse{\equal{\DepartmentLines}{1}}
 {
     %   DepartmentLines == 1
-    \vskip 20pt
+    \vskip 16pt
 }
 {
     %   DepartmentLines == 2
@@ -96,11 +97,12 @@
 
 \begin{center}
     \zihao{4}
-    \begin{tabularx}{.6\textwidth}{>{\fangsong}l >{\fangsong}X<{\centering}}
+    \zihao{-4}
+    \begin{tabularx}{.8\textwidth}{>{\fangsong}l >{\fangsong}X<{\centering}}
         \ifthenelse{\equal{\BlindReview}{true}}%
         {%
-        Author：        & \uline{\hfill}                           \\
-        Supervisor：    & \uline{\hfill}                           \\
+        Author：        & \uline{\hfill Not described due to blind peer review. \hfill} \\
+        Supervisor：    & \uline{\hfill Not described due to blind peer review. \hfill} \\
         }
         {%
         Author：        & \uline{\hfill \StudentName \hfill}       \\
@@ -142,3 +144,4 @@
         Submitted Date & \uline{\SubmitDate}
     \end{tabularx}
 \end{center}
+\endgroup

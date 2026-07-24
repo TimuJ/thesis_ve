@@ -6,6 +6,7 @@
 \setcounter{page}{1}
 
 
-% \inputpage{acknowledgement}  % excluded for blind review
+% Acknowledgement identifies advisor/lab — included only outside blind review.
+\ifthenelse{\equal{\BlindReview}{false}}{\inputpage{acknowledgement}}{}
 \inputpage{abstract-eng}
 \inputpage{abstract-ch}
