@@ -13,6 +13,7 @@ after the capstone note (grid labels; the resolution-"collapse" resolution).
 | Spatial shifts 8/24, any stretch | ±0.003 dB — free | spatial h/w |
 | PI zone s=0.75 (t / h / w) | +0.01 / +0.02 / −0.03 — free | all sweeps |
 | Dilation t: s=1.25/1.5/2/3 | −0.12/−0.22/−0.25/−0.95 | udm10_gt |
+| **Extreme dilation t: s=5/10/20/50/125/250** | **−1.34/−1.03/−0.31/−1.57/−1.33/−1.56 — bounded, no collapse** | udm10_extreme |
 | Dilation h,w at s=3 | −2.55 / −2.30 | spatial h/w |
 | Compression s=0.5 (t / h / w) | −0.66 / −1.00 / −0.83 | all sweeps |
 | Continuous-PI identity validation | 53.4 dB = numerics floor | stretch_cont |

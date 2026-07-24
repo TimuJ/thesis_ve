@@ -1,6 +1,6 @@
 # Comprehensive RoPE Sensitivity in Time and Space — FlashVSR
 
-**Timur Iakshibaev · 2026-07-10 · answering the group's July-10 ask:**
+**Timur Iakshibaev · answering the group's ask:**
 *"characterise RoPE sensitivity separately in the spatial (h, w) and temporal
 dimensions, on real data, including direct resolution extrapolation."*
 
@@ -52,7 +52,11 @@ position 996 (≈ 50× beyond the trained window): +0.001 dB; spatial shifts
 Temporal caveat: under streaming, FlashVSR's attention span is ~8 latents,
 so relative distances stay inside the trained 21-latent range until s≈2.6 —
 the small s≤2 costs are *within-window* geometry effects; s=3 is the first
-genuinely out-of-window condition.
+genuinely out-of-window condition. §3.5 pushes this axis to s=250 (distance
+~2000, 100× the window): the temporal cost stays bounded (~−1.5 dB) and never
+collapses.
+
+![Time vs space sensitivity to position stretch](figures/sensitivity/time_vs_space_stretch.png)
 
 ### 3.2 Real resolution extrapolation (YouHQ40 ladder, actual grids)
 
@@ -104,14 +108,81 @@ extended table sustained a 5009-frame single pass at 11.6 GiB VRAM.
 identical output *change* (self-PSNR 31.8 both) but opposite GT verdicts
 (+0.01 vs −0.22 dB). Position-perturbation studies need real references.
 
+### 3.5 Extreme retrieval distance — "fetching frame 0 from frame 1000" (temporal)
+
+A group question from the team meeting: in the local streaming window, when a
+late frame retrieves an early one, we could re-base the early frame's position to a
+small value or keep its *true* index — so the relative distance between "frame
+1000" and "frame 0" is genuinely ~1000. Does the true, large distance cost
+quality? Two facts frame it before any measurement.
+
+**FlashVSR already uses the true index.** Its temporal RoPE index *is* the
+absolute latent index (`4+2i`) and never resets. What keeps relative distances
+small on a long stream is not re-basing but the **short KV cache** (~8-latent
+attention span, §3.1 caveat): a query at "frame 1000" never forms an attention
+edge to "frame 0" — that key was evicted hundreds of frames earlier. The
+distance-1000 pair is a *latent* danger, never realised at inference. (The
+re-based / window-local alternative is exactly SeedVR2's design so both options are shipping design choices, not a
+hypothetical.)
+
+**Isolating what the danger would cost.** We hold content fixed (a short clip
+whose frames are genuinely adjacent) and inflate only the position *label* by
+continuous stretch `s`; the in-window pair then sits at effective relative
+distance ≈ `8s`. Same instrument as the §3.1 dilation sweep, pushed to the
+extreme `s` the meeting asked about — so the two July questions (extreme
+stretch; true-vs-rebased index) collapse to one experiment.
+
+| stretch s | effective distance | vs trained window (~20) | PSNR (dB) | ΔPSNR |
+|---|---|---|---:|---:|
+| 1.0 (stock) | ~8 | in-window | 24.02 | — |
+| 2 | ~16 | window edge | 23.78 | −0.25 |
+| 5 | ~40 | 2× | 22.68 | −1.34 |
+| 10 | ~80 | 4× | 23.00 | −1.03 |
+| 20 | ~160 | 8× | 23.72 | −0.31 |
+| 50 | ~400 | 20× | 22.46 | −1.57 |
+| 125 | ~1000 | 50× — **"frame 0 from frame 1000"** | 22.69 | −1.33 |
+| 250 | ~2000 | 100× | 22.47 | −1.56 |
+
+*(DOVE-UDM10, 10 clips × 29 frames, temporal axis, continuous positions, vs
+real GT; content and compute identical across rows — only the position label
+changes. Baseline reproduces the established 24.02 dB exactly. The stock
+1024-row table is bypassed by the continuous row-builder, so s=250 →
+positions ~2000 runs with no table-extension crash.)*
+
+![Temporal retrieval-distance dose-response](figures/sensitivity/extreme_distance_temporal.png)
+
+Three reads:
+
+1. **The loss is bounded and saturates — no collapse.** Even at 50–100× the
+   trained window (distance ~1000–2000), quality sits at ~−1.3 to −1.6 dB,
+   barely worse than the −0.95 dB already seen at s=3 (§3.1). Temporal position
+   extrapolation degrades *gracefully* — the model loses fine relative-distance
+   information but does not blow up. This is the opposite of the spatial axes,
+   where s=3 *alone* costs −2.3 to −2.6 dB (§3.1): **time is far more forgiving
+   of extreme extrapolation than space.**
+2. **The curve is non-monotonic — RoPE frequency periodicity.** It is not a
+   clean ramp: s=20 recovers to −0.31 dB, between the ~−1.0 dB neighbours at
+   s=10 and s=50. Rotary phases are periodic (mod 2π), so certain large stretch
+   factors accidentally re-align the fast frequencies near trained-like
+   configurations. **"How far beyond the window" does not by itself set the
+   damage — *where the phases land* does** (the same "where, not how far" point
+   as the §5 symmetry argument, now at extreme scale).
+3. **The meeting's answer.** Using the true large index costs a *bounded*
+   ~1.3 dB at distance 1000 — a real but modest penalty, not a catastrophe —
+   and FlashVSR never even pays it, because its short cache prevents the far
+   edge from forming. The absolute-index + short-cache design is safe by
+   construction, which is also why long-video drift is not positional (§3.3).
+
 ## 4. Recommendations
 
 1. **For the window-extension study:** temporal extension to ~1.33×
    (21→28 latents) with continuous-PI positions is predicted RoPE-loss-free;
-   beyond ~2× expect growing geometry costs (the s≥3 regime). The validated
-   hook (continuous PI, per-axis, zero model modification) is ready for the
-   extended-window runs — comparing stock vs PI positions there isolates
-   RoPE's causal share directly.
+   beyond that, temporal geometry costs grow but stay **bounded and graceful**
+   — even 100× the window plateaus at ~−1.5 dB, never a collapse (§3.5), so
+   RoPE alone will not be the wall a temporal window-extension hits. The
+   validated hook (continuous PI, per-axis, zero model modification) is ready
+   for the extended-window runs — comparing stock vs PI positions there
+   isolates RoPE's causal share directly.
 2. **Do not apply spatial PI at ≤1.5× resolution extension** — stock
    extrapolation is cheaper.
 3. **Long-video and high-resolution improvement effort should not target
