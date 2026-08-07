@@ -114,28 +114,20 @@ from committed scripts and cached measurements.
 
 ## Next steps
 
-A five-phase plan takes the benchmark from validated prototype to
-publication-grade release:
+The benchmark work continues along three lines:
 
-1. **Scale the video set** from 5 to 15+ bases (staged toward 25+):
-   genuinely degraded, single-shot, minute-plus footage sourced under
-   degradation-stratified quotas (bitrate-starved modern uploads, analog-era
-   digitizations, low-light/sensor-noise, low-res broadcast archive) from
-   public archives and platforms — tripling the validation matrix to 180+
-   cells and giving the reliability gates real statistics.
-2. **Human anchoring:** a pairwise 2AFC study on real SR outputs and graded
-   corruptions, reporting LR-VCC-vs-human rank correlation with the VBench
-   dimensions as the baseline on identical pairs.
-3. **Sensitivity calibration and metric v6:** promote the corruption battery
+1. **Scale the video set (video sourcing under Teme):** take the long-video
+   footage Teme will send, run it through the benchmark's curation checks
+   (single-shot, minute-plus, genuinely degraded), and evaluate it with
+   LR-VCC; regenerate the corruption battery on the accepted bases,
+   extending the validation matrix from 60 toward 180+ cells and giving the
+   reliability gates real statistics.
+2. **Sensitivity calibration and metric v6:** promote the corruption battery
    from validator to calibration signal — fit each sub-metric's response
    parameters to a target severity-response curve, calibrating and
    validating on disjoint videos, with the sign-flip control families
    guarding against over-calibration; plus failure analysis of every
    non-clean matrix cell against the frozen v5 reference.
-4. **Leaderboard and audit expansion:** the SeedVR2 row (environment ready;
-   needs an 80 GB GPU), 1–2 current-generation diffusion SR methods, and
-   widening the metric-vs-metric audit (optical-flow consistency, FVD-family,
-   DOVE suite) through the same severity battery.
-5. **Publication and release:** consolidate metric, battery, human study,
-   leaderboard, and the SOTA audit into a paper (working target: CVPR 2027)
-   with a scripts-plus-source-links data release.
+3. **Human evaluation study:** pairwise 2AFC comparisons on real SR outputs
+   and graded corruptions, reporting LR-VCC-vs-human rank correlation with
+   the VBench dimensions as the baseline on identical pairs.
