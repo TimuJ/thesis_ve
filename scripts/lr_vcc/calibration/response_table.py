@@ -58,18 +58,23 @@ def _row(unit_name, clip, u):
         "a_std": statistics.pstdev(qs),
         "tof": tof_payload["tof"],
         "cov": tof_payload["mean_mask_coverage"],
-        "identity_fused": float(id_pv.get("fused", 0.0)),
-        "n_clips": int(id_pv.get("n_clips", 0)),
-        "n_clips_with_faces": int(id_pv.get("n_clips_with_faces", 0)),
+        "identity_fused": float(id_pv["fused"]),
+        "n_clips": int(id_pv["n_clips"]),
+        "n_clips_with_faces": int(id_pv["n_clips_with_faces"]),
         "dispersion": clip_score_dispersion(id_pv),
         "closeup_p50": u["closeup_map"].get(base if sev else clip),
         "hist_dist": float(hist_dist),
         "hist_n_frames": int(hist.get("n_frames", 0)),
         "slope_abs": float((slope.get("details") or {})["max_abs_slope"]),
+        # Asymmetric default is deliberate: mirrors evaluate_one_video's
+        # raw_e.get("reliability", 0.0) for sub-metric E exactly (Task 4
+        # reproduces it bit-exactly) — do not harmonise with anchor/clip below.
         "slope_rel": float(slope.get("reliability", 0.0)),
         "anchor_q14": _q14(anchor),
+        # mirrors evaluate_one_video's raw.get("reliability", 1.0) for D'.
         "anchor_rel": float(anchor.get("reliability", 1.0)),
         "clip_q14": _q14(traj),
+        # mirrors evaluate_one_video's raw.get("reliability", 1.0) for D''.
         "clip_rel": float(traj.get("reliability", 1.0)),
     }
 
