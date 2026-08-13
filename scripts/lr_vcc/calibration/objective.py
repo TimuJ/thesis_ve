@@ -46,11 +46,19 @@ def cell_loss(family, ladder, cfg=LOSS_CFG):
     exp = E.EXPECTATION[family]
     if exp == E.UNCONSTRAINED:
         return 0.0
-    r = response(ladder)
     if exp == E.RESPOND:
+        r = response(ladder)
         shortfall = max(0.0, cfg["r_target"] - r)
         return shortfall ** 2 + cfg["w_mono"] * monotonicity_violation(ladder)
-    excess = max(0.0, abs(r) - cfg["r_silent"])
+    # SILENT: score the worst excursion from baseline across all five ladder
+    # points, not just the endpoint difference. An endpoint-only read would
+    # score a control that swings wildly mid-ladder and returns to baseline
+    # (e.g. 0.80, 0.95, 0.60, 0.95, 0.79) as a perfect 0.0 — exactly the
+    # unwanted sensitivity this penalty exists to catch. This is a strict
+    # generalisation of the endpoint formula: identical whenever the extreme
+    # point is the 0p40 endpoint.
+    excursion = max(abs(ladder[s] - ladder["0p02"]) for s in E.SEVERITIES)
+    excess = max(0.0, excursion - cfg["r_silent"])
     return cfg["w_silence"] * excess ** 2
 
 
@@ -103,6 +111,11 @@ def guards_ok(realmodel_rows, params, bases=None):
         return False
     means = {m: mean(v.values()) for m, v in per_method.items()}
     if sorted(means, key=means.get, reverse=True) != list(GUARD_ORDER):
+        return False
+    # Fail closed rather than KeyError if a swept parameter vector makes one
+    # method low-confidence on a base the other method isn't — e.g. an
+    # uncovered video should reject the vector, not crash the fitting loop.
+    if set(per_method["mgld"]) != set(per_method["uav"]):
         return False
     videos = sorted(per_method["mgld"])
     return all(per_method["mgld"][v] > per_method["uav"][v] for v in videos)
