@@ -1,10 +1,9 @@
-import math
-
 import pytest
 
 from scripts.lr_vcc.calibration import recompose as R
 from scripts.lr_vcc.calibration import response_table as RT
 from scripts.lr_vcc.calibration import expectations as E
+from scripts.lr_vcc.color_stability import color_stability_score
 from scripts.lr_vcc.sweep_sensitivity import (
     PROD, artefact_units, compose_unit, realmodel_units,
 )
@@ -65,8 +64,18 @@ def test_beta_t_is_monotone_decreasing_in_tof(table):
 
 
 def test_beta_t_one_approximates_the_linear_v5_form(table):
-    """exp(-x) ~= 1 - x over the observed tOF range [0.04, 0.17]."""
-    for row in table["artefacts"][:40]:
+    """exp(-x) ~= 1 - x over the observed tOF range [0.0224, 0.1594].
+
+    Sampled a few rows per artefact family (not just the first 40 rows,
+    which — since the table is laid out as contiguous 25-row blocks, one per
+    family — would span only 2 of the 12 families).
+    """
+    by_unit = {}
+    for row in table["artefacts"]:
+        by_unit.setdefault(row["unit"], []).append(row)
+    sample = [row for rows in by_unit.values() for row in rows[:4]]
+    assert len({row["unit"] for row in sample}) == 12
+    for row in sample:
         lin = [s for n, s, _ in
                R.sub_metric_values(row, dict(R.PROD_PARAMS, beta_t=None))
                if n == "temporal"][0]
@@ -78,5 +87,35 @@ def test_beta_t_one_approximates_the_linear_v5_form(table):
 
 def test_low_confidence_flag(table):
     row = table["artefacts"][0]
+    # Assert the wiring, not the identity: composite's low_confidence must
+    # actually track low_confidence_floor, not just echo whatever expression
+    # was used to compute it (every row in the corpus has a reliability of
+    # exactly 1.0 somewhere, so a fixed floor of 0.2 is always False on both
+    # sides and would pass even if low_confidence were hardcoded False).
+    assert R.composite(row, dict(R.PROD_PARAMS,
+                                 low_confidence_floor=1.01))["low_confidence"] is True
+    assert R.composite(row, dict(R.PROD_PARAMS,
+                                 low_confidence_floor=0.0))["low_confidence"] is False
     out = R.composite(row, R.PROD_PARAMS)
     assert out["low_confidence"] == all(r < 0.2 for r in out["reliabilities"])
+
+
+def test_color_stability_reliability_matches_canonical_at_low_frame_count(table):
+    """Pins D's reliability against color_stability_score at a frame count
+    (120, below the 240 floor) where sharpness=0.02 and the default
+    sharpness=10.0 diverge — the bit-exactness gate can't catch a regression
+    to the wrong sharpness because every real row has hist_n_frames >> 240,
+    where both sharpness values round to a reliability of 1.0.
+    """
+    row = dict(table["artefacts"][0], hist_n_frames=120)
+    d_score, d_rel = [(s, r) for n, s, r in
+                      R.sub_metric_values(row, R.PROD_PARAMS)
+                      if n == "color_stability"][0]
+    ref = color_stability_score(
+        {"n_frames": 120, "mean_hist_dist": row["hist_dist"]},
+        alpha=R.PROD_PARAMS["alpha"])
+    assert abs(d_score - ref["score"]) < 1e-12
+    assert abs(d_rel - ref["reliability"]) < 1e-12
+    # Confirm this row actually exercises the divergent regime (reliability
+    # meaningfully below 1.0, unlike every real row in the corpus).
+    assert d_rel < 0.5

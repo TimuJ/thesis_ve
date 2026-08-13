@@ -1,11 +1,19 @@
 """(row, parameter vector) -> LR-VCC composite, as pure arithmetic.
 
 No disk access, no JSON, no video. This is what makes a five-fold search over
-a real parameter grid affordable: a full 315-row matrix recomposes in under a
-millisecond, against 2.7 s for the JSON-reading path in sweep_sensitivity.
+a real parameter grid affordable: a full 315-row matrix recomposes in a few
+milliseconds, against 2.7 s for the JSON-reading path in sweep_sensitivity.
 
 The bit-exactness test against run_lr_vcc.evaluate_one_video is what keeps
 this module honest. Any change here that breaks it is a bug here, not there.
+
+This module assumes each row is well-formed. The canonical sub-metric
+modules guard degenerate inputs (e.g. appearance_score returns (0.0, 0.0) on
+an empty clip_iqa list; color_stability_score returns (0.0, 0.0) when dist is
+None) — this module does not re-implement those guards and would diverge or
+raise on such a row. That's fine today because response_table.py raises on
+such inputs first, upstream of here; the next reader should know the guard
+lives there, not in this module.
 """
 import math
 
