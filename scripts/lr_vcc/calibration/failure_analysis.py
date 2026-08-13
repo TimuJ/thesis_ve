@@ -95,8 +95,27 @@ def attribute(rows_by_severity, family, params, conforming):
     return findings
 
 
+def _weight_drift_submetrics(rows_by_severity, params):
+    """Sub-metrics (canonical order) whose weight range across the ladder
+    exceeds _WEIGHT_DRIFT — a cell-level scan over every sub-metric, not
+    just the family's designed-for ones.
+
+    Weight reallocation across the severity ladder confounds the composite
+    regardless of whether the drifting sub-metric was built to respond to
+    this family, so restricting this scan to designed-for sub-metrics would
+    hide the confound precisely where it bites (e.g. identity's weight on
+    background_drift/BrRLKMbBTYQ, even though identity isn't designed-for
+    that family).
+    """
+    traces = _traces(rows_by_severity, params)
+    return [name for name in E.SUB_METRICS
+            if (max(traces[name]["weight"]) - min(traces[name]["weight"]))
+            > _WEIGHT_DRIFT]
+
+
 def analyse(rows, params):
-    """{(family, base): {"verdict", "delta", "conforms", "sub_metrics"}}."""
+    """{(family, base): {"verdict", "delta", "conforms", "sub_metrics",
+    "weight_drift_submetrics"}}."""
     by_cell = {}
     for row in rows:
         by_cell.setdefault((row["unit"], row["base"]), {})[row["severity"]] = row
@@ -111,5 +130,7 @@ def analyse(rows, params):
             "conforms": conforming,
             "sub_metrics": attribute(ladder_rows, family, params,
                                      conforming is True),
+            "weight_drift_submetrics": _weight_drift_submetrics(ladder_rows,
+                                                                 params),
         }
     return out

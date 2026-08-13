@@ -51,11 +51,14 @@ def test_every_cell_is_analysed(rows):
 
 
 def test_weight_drift_flag_fires_on_background_drift_brrlk(rows):
-    """I's weight moves 0.017 -> 0.176 across this ladder."""
+    """I's weight moves 0.017 -> 0.176 across this ladder, confounding the delta.
+
+    identity is not a designed-for sub-metric for background_drift, so the
+    confound only shows up in the cell-level scan.
+    """
     result = FA.analyse(rows, R.PROD_PARAMS)
     cell = result[("background_drift", "BrRLKMbBTYQ")]
-    drift = {d["sub_metric"]: d["weight_drift"] for d in cell["sub_metrics"]}
-    assert drift["identity"] is True
+    assert "identity" in cell["weight_drift_submetrics"]
 
 
 def test_assigned_stages_stay_inside_the_vocabulary(rows):
