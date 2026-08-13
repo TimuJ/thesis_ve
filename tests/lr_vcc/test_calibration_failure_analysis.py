@@ -61,6 +61,25 @@ def test_weight_drift_flag_fires_on_background_drift_brrlk(rows):
     assert "identity" in cell["weight_drift_submetrics"]
 
 
+def test_silence_broken_by_reports_mechanism_for_flip_elastic(rows):
+    """flip_elastic/mJog8DlRk_4 is non-conforming SILENT with no DESIGNED_FOR
+    entry, so sub_metrics is empty and the cell would otherwise carry no
+    explanation at all.
+    """
+    result = FA.analyse(rows, R.PROD_PARAMS)
+    cell = result[("flip_elastic", "mJog8DlRk_4")]
+    assert cell["conforms"] is False
+    assert cell["sub_metrics"] == []
+    assert cell["silence_broken_by"] != []
+
+
+def test_silence_broken_by_is_empty_for_a_conforming_silent_cell(rows):
+    result = FA.analyse(rows, R.PROD_PARAMS)
+    cell = result[("flip_horizontal", "7WHI2L_FDNg")]
+    assert cell["conforms"] is True
+    assert cell["silence_broken_by"] == []
+
+
 def test_assigned_stages_stay_inside_the_vocabulary(rows):
     """Coverage check: no cell gets a stage outside STAGES, and the two
     mechanisms the probes demonstrated both occur somewhere in the matrix."""

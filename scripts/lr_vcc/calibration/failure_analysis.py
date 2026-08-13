@@ -65,7 +65,7 @@ def attribute(rows_by_severity, family, params, conforming):
     for name in designed:
         t = traces[name]
         raw0, raw1 = t["raw"][0], t["raw"][-1]
-        rel_raw = abs(raw1 - raw0) / (abs(raw0) + _EPS)
+        rel_raw = abs(raw1 - raw0) / max(abs(raw0), abs(raw1), _EPS)
         delta_score = t["score"][-1] - t["score"][0]
         mean_w = sum(t["weight"]) / len(t["weight"])
         drift = (max(t["weight"]) - min(t["weight"])) > _WEIGHT_DRIFT
@@ -113,9 +113,29 @@ def _weight_drift_submetrics(rows_by_severity, params):
             > _WEIGHT_DRIFT]
 
 
+def _silence_broken_by(rows_by_severity, params):
+    """Sub-metrics (canonical order) whose score moved by more than
+    _SCORE_DEAD between the ladder's endpoints — the mechanism explanation
+    for a SILENT family that responded when it should not have.
+
+    STAGES describes signal being lost; a broken SILENT expectation is
+    signal appearing where none should, which does not fit that vocabulary
+    (and STAGES is closed — the tests pin it). Rather than stretch a stage
+    to cover it, this is reported as its own cell-level key, populated only
+    for non-conforming SILENT cells. Without it, a family with no
+    DESIGNED_FOR entry (true of all three SILENT families, since nothing is
+    supposed to fire on them) leaves `sub_metrics` empty and the cell would
+    carry no explanation at all — e.g. flip_elastic/mJog8DlRk_4.
+    """
+    traces = _traces(rows_by_severity, params)
+    return [name for name in E.SUB_METRICS
+            if abs(traces[name]["score"][-1] - traces[name]["score"][0])
+            > _SCORE_DEAD]
+
+
 def analyse(rows, params):
     """{(family, base): {"verdict", "delta", "conforms", "sub_metrics",
-    "weight_drift_submetrics"}}."""
+    "weight_drift_submetrics", "silence_broken_by"}}."""
     by_cell = {}
     for row in rows:
         by_cell.setdefault((row["unit"], row["base"]), {})[row["severity"]] = row
@@ -125,6 +145,8 @@ def analyse(rows, params):
         family, _base = key
         cell = scored[key]
         conforming = E.conforms(family, cell["verdict"])
+        broken_silence = (E.EXPECTATION.get(family) == E.SILENT and
+                          conforming is False)
         out[key] = {
             "verdict": cell["verdict"], "delta": cell["delta"],
             "conforms": conforming,
@@ -132,5 +154,7 @@ def analyse(rows, params):
                                      conforming is True),
             "weight_drift_submetrics": _weight_drift_submetrics(ladder_rows,
                                                                  params),
+            "silence_broken_by": (_silence_broken_by(ladder_rows, params)
+                                  if broken_silence else []),
         }
     return out
