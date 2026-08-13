@@ -66,6 +66,37 @@ def test_lobo_folds_are_disjoint(lobo_result):
         assert set(fold["train_bases"]) | {fold["held_out"]} == set(E.BASES)
 
 
+def test_loss_surface_is_deterministic_and_covers_the_declared_grids(table):
+    """The sensitivity deliverable (F3): one point per grid value, for
+    every searched parameter, and re-running it changes nothing.
+    """
+    surf1 = F.loss_surface(table["artefacts"], R.PROD_PARAMS, O.LOSS_CFG)
+    surf2 = F.loss_surface(table["artefacts"], R.PROD_PARAMS, O.LOSS_CFG)
+    assert surf1 == surf2
+    assert set(surf1) == set(F.SEARCH_ORDER) | set(F.GATE_ORDER)
+    for key, points in surf1.items():
+        grid = F.GRIDS[key] if key in F.GRIDS else F.GATE_GRIDS[key]
+        assert [p["value"] for p in points] == grid
+        assert all(p["loss"] >= 0 for p in points)
+
+
+def test_lobo_result_includes_loss_surfaces_at_the_final_params(lobo_result):
+    """lobo() stores the scan around final_params, not around PROD_PARAMS
+    or some other point — the point a reader will actually be looking at
+    in the 'Final parameters' table.
+    """
+    surfaces = lobo_result["loss_surfaces"]
+    final_params = lobo_result["final_params"]
+    for key, points in surfaces.items():
+        grid = F.GRIDS[key] if key in F.GRIDS else F.GATE_GRIDS[key]
+        chosen_index = grid.index(final_params[key])
+        # The loss recorded at the chosen value's own grid point must
+        # equal final_loss: everything else is held at final_params, and
+        # this point *is* final_params.
+        assert points[chosen_index]["loss"] == pytest.approx(
+            lobo_result["final_loss"])
+
+
 def test_lobo_heldout_matrix_has_one_column_per_fold(lobo_result):
     cells = lobo_result["heldout_matrix"]
     assert len(cells) == 60

@@ -2,6 +2,8 @@
 
 Each cell is scored against the expectation pre-registered for its family, not against a uniform PASS+WEAK rule. A control family predicted invisible conforms by being FLAT.
 
+Sign convention: **delta = −R = y(0.40) − y(0.02)** (mirrors `build_verdict_matrix`'s own convention; PASS is delta ≤ −0.05); a negative delta means the corruption lowered the score — the correct direction. `response_curves_v5.md` prints `R = −delta` instead — same quantity, opposite sign.
+
 | artefact | expectation | 7WHI2L_FDNg | BrRLKMbBTYQ | KZ8p6b1zJ9U | hhszUXL1Cu8 | mJog8DlRk_4 |
 |---|---|---|---|---|---|---|
 | background_drift | RESPOND | +0.002 FLAT ✗ | +0.054 INVERTED ✗ | -0.072 PASS ✓ | -0.201 PASS ✓ | +0.002 FLAT ✗ |

@@ -115,3 +115,25 @@ def test_guards_ok_fails_closed_on_asymmetric_low_confidence(monkeypatch):
 
     monkeypatch.setattr(O, "composite", fake_composite)
     assert O.guards_ok(rows, {}) is False
+
+
+def test_guards_ok_rejects_an_order_inverting_vector(monkeypatch):
+    """The `sorted(means) != GUARD_ORDER` branch is the only thing enforcing
+    "v6 may not buy matrix cells with the leaderboard" (GUARD_ORDER is
+    mgld > flashvsr > uav). The other guards_ok test above exercises the
+    asymmetric-coverage False case; this one exercises the order-inversion
+    False case, which was previously unexercised by any test.
+    """
+    rows = [
+        {"unit": "mgld", "base": "v1"}, {"unit": "mgld", "base": "v2"},
+        {"unit": "flashvsr", "base": "v1"}, {"unit": "flashvsr", "base": "v2"},
+        {"unit": "uav", "base": "v1"}, {"unit": "uav", "base": "v2"},
+    ]
+
+    def fake_composite(row, params):
+        # Inverted: uav > flashvsr > mgld — the opposite of GUARD_ORDER.
+        score = {"mgld": 0.4, "flashvsr": 0.6, "uav": 0.8}[row["unit"]]
+        return {"lr_vcc": score, "low_confidence": False}
+
+    monkeypatch.setattr(O, "composite", fake_composite)
+    assert O.guards_ok(rows, {}) is False

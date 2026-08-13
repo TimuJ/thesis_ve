@@ -97,6 +97,27 @@ def coordinate_search(art_rows, real_rows, bases, cfg=LOSS_CFG,
     return params, best
 
 
+def loss_surface(art_rows, params, cfg=LOSS_CFG):
+    """One-coordinate-at-a-time loss scan: the sensitivity deliverable.
+
+    Holds every parameter at its value in `params` except one, sweeps that
+    one over its declared grid, and records matrix_loss (all five bases) at
+    each point. Unlike the search itself this ignores the leaderboard
+    guards — it is reporting where the loss surface is flat or sharp, not
+    proposing a parameter vector to adopt. Returns
+    {param: [{"value": v, "loss": l}, ...]}.
+    """
+    surfaces = {}
+    for key in SEARCH_ORDER + GATE_ORDER:
+        grid = GRIDS[key] if key in GRIDS else GATE_GRIDS[key]
+        surfaces[key] = [
+            {"value": value,
+             "loss": matrix_loss(art_rows, dict(params, **{key: value}), cfg)}
+            for value in grid
+        ]
+    return surfaces
+
+
 def lobo(table, cfg=LOSS_CFG, passes=20):
     """Five folds. Each fold's parameters never saw its held-out base."""
     art, real = table["artefacts"], table["realmodels"]
@@ -125,7 +146,8 @@ def lobo(table, cfg=LOSS_CFG, passes=20):
     return {"folds": folds, "heldout_matrix": heldout,
             "insample_matrix": insample, "final_params": final_params,
             "final_loss": final_loss, "final_converged": final_converged,
-            "v5_loss": matrix_loss(art, PROD_PARAMS, cfg)}
+            "v5_loss": matrix_loss(art, PROD_PARAMS, cfg),
+            "loss_surfaces": loss_surface(art, final_params, cfg)}
 
 
 def _jsonable(matrix):

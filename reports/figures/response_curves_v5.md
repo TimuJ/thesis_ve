@@ -2,6 +2,8 @@
 
 All five ladder points. The v5 verdict protocol reads only the 0p02 and 0p40 endpoints; the intermediate severities were cached but unused.
 
+Sign convention: **R = y(0.02) − y(0.40)**; a positive R means the corruption lowered the score, the correct direction for a RESPOND family. `expectation_scored_matrix_v5.md` and the LOBO held-out matrix print `delta = −R` instead — the same quantity with the opposite sign.
+
 | artefact | base | 0p02 | 0p05 | 0p10 | 0p20 | 0p40 | R | monotone | verdict |
 |---|---|---|---|---|---|---|---|---|---|
 | background_drift | 7WHI2L_FDNg | 0.655 | 0.660 | 0.664 | 0.664 | 0.657 | -0.002 | no | FLAT |
