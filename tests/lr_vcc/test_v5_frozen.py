@@ -8,7 +8,7 @@ from scripts.lr_vcc.sweep_sensitivity import (
     PROD, artefact_units, compose_unit, realmodel_units,
 )
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 LRV = REPO / "results" / "lr_vcc"
 
 # The six flip families were composed with the current code path (dispersion
