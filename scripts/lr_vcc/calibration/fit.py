@@ -8,7 +8,6 @@ Usage (repo root):
   python -m scripts.lr_vcc.calibration.fit
 """
 import json
-from pathlib import Path
 
 from . import expectations as E
 from .objective import LOSS_CFG, guards_ok, matrix_loss, matrix_scores
@@ -34,7 +33,11 @@ GRIDS = {
     "tau": logspace(0.05, 5.0, 11),
 }
 
-# Gate thresholds, searched in a second pass with response parameters fixed.
+# Gate thresholds. NOT searched in a separate second pass: SEARCH_ORDER and
+# GATE_ORDER are swept inside the same per-pass loop below (one coordinate at
+# a time, response parameters first, then gates), and every subsequent pass
+# revisits both groups again. A gate move late in one pass can reopen room
+# for a response parameter that had already settled earlier in that pass.
 GATE_GRIDS = {
     "a_drift_floor": [0.0, 0.01, 0.02, 0.05, 0.10],
     "a_sat_ceiling": [0.90, 0.95, 0.98, 1.0],
@@ -56,17 +59,23 @@ def _evaluate(art_rows, real_rows, bases, cfg, params):
     return matrix_loss(art_rows, params, cfg, bases=bases)
 
 
-def coordinate_search(art_rows, real_rows, bases, cfg=LOSS_CFG,
-                      start=PROD_PARAMS, passes=3):
-    """Minimise the loss one parameter at a time. Returns (params, loss)."""
+def _search(art_rows, real_rows, bases, cfg, start, passes):
+    """The coordinate descent itself. Returns (params, loss, converged).
+
+    converged is True when a pass completed with zero improving moves (a
+    local optimum under these grids) and False when the pass budget ran out
+    while a move was still improving things — i.e. the result is cap-limited
+    by `passes`, not necessarily a local optimum.
+    """
     params = dict(start)
     best = _evaluate(art_rows, real_rows, bases, cfg, params)
     if best is None:
         raise ValueError("starting parameters violate the leaderboard guards")
+    converged = False
     for _ in range(passes):
         improved = False
         for key in SEARCH_ORDER + GATE_ORDER:
-            grid = GRIDS.get(key) or GATE_GRIDS[key]
+            grid = GRIDS[key] if key in GRIDS else GATE_GRIDS[key]
             for value in grid:
                 if value == params[key]:
                     continue
@@ -75,7 +84,16 @@ def coordinate_search(art_rows, real_rows, bases, cfg=LOSS_CFG,
                 if loss is not None and loss < best - 1e-12:
                     params, best, improved = trial, loss, True
         if not improved:
+            converged = True
             break
+    return params, best, converged
+
+
+def coordinate_search(art_rows, real_rows, bases, cfg=LOSS_CFG,
+                      start=PROD_PARAMS, passes=3):
+    """Minimise the loss one parameter at a time. Returns (params, loss)."""
+    params, best, _converged = _search(art_rows, real_rows, bases, cfg,
+                                       start, passes)
     return params, best
 
 
@@ -85,21 +103,28 @@ def lobo(table, cfg=LOSS_CFG, passes=3):
     folds, heldout = [], {}
     for held in E.BASES:
         train = tuple(b for b in E.BASES if b != held)
-        params, train_loss = coordinate_search(art, real, train, cfg,
-                                               PROD_PARAMS, passes)
+        params, train_loss, converged = _search(art, real, train, cfg,
+                                                 PROD_PARAMS, passes)
         test_loss = matrix_loss(art, params, cfg, bases=(held,))
+        # Paired baseline: v5 scored on exactly the same held-out base, so
+        # the headline comparison is like-for-like rather than a one-base
+        # v6 number against a five-base v5 number (base difficulty here is
+        # heterogeneous enough that the unpaired comparison is meaningless).
+        v5_test_loss = matrix_loss(art, PROD_PARAMS, cfg, bases=(held,))
         for key, cell in matrix_scores(art, params, bases=(held,)).items():
             heldout[key] = dict(cell, fitted_without=held)
         folds.append({"held_out": held, "train_bases": list(train),
                       "params": params, "train_loss": train_loss,
-                      "test_loss": test_loss})
-    final_params, final_loss = coordinate_search(art, real, E.BASES, cfg,
-                                                 PROD_PARAMS, passes)
+                      "test_loss": test_loss, "v5_test_loss": v5_test_loss,
+                      "converged": converged})
+    final_params, final_loss, final_converged = _search(art, real, E.BASES,
+                                                        cfg, PROD_PARAMS,
+                                                        passes)
     insample = {k: dict(v) for k, v in
                 matrix_scores(art, final_params).items()}
     return {"folds": folds, "heldout_matrix": heldout,
             "insample_matrix": insample, "final_params": final_params,
-            "final_loss": final_loss,
+            "final_loss": final_loss, "final_converged": final_converged,
             "v5_loss": matrix_loss(art, PROD_PARAMS, cfg)}
 
 
@@ -114,9 +139,22 @@ if __name__ == "__main__":
     out = dict(result,
                heldout_matrix=_jsonable(result["heldout_matrix"]),
                insample_matrix=_jsonable(result["insample_matrix"]))
-    json.dump(out, open(FIT_DIR / "lobo_result.json", "w"), indent=2)
+    with open(FIT_DIR / "lobo_result.json", "w", encoding="utf-8") as fh:
+        json.dump(out, fh, indent=2)
     print("v5 loss           {:.6f}".format(result["v5_loss"]))
-    print("v6 in-sample loss {:.6f}".format(result["final_loss"]))
+    print("v6 in-sample loss {:.6f}  (converged={})".format(
+        result["final_loss"], result["final_converged"]))
+    print()
+    print("paired per-fold comparison (v6 fit without the held-out base, "
+         "vs v5 scored on that same held-out base):")
+    beats = 0
     for f in result["folds"]:
-        print("fold {:14s} train {:.6f}  held-out {:.6f}".format(
-            f["held_out"], f["train_loss"], f["test_loss"]))
+        delta = f["v5_test_loss"] - f["test_loss"]
+        if delta > 0:
+            beats += 1
+        print("fold {:14s} train {:.6f}  v6 held-out {:.6f}  "
+             "v5 same-base {:.6f}  delta(v5-v6) {:+.6f}  converged {}".format(
+                 f["held_out"], f["train_loss"], f["test_loss"],
+                 f["v5_test_loss"], delta, f["converged"]))
+    print("v6 beats v5 on {}/{} folds (paired, like-for-like)".format(
+        beats, len(result["folds"])))

@@ -40,6 +40,11 @@ def test_coordinate_search_does_not_increase_loss(table):
                                        bases, O.LOSS_CFG, R.PROD_PARAMS,
                                        passes=1)
     assert loss <= start_loss + 1e-12
+    # Load-bearing: the returned loss must actually be the loss of the
+    # returned params, not just some value <= start_loss. A stub returning
+    # (PROD_PARAMS, 0.0) would satisfy the assertion above but fail this one.
+    assert loss == pytest.approx(O.matrix_loss(table["artefacts"], params,
+                                               O.LOSS_CFG, bases=bases))
     assert O.guards_ok(table["realmodels"], params, bases=bases) is True
 
 
@@ -66,3 +71,59 @@ def test_lobo_heldout_matrix_has_one_column_per_fold(lobo_result):
     assert len(cells) == 60
     for (_family, base), cell in cells.items():
         assert cell["fitted_without"] == base
+
+
+def test_fitting_never_receives_its_own_held_out_base(monkeypatch, table):
+    """Give the disjointness claim teeth.
+
+    test_lobo_folds_are_disjoint only reads the labels fit.py itself writes
+    (fold["held_out"], fold["train_bases"]) — both come from the same local
+    `train` variable the implementation controls. An implementation that
+    secretly fit every fold on all five bases while still recording
+    "train_bases": list(train) would pass every assertion there. This test
+    instead intercepts every guards_ok / matrix_loss call made while a fold
+    is actually being fit and checks the REAL `bases` argument each one
+    received, not a label.
+
+    Patches fit._search rather than the public coordinate_search: lobo()
+    calls _search directly (to also recover the convergence flag), so
+    _search is the actual fitting entry point whose calls need bracketing.
+    """
+    calls = []
+    real_search = F._search
+    real_guards_ok = F.guards_ok
+    real_matrix_loss = F.matrix_loss
+    active = []
+
+    def spy_search(art_rows, real_rows, bases, cfg, start, passes):
+        active.append(tuple(bases))
+        try:
+            return real_search(art_rows, real_rows, bases, cfg, start, passes)
+        finally:
+            active.pop()
+
+    def spy_guards_ok(real_rows, params, bases=None):
+        if active:
+            calls.append(("guards_ok", active[-1], bases))
+        return real_guards_ok(real_rows, params, bases=bases)
+
+    def spy_matrix_loss(rows, params, cfg=O.LOSS_CFG, bases=None):
+        if active:
+            calls.append(("matrix_loss", active[-1], bases))
+        return real_matrix_loss(rows, params, cfg, bases=bases)
+
+    monkeypatch.setattr(F, "_search", spy_search)
+    monkeypatch.setattr(F, "guards_ok", spy_guards_ok)
+    monkeypatch.setattr(F, "matrix_loss", spy_matrix_loss)
+
+    F.lobo(table, O.LOSS_CFG, passes=1)
+
+    # Fold-time calls are the ones made while a 4-base (not the full 5-base
+    # final refit) search is active.
+    fold_time_calls = [(fn, expected, actual) for fn, expected, actual in calls
+                       if len(expected) == 4]
+    assert fold_time_calls, "expected fitting-time calls to be recorded"
+    for fn, expected_bases, actual_bases in fold_time_calls:
+        held = (set(E.BASES) - set(expected_bases)).pop()
+        assert actual_bases == expected_bases, (fn, expected_bases, actual_bases)
+        assert held not in actual_bases, (fn, held, actual_bases)
