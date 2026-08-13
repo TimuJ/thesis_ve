@@ -23,11 +23,11 @@ def test_conforms_rules():
     # RESPOND wants a downward move; SILENT wants no move.
     assert E.conforms("flicker", "PASS")
     assert E.conforms("flicker", "WEAK")
-    assert not E.conforms("flicker", "FLAT")
-    assert not E.conforms("flicker", "INVERTED")
+    assert E.conforms("flicker", "FLAT") is False
+    assert E.conforms("flicker", "INVERTED") is False
     assert E.conforms("flip_horizontal", "FLAT")
-    assert not E.conforms("flip_horizontal", "WEAK")
-    assert not E.conforms("flip_horizontal", "INVERTED")
+    assert E.conforms("flip_horizontal", "WEAK") is False
+    assert E.conforms("flip_horizontal", "INVERTED") is False
     # UNCONSTRAINED never counts either way.
     assert E.conforms("flip_transpose", "FLAT") is None
     assert E.conforms("flip_transpose", "PASS") is None
