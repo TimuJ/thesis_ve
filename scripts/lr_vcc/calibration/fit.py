@@ -59,7 +59,7 @@ def _evaluate(art_rows, real_rows, bases, cfg, params):
     return matrix_loss(art_rows, params, cfg, bases=bases)
 
 
-def _search(art_rows, real_rows, bases, cfg, start, passes):
+def _search(art_rows, real_rows, bases, cfg, start, passes=20):
     """The coordinate descent itself. Returns (params, loss, converged).
 
     converged is True when a pass completed with zero improving moves (a
@@ -90,14 +90,14 @@ def _search(art_rows, real_rows, bases, cfg, start, passes):
 
 
 def coordinate_search(art_rows, real_rows, bases, cfg=LOSS_CFG,
-                      start=PROD_PARAMS, passes=3):
+                      start=PROD_PARAMS, passes=20):
     """Minimise the loss one parameter at a time. Returns (params, loss)."""
     params, best, _converged = _search(art_rows, real_rows, bases, cfg,
                                        start, passes)
     return params, best
 
 
-def lobo(table, cfg=LOSS_CFG, passes=3):
+def lobo(table, cfg=LOSS_CFG, passes=20):
     """Five folds. Each fold's parameters never saw its held-out base."""
     art, real = table["artefacts"], table["realmodels"]
     folds, heldout = [], {}
