@@ -232,11 +232,10 @@ def write_lobo_report(result, out=FIG / "calibration_v6_lobo.md"):
 
     beta_t_final = result["final_params"].get("beta_t")
     if beta_t_final is not None:
-        lines += ["`beta_t=None` — sub-metric T's original linear response — "
-                  "was in the search grid and was **not** chosen; the refit "
-                  "on all five bases lands on beta_t≈{:.2f} (T's exponential "
-                  "form). The new lever earned its place rather than the "
-                  "fit declining it and falling back to v5's form."
+        lines += ["`beta_t=None` — sub-metric T's original linear form — was "
+                  "present in the search grid and was not selected; the fit "
+                  "chose beta_t≈{:.2f} instead. The new response parameter "
+                  "was therefore adopted on the evidence, not imposed."
                   .format(beta_t_final), ""]
 
     lines += ["## Summary", "",

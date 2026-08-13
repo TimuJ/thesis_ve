@@ -2,7 +2,7 @@
 
 Every fold's coordinate search is warm-started from `PROD_PARAMS` — v5's parameter vector, which was itself chosen with all five base videos in view. This is not a data leak: each fold's loss and leaderboard guards are strictly restricted to its four training bases, and the held-out base never enters the search that produces that fold's parameters. But the fold results are honest *conditional on* that starting point, not on a blank slate — a cold start could in principle land somewhere else. Targets: R_target=0.1, R_silent=0.02, w_mono=1.0, w_silence=3.0.
 
-`beta_t=None` — sub-metric T's original linear response — was in the search grid and was **not** chosen; the refit on all five bases lands on beta_t≈33.81 (T's exponential form). The new lever earned its place rather than the fit declining it and falling back to v5's form.
+`beta_t=None` — sub-metric T's original linear form — was present in the search grid and was not selected; the fit chose beta_t≈33.81 instead. The new response parameter was therefore adopted on the evidence, not imposed.
 
 ## Summary
 
