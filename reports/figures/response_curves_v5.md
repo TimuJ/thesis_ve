@@ -1,0 +1,68 @@
+# LR-VCC v5 — severity-response curves
+
+All five ladder points. The v5 verdict protocol reads only the 0p02 and 0p40 endpoints; the intermediate severities were cached but unused.
+
+Sign convention: **R = y(0.02) − y(0.40)**; a positive R means the corruption lowered the score, the correct direction for a RESPOND family. `expectation_scored_matrix_v5.md` and the LOBO held-out matrix print `delta = −R` instead — the same quantity with the opposite sign.
+
+| artefact | base | 0p02 | 0p05 | 0p10 | 0p20 | 0p40 | R | monotone | verdict |
+|---|---|---|---|---|---|---|---|---|---|
+| background_drift | 7WHI2L_FDNg | 0.655 | 0.660 | 0.664 | 0.664 | 0.657 | -0.002 | no | FLAT |
+| background_drift | BrRLKMbBTYQ | 0.412 | 0.424 | 0.458 | 0.434 | 0.466 | -0.054 | no | INVERTED |
+| background_drift | KZ8p6b1zJ9U | 0.726 | 0.725 | 0.699 | 0.689 | 0.654 | +0.072 | yes | PASS |
+| background_drift | hhszUXL1Cu8 | 0.580 | 0.582 | 0.562 | 0.485 | 0.379 | +0.201 | no | PASS |
+| background_drift | mJog8DlRk_4 | 0.581 | 0.577 | 0.595 | 0.569 | 0.583 | -0.002 | no | FLAT |
+| chunk_boundary | 7WHI2L_FDNg | 0.653 | 0.647 | 0.636 | 0.623 | 0.579 | +0.074 | yes | PASS |
+| chunk_boundary | BrRLKMbBTYQ | 0.401 | 0.390 | 0.382 | 0.430 | 0.506 | -0.105 | no | INVERTED |
+| chunk_boundary | KZ8p6b1zJ9U | 0.721 | 0.724 | 0.712 | 0.676 | 0.623 | +0.098 | no | PASS |
+| chunk_boundary | hhszUXL1Cu8 | 0.523 | 0.508 | 0.501 | 0.465 | 0.414 | +0.109 | yes | PASS |
+| chunk_boundary | mJog8DlRk_4 | 0.582 | 0.552 | 0.575 | 0.557 | 0.540 | +0.042 | no | WEAK |
+| color_drift | 7WHI2L_FDNg | 0.651 | 0.650 | 0.610 | 0.568 | 0.542 | +0.108 | yes | PASS |
+| color_drift | BrRLKMbBTYQ | 0.410 | 0.411 | 0.399 | 0.375 | 0.355 | +0.055 | no | PASS |
+| color_drift | KZ8p6b1zJ9U | 0.729 | 0.731 | 0.716 | 0.655 | 0.579 | +0.150 | no | PASS |
+| color_drift | hhszUXL1Cu8 | 0.544 | 0.540 | 0.533 | 0.512 | 0.496 | +0.048 | yes | WEAK |
+| color_drift | mJog8DlRk_4 | 0.560 | 0.563 | 0.584 | 0.514 | 0.449 | +0.111 | no | PASS |
+| flicker | 7WHI2L_FDNg | 0.656 | 0.654 | 0.654 | 0.653 | 0.655 | +0.001 | no | FLAT |
+| flicker | BrRLKMbBTYQ | 0.407 | 0.407 | 0.406 | 0.417 | 0.465 | -0.059 | no | INVERTED |
+| flicker | KZ8p6b1zJ9U | 0.741 | 0.730 | 0.729 | 0.716 | 0.711 | +0.030 | yes | WEAK |
+| flicker | hhszUXL1Cu8 | 0.575 | 0.576 | 0.576 | 0.577 | 0.585 | -0.010 | no | FLAT |
+| flicker | mJog8DlRk_4 | 0.568 | 0.565 | 0.561 | 0.564 | 0.569 | -0.001 | no | FLAT |
+| flip_channel_shuffle | 7WHI2L_FDNg | 0.658 | 0.663 | 0.654 | 0.611 | 0.633 | +0.025 | no | WEAK |
+| flip_channel_shuffle | BrRLKMbBTYQ | 0.399 | 0.388 | 0.372 | 0.347 | 0.319 | +0.080 | yes | PASS |
+| flip_channel_shuffle | KZ8p6b1zJ9U | 0.727 | 0.729 | 0.716 | 0.574 | 0.422 | +0.305 | no | PASS |
+| flip_channel_shuffle | hhszUXL1Cu8 | 0.581 | 0.574 | 0.558 | 0.508 | 0.585 | -0.003 | no | FLAT |
+| flip_channel_shuffle | mJog8DlRk_4 | 0.559 | 0.571 | 0.569 | 0.540 | 0.501 | +0.058 | no | PASS |
+| flip_elastic | 7WHI2L_FDNg | 0.653 | 0.651 | 0.643 | 0.640 | 0.651 | +0.002 | no | FLAT |
+| flip_elastic | BrRLKMbBTYQ | 0.406 | 0.405 | 0.406 | 0.404 | 0.406 | -0.000 | no | FLAT |
+| flip_elastic | KZ8p6b1zJ9U | 0.730 | 0.728 | 0.734 | 0.732 | 0.728 | +0.002 | no | FLAT |
+| flip_elastic | hhszUXL1Cu8 | 0.575 | 0.579 | 0.576 | 0.576 | 0.582 | -0.007 | no | FLAT |
+| flip_elastic | mJog8DlRk_4 | 0.558 | 0.552 | 0.554 | 0.547 | 0.536 | +0.022 | no | WEAK |
+| flip_horizontal | 7WHI2L_FDNg | 0.649 | 0.640 | 0.633 | 0.597 | 0.665 | -0.016 | no | FLAT |
+| flip_horizontal | BrRLKMbBTYQ | 0.403 | 0.399 | 0.399 | 0.400 | 0.408 | -0.005 | no | FLAT |
+| flip_horizontal | KZ8p6b1zJ9U | 0.730 | 0.740 | 0.732 | 0.668 | 0.730 | +0.000 | no | FLAT |
+| flip_horizontal | hhszUXL1Cu8 | 0.581 | 0.587 | 0.575 | 0.521 | 0.571 | +0.009 | no | FLAT |
+| flip_horizontal | mJog8DlRk_4 | 0.567 | 0.566 | 0.546 | 0.522 | 0.550 | +0.017 | no | FLAT |
+| flip_invert | 7WHI2L_FDNg | 0.651 | 0.643 | 0.616 | 0.466 | 0.504 | +0.147 | no | PASS |
+| flip_invert | BrRLKMbBTYQ | 0.453 | 0.545 | 0.590 | 0.519 | 0.230 | +0.224 | no | PASS |
+| flip_invert | KZ8p6b1zJ9U | 0.746 | 0.741 | 0.724 | 0.467 | 0.398 | +0.348 | yes | PASS |
+| flip_invert | hhszUXL1Cu8 | 0.436 | 0.296 | 0.169 | 0.044 | 0.045 | +0.391 | no | PASS |
+| flip_invert | mJog8DlRk_4 | 0.579 | 0.596 | 0.581 | 0.537 | 0.511 | +0.069 | no | PASS |
+| flip_periodic | 7WHI2L_FDNg | 0.651 | 0.647 | 0.647 | 0.633 | 0.643 | +0.009 | no | FLAT |
+| flip_periodic | BrRLKMbBTYQ | 0.404 | 0.403 | 0.403 | 0.403 | 0.389 | +0.015 | no | FLAT |
+| flip_periodic | KZ8p6b1zJ9U | 0.722 | 0.725 | 0.712 | 0.702 | 0.725 | -0.003 | no | FLAT |
+| flip_periodic | hhszUXL1Cu8 | 0.578 | 0.577 | 0.571 | 0.560 | 0.560 | +0.018 | yes | FLAT |
+| flip_periodic | mJog8DlRk_4 | 0.570 | 0.573 | 0.558 | 0.545 | 0.563 | +0.007 | no | FLAT |
+| flip_transpose | 7WHI2L_FDNg | 0.645 | 0.641 | 0.629 | 0.598 | 0.657 | -0.012 | no | FLAT |
+| flip_transpose | BrRLKMbBTYQ | 0.403 | 0.399 | 0.402 | 0.403 | 0.404 | -0.000 | no | FLAT |
+| flip_transpose | KZ8p6b1zJ9U | 0.735 | 0.731 | 0.716 | 0.681 | 0.683 | +0.052 | no | PASS |
+| flip_transpose | hhszUXL1Cu8 | 0.584 | 0.580 | 0.563 | 0.525 | 0.529 | +0.055 | no | PASS |
+| flip_transpose | mJog8DlRk_4 | 0.559 | 0.559 | 0.531 | 0.523 | 0.528 | +0.031 | no | WEAK |
+| identity_degradation | 7WHI2L_FDNg | 0.654 | 0.653 | 0.652 | 0.653 | 0.683 | -0.029 | no | INVERTED |
+| identity_degradation | BrRLKMbBTYQ | 0.408 | 0.407 | 0.410 | 0.407 | 0.408 | -0.000 | no | FLAT |
+| identity_degradation | KZ8p6b1zJ9U | 0.739 | 0.727 | 0.727 | 0.719 | 0.709 | +0.030 | no | WEAK |
+| identity_degradation | hhszUXL1Cu8 | 0.579 | 0.576 | 0.569 | 0.566 | 0.526 | +0.053 | yes | PASS |
+| identity_degradation | mJog8DlRk_4 | 0.566 | 0.560 | 0.580 | 0.569 | 0.579 | -0.013 | no | FLAT |
+| identity_drift | 7WHI2L_FDNg | 0.653 | 0.657 | 0.656 | 0.657 | 0.652 | +0.001 | no | FLAT |
+| identity_drift | BrRLKMbBTYQ | 0.407 | 0.406 | 0.407 | 0.407 | 0.407 | +0.000 | no | FLAT |
+| identity_drift | KZ8p6b1zJ9U | 0.737 | 0.731 | 0.727 | 0.726 | 0.712 | +0.025 | yes | WEAK |
+| identity_drift | hhszUXL1Cu8 | 0.579 | 0.579 | 0.576 | 0.566 | 0.510 | +0.069 | no | PASS |
+| identity_drift | mJog8DlRk_4 | 0.560 | 0.560 | 0.575 | 0.561 | 0.556 | +0.003 | no | FLAT |

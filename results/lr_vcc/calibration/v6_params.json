@@ -1,0 +1,23 @@
+{
+  "v5_loss": 0.026883611007539884,
+  "final_loss": 0.01158830167071562,
+  "final_converged": true,
+  "final_params": {
+    "lambda_a": 2.0,
+    "beta_t": 33.81216689031207,
+    "alpha": 0.5832580674880615,
+    "beta_e": 200.0,
+    "beta_dp": 0.7071067811865476,
+    "beta_dpp": 8.783667340657066,
+    "tau": 1.2559432157547898,
+    "a_drift_floor": 0.0,
+    "a_sat_ceiling": 0.98,
+    "mask_cov_floor": 0.0,
+    "face_rate_floor": 0.2,
+    "closeup_threshold": 0.05,
+    "temporal_weight": "uniform",
+    "hist_min_frames": 240,
+    "low_confidence_floor": 0.2,
+    "eps": 1e-06
+  }
+}
