@@ -23,6 +23,7 @@ echo "generation + battery done — starting VBench consistency runs"
 
 cd "$VB"
 export PYTHONPATH=$VB:${PYTHONPATH:-}
+export HF_ENDPOINT=https://hf-mirror.com   # huggingface.co is blocked/throttled from this host
 GPU=0
 for fam in $FAMILIES; do
   SRCDIR=$H/results/synthetic_artefacts/$fam

@@ -88,9 +88,9 @@ For each searched parameter, every other parameter is held at its `final_params`
 | beta_dpp | 8.78367 | 0.011588 | 8.78367 (0.011588) | 30 (0.015040) | 0.003452 |
 | mask_cov_floor | 0 | 0.011588 | 0 (0.011588) | 0.2 (0.014034) | 0.002445 |
 | a_drift_floor | 0 | 0.011588 | 0 (0.011588) | 0.1 (0.011759) | 0.000171 |
-| a_sat_ceiling | 0.98 | 0.011588 | 0.9 (0.011588) | 0.9 (0.011588) | 0.000000 |
+| a_sat_ceiling | 0.98 | 0.011588 | flat across grid | flat across grid | 0.000000 |
 | face_rate_floor | 0.2 | 0.011588 | 0.2 (0.011588) | 0 (0.011717) | 0.000129 |
-| closeup_threshold | 0.05 | 0.011588 | 0.02 (0.011588) | 0.02 (0.011588) | 0.000000 |
+| closeup_threshold | 0.05 | 0.011588 | flat across grid | flat across grid | 0.000000 |
 
 - **flat** (worst point on the grid raises the loss by less than 5% of the chosen value's loss — not constrained by this data at n=5): a_drift_floor, a_sat_ceiling, face_rate_floor, closeup_threshold.
 - **sharp** (worst point raises the loss by more than 50%): tau, beta_t, lambda_a, beta_dp.

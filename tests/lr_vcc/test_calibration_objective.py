@@ -123,6 +123,13 @@ def test_guards_ok_rejects_an_order_inverting_vector(monkeypatch):
     mgld > flashvsr > uav). The other guards_ok test above exercises the
     asymmetric-coverage False case; this one exercises the order-inversion
     False case, which was previously unexercised by any test.
+
+    The scores below are chosen so the order branch is the ONLY thing that
+    rejects them: flashvsr outranks mgld on the mean (breaking GUARD_ORDER)
+    while mgld still beats uav on every video, so the per-video check at the
+    end of guards_ok would pass. Deleting the order branch makes this test
+    fail — which is what makes it a real guard rather than a restatement of
+    the per-video check.
     """
     rows = [
         {"unit": "mgld", "base": "v1"}, {"unit": "mgld", "base": "v2"},
@@ -131,8 +138,9 @@ def test_guards_ok_rejects_an_order_inverting_vector(monkeypatch):
     ]
 
     def fake_composite(row, params):
-        # Inverted: uav > flashvsr > mgld — the opposite of GUARD_ORDER.
-        score = {"mgld": 0.4, "flashvsr": 0.6, "uav": 0.8}[row["unit"]]
+        # flashvsr > mgld > uav — GUARD_ORDER wants mgld first, but mgld
+        # still beats uav per video, isolating the order branch.
+        score = {"mgld": 0.6, "flashvsr": 0.8, "uav": 0.4}[row["unit"]]
         return {"lr_vcc": score, "low_confidence": False}
 
     monkeypatch.setattr(O, "composite", fake_composite)

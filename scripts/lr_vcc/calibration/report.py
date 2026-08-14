@@ -438,10 +438,17 @@ def write_lobo_report(result, table, out=FIG / "calibration_v6_lobo.md"):
         worst = max(points, key=lambda p: p["loss"])
         spread = worst["loss"] - final_loss
         spread_ratio[key] = spread / final_loss if final_loss else 0.0
-        lines.append("| {} | {} | {:.6f} | {} ({:.6f}) | {} ({:.6f}) | "
-                     "{:.6f} |".format(
-            key, _fmt(chosen_val), final_loss, _fmt(best["value"]),
-            best["loss"], _fmt(worst["value"]), worst["loss"], spread))
+        if worst["loss"] - best["loss"] <= 0.0:
+            # Every point on the grid gives the same loss, so min()/max()
+            # both return the first one — printing it as "best" and "worst"
+            # reads as though the fit missed the optimum. It did not: there
+            # is no optimum to miss.
+            best_cell = worst_cell = "flat across grid"
+        else:
+            best_cell = "{} ({:.6f})".format(_fmt(best["value"]), best["loss"])
+            worst_cell = "{} ({:.6f})".format(_fmt(worst["value"]), worst["loss"])
+        lines.append("| {} | {} | {:.6f} | {} | {} | {:.6f} |".format(
+            key, _fmt(chosen_val), final_loss, best_cell, worst_cell, spread))
 
     flat = [k for k in ALL_PARAM_KEYS if spread_ratio[k] < 0.05]
     sharp = [k for k in ALL_PARAM_KEYS if spread_ratio[k] > 0.5]
@@ -508,10 +515,14 @@ def write_lobo_report(result, table, out=FIG / "calibration_v6_lobo.md"):
             ("v6 held-out", held_conf, held_total_conf, held_total_cells),
             ("v6 in-sample", insample_conf, insample_total_conf,
              insample_total_cells)):
-        lines.append("| {} | {}/{} | {}/{} | {}/{} | {}/60 |".format(
+        # The uniform rule scores every cell, including the unconstrained
+        # ones the as-designed count excludes — so its denominator is the
+        # full matrix, computed rather than assumed.
+        uniform_total = c["respond_total"] + c["silent_total"] + c["unconstrained"]
+        lines.append("| {} | {}/{} | {}/{} | {}/{} | {}/{} |".format(
             label, c["respond_conforming"], c["respond_total"],
             c["silent_conforming"], c["silent_total"], tc, tt,
-            c["uniform_clean"]))
+            c["uniform_clean"], uniform_total))
 
     lines += ["",
               "- **the as-designed count is unchanged at the verdict "
