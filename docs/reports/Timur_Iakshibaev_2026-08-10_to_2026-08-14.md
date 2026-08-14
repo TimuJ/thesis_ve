@@ -140,10 +140,47 @@ report is regenerated from that table rather than transcribed.
 
 ## Next
 
-The blocking dependency is the video set — every limitation above is a sample-size
-limitation. When the additional long-video footage lands, the same code re-runs unchanged
-on a larger, stratified set, and the calibration/validation split stops being five folds
-over five videos. The structural failures are independent of that and can be worked on in
-parallel: they need new or replacement sub-metrics, specifically a scene-cut-aware anchor
-for cut-heavy content and a mirror-sensitive measure, neither of which any amount of
-parameter fitting will substitute for.
+The blocking dependency for the *calibration* side is the video set — every limitation
+above is a sample-size limitation. When the additional long-video footage lands, the same
+code re-runs unchanged on a larger, stratified set, and the calibration/validation split
+stops being five folds over five videos.
+
+The structural side does not depend on that, and is now drafted as its own design. The
+work list comes from the 14 structural findings rather than from intuition:
+
+| sub-metric | structural findings |
+|---|---:|
+| identity | 6 |
+| appearance | 5 |
+| CLIP trajectory | 2 |
+| anchored colour histogram | 1 |
+
+**Identity is the dominant item, and the mechanism is now pinned.** The sub-metric scores
+within-clip embedding self-similarity with no reference, so it cannot distinguish
+*consistently the right person* from *consistently a blur*. The battery shows per-clip
+scores rising as identity degrades — 0.767 → 0.933 on one clip, 0.05 → 0.80 on another,
+fused 0.375 → 0.489 — and identity carries roughly five times the weight of the
+sub-metrics that correctly detect the corruption. No choice of constants inverts a
+monotone-increasing response.
+
+The proposed fix repeats a move that already worked here: anchor it. The self-referential
+colour histogram was flat on colour drift on 0 of 5 videos; the anchored variant reached
+4 of 5. An anchored identity measure scores each clip against a reference identity built
+from the video's own high-confidence early clips, so a washed-out face reads as *far from
+the reference* rather than as pleasingly self-consistent.
+
+Two corrections to what I said previously, both from looking at the attribution rather
+than trusting memory:
+
+- **A mirror-sensitive sub-metric is not justified and is now a stated non-goal.** The
+  horizontal-flip family is a silent *control* — staying flat is its correct outcome, it
+  conforms on all five videos, and it contributes zero structural findings. Building
+  mirror sensitivity would fix nothing and would put a passing control at risk.
+- **Some of the 14 are probably bookkeeping, not measurement failures.** Appearance is
+  declared as a target for background drift, identity degradation and channel shuffle —
+  corruptions that leave each frame individually plausible, so per-frame quality
+  genuinely should not move. Auditing that declaration costs no compute and comes first,
+  precisely so a narrowed expectation cannot later be mistaken for a metric improvement.
+
+Unlike the calibration work, this needs GPU time: a changed measurement means re-scanning
+the battery. It composes with the enlarged video set rather than competing with it.
