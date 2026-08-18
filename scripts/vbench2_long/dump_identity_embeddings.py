@@ -47,18 +47,24 @@ import json
 import os
 import shutil
 
-import cv2
-import decord
 import numpy as np
 import torch
 from retinaface.pre_trained_models import get_model as RetinaModel
 from torch.utils import model_zoo
 
-from vbench2.utils import init_submodules
-from vbench2.third_party.arcface.models import resnet_face18
-from vbench2.human_identity import extract_face_features, calculate_similarity
+# MUST come first: importing this module is what puts VBench-2.0 on sys.path
+# (and applies its hack_registry patch). The `vbench2.*` imports below fail
+# without it. The host-specific VBENCH2_PATH lives in that file, uncommitted,
+# so this indirection also keeps the path fix in exactly one place.
+from .human_identity_long import split_into_clips  # noqa: I001
 
-from .human_identity_long import split_into_clips
+import decord  # noqa: E402
+from vbench2.utils import init_submodules  # noqa: E402
+from vbench2.third_party.arcface.models import resnet_face18  # noqa: E402
+from vbench2.human_identity import (  # noqa: E402
+    calculate_similarity,
+    extract_face_features,
+)
 
 SIMILARITY_THRESHOLD = 0.4   # shipped value; replayed, not re-tuned here
 MIN_FRAMES = 20              # shipped value: clips with fewer face-frames score -1
