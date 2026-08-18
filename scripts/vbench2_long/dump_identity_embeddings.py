@@ -49,7 +49,10 @@ import shutil
 
 import numpy as np
 import torch
-from retinaface.pre_trained_models import get_model as RetinaModel
+# Same import the shipped identity runner uses: the bare Model, constructed with
+# (max_size, device) and then loaded from the release URL below. NOT
+# pre_trained_models.get_model, whose signature requires a model_name.
+from retinaface.predict_single import Model as RetinaModel
 from torch.utils import model_zoo
 
 # MUST come first: importing this module is what puts VBench-2.0 on sys.path
