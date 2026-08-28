@@ -110,7 +110,12 @@ def dump_clip(clip_path, retina_model, arc_model):
       frame_area (float32), plus n_frames_total.
     """
     vr = decord.VideoReader(clip_path)
-    frames = vr.get_batch(range(len(vr))).asnumpy()  # T H W C, RGB uint8
+    batch = vr.get_batch(range(len(vr)))
+    # VBench sets decord's bridge to torch, so get_batch returns a Tensor
+    # (which is why the shipped code calls .permute on it). Handle both
+    # bridges rather than assuming one.
+    frames = (batch.asnumpy() if hasattr(batch, "asnumpy")
+              else batch.numpy())  # T H W C, RGB uint8
     idxs, embs, areas = [], [], []
     h, w = frames.shape[1], frames.shape[2]
     for i, frame in enumerate(frames):
