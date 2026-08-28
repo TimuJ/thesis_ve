@@ -223,3 +223,83 @@ The correctness gate for that shortcut: the fast path must reproduce the canonic
 implementation **bit-exactly** at the published coefficients. It does — 0.0
 worst-case difference across all 315 clips, pinned as a regression test, so the
 published configuration cannot drift silently underneath us.
+
+---
+
+## 7. What the calibration actually bought us
+
+The coefficient fit is the visible output, but it is not the most valuable one.
+Running it forced every failing cell in the validation matrix to be attributed to
+*the stage where the signal was lost* — and that attribution is what turned a list
+of failures into a work plan.
+
+Five stages, of which only three are reachable by changing numbers:
+
+| stage | what it means | fixable by refitting? |
+|---|---|---|
+| normalisation | raw statistic moved a lot, score barely did | ✅ |
+| gate | score moved but carried almost no weight | ✅ |
+| composition | responded correctly, but other sub-metrics cancelled it | ✅ |
+| **measurement** | the raw statistic never moved at all | ❌ |
+| **reward-direction** | the score moved the *wrong* way | ❌ |
+
+**20 findings are addressable by coefficients; 14 are not.** That second number is
+the honest ceiling on what any amount of calibration can deliver, and it is only
+knowable because the fit was run.
+
+### Where the 14 sit
+
+| sub-metric | structural findings |
+|---|---:|
+| identity | **6** |
+| appearance | **5** |
+| CLIP trajectory | 2 |
+| anchored histogram | 1 |
+
+### Two follow-ons this produced
+
+**A correction to the declaration, not the metric.** Some of those 14 are
+bookkeeping rather than defects. Attribution records a failure whenever a
+*declared* sub-metric fails to respond — so if a sub-metric was never physically
+capable of responding to a family, the non-response is an artefact. Appearance is
+declared for corruptions that leave every frame individually plausible (background
+drift, channel shuffle, face-local degradation), where per-frame quality genuinely
+should not move. Removing those declarations takes the counts to 27 findings and
+**11 structural**.
+
+That audit is written but deliberately **not applied**: narrowing the map improves
+the numbers without improving the metric, so it has to be frozen before any
+replacement measurement exists, or it could be shaped to flatter one. Two checks
+keep it honest — it shrinks *both* classes, leaving the structural share at 41%
+before and after, and one of its four removals changes no number at all and is
+proposed purely on mechanism.
+
+**The largest structural item now has a mechanism, not just a symptom.** The
+identity sub-metric's tracker is re-created for every two-second clip, so the
+reference face is re-initialised roughly eighty times per video and the score is a
+*within-clip self-similarity* — the fraction of frames matching that clip's own
+first face. It therefore cannot distinguish *consistently the right person* from
+*consistently a blur*, and degradation collapses embeddings toward each other so
+the score **rises**: fused 0.375 → 0.489 as identity degrades, while the
+sub-metric carries roughly five times the weight of those that detect the
+corruption correctly.
+
+This is the cleanest illustration of the coefficient/measurement boundary that
+this whole document is about. Section 2 showed coefficients that were compressing
+a real signal — fixable by refitting. This is a signal pointing the wrong way, and
+**no choice of constants inverts a rising response.** It needs a different
+measurement: anchor each clip against a reference identity built from the video's
+own high-confidence opening clips rather than against its own first frame. The
+precedent is in this benchmark already — the self-referential colour measure was
+blind to colour drift on 0 of 5 videos; the anchored variant reached 4 of 5.
+
+That work is underway, built the same way as the calibration harness: extract the
+expensive statistic once and make every design variant cheap offline arithmetic,
+with a replay of the *existing* scoring as a correctness gate. The gate has
+already paid for itself — on the first processed video it flagged a discrepancy
+against the committed numbers (0.6859 replayed against 0.6836 stored, with clip
+and face-detection counts identical), traced to battery clips that had to be
+regenerated after the originals were pruned. Video re-encoding is not
+bit-identical, so both sides of every comparison now have to come from the same
+files. A 0.002 discrepancy is small; silently inheriting it into every
+anchored-identity comparison would not have been.
