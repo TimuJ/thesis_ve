@@ -73,6 +73,32 @@ SIMILARITY_THRESHOLD = 0.4   # shipped value; replayed, not re-tuned here
 MIN_FRAMES = 20              # shipped value: clips with fewer face-frames score -1
 
 
+def all_face_boxes(frame_u8, retina_model, cap=8):
+    """All detected face boxes (clipped, degenerate-rejected), largest first.
+
+    Returns [(x1, y1, x2, y2, area)]. The largest entry is exactly what
+    largest_face_box returns, so the legacy replay stays derivable from the
+    candidate list. `cap` bounds embedding cost on face-dense frames.
+    """
+    faces = retina_model.predict_jsons(frame_u8)
+    if not faces:
+        return []
+    out = []
+    for f in faces:
+        box = f.get("bbox") if isinstance(f, dict) else None
+        if not (box and len(box) == 4):
+            continue
+        x1, y1, x2, y2 = box
+        x1, y1 = max(0, int(x1)), max(0, int(y1))
+        x2 = min(frame_u8.shape[1], int(x2))
+        y2 = min(frame_u8.shape[0], int(y2))
+        if x2 <= x1 or y2 <= y1:
+            continue
+        out.append((x1, y1, x2, y2, float((x2 - x1) * (y2 - y1))))
+    out.sort(key=lambda b: -b[4])
+    return out[:cap]
+
+
 def largest_face_box(frame_u8, retina_model):
     """Largest detected face box, mirroring IDTracker.update's selection.
 
@@ -100,6 +126,51 @@ def largest_face_box(frame_u8, retina_model):
     if x2 <= x1 or y2 <= y1:
         return None
     return x1, y1, x2, y2, float(best_area)
+
+
+def dump_clip_all(clip_path, retina_model, arc_model):
+    """Per-frame candidate embeddings for one clip (--all_faces mode).
+
+    Beyond dump_clip's largest-face arrays, stores EVERY candidate face:
+    cand_emb (M,1024), cand_frame (M,), cand_area (M,). The largest-face
+    arrays are derived from the same detections (no second detector pass),
+    so the legacy replay is unchanged.
+    """
+    vr = decord.VideoReader(clip_path)
+    batch = vr.get_batch(range(len(vr)))
+    frames = (batch.asnumpy() if hasattr(batch, "asnumpy")
+              else batch.numpy())
+    h, w = frames.shape[1], frames.shape[2]
+    idxs, embs, areas = [], [], []
+    c_embs, c_frames, c_areas = [], [], []
+    for i, frame in enumerate(frames):
+        f8 = frame.astype(np.uint8)
+        cands = all_face_boxes(f8, retina_model)
+        if not cands:
+            continue
+        feats = [np.asarray(extract_face_features(f8[y1:y2, x1:x2], arc_model),
+                            dtype=np.float32)
+                 for x1, y1, x2, y2, _a in cands]
+        # largest-face arrays (cands is sorted largest-first)
+        idxs.append(i)
+        embs.append(feats[0])
+        areas.append(cands[0][4])
+        for feat, (_x1, _y1, _x2, _y2, a) in zip(feats, cands):
+            c_embs.append(feat)
+            c_frames.append(i)
+            c_areas.append(a)
+    return {
+        "frame_idx": np.asarray(idxs, dtype=np.int32),
+        "emb": (np.stack(embs).astype(np.float32) if embs
+                else np.zeros((0, 1024), dtype=np.float32)),
+        "bbox_area": np.asarray(areas, dtype=np.float32),
+        "cand_emb": (np.stack(c_embs).astype(np.float32) if c_embs
+                     else np.zeros((0, 1024), dtype=np.float32)),
+        "cand_frame": np.asarray(c_frames, dtype=np.int32),
+        "cand_area": np.asarray(c_areas, dtype=np.float32),
+        "frame_area": np.float32(h * w),
+        "n_frames_total": np.int32(len(frames)),
+    }
 
 
 def dump_clip(clip_path, retina_model, arc_model):
@@ -172,6 +243,10 @@ def main():
     ap.add_argument("--limit", type=int, default=None,
                     help="process only the first N videos (smoke tests)")
     ap.add_argument("--keep_clips", action="store_true")
+    ap.add_argument("--all_faces", action="store_true",
+                    help="store every candidate face per frame (cand_* arrays), "
+                         "not only the largest — needed for reference-similarity "
+                         "face selection in the anchored-identity work")
     args = ap.parse_args()
 
     fps_overrides = {}
@@ -218,7 +293,8 @@ def main():
                                       fps_override=fps_overrides.get(base))
         payload, legacy = {}, []
         for ci, cp in enumerate(clip_paths):
-            clip = dump_clip(cp, retina_model, arc_model)
+            clip = (dump_clip_all if args.all_faces
+                    else dump_clip)(cp, retina_model, arc_model)
             for k, v in clip.items():
                 payload[f"c{ci}_{k}"] = v
             legacy.append(replay_legacy_clip_score(clip))
