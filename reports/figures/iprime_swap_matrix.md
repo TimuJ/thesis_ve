@@ -12,14 +12,18 @@ delta = lrvcc(0p40) − lrvcc(0p02); PASS ≤ −0.05, WEAK ≤ −0.02, FLAT < 
 
 ### identity_degradation
 
-| base | v5 frozen (old era) | same-era legacy | same-era I′ |
-|---|---|---|---|
-| 7WHI2L_FDNg | +0.029 INVERTED | −0.004 FLAT | **−0.020 WEAK** |
-| BrRLKMbBTYQ | +0.000 FLAT | −0.001 FLAT | −0.001 FLAT |
-| KZ8p6b1zJ9U | −0.030 WEAK | −0.027 WEAK | −0.007 FLAT |
-| hhszUXL1Cu8 | −0.053 PASS | −0.013 FLAT | **−0.023 WEAK** |
-| mJog8DlRk_4 | +0.013 FLAT | −0.008 FLAT | −0.009 FLAT |
-| **clean** | 2/5 | 1/5 | **2/5** |
+The canonical column composes the regen identity-stage FUSED score (slow+fast,
+the deployed v5 branch) with the same regen inputs — the true same-era
+baseline. The legacy-slow arm replays only the slow branch from the npz.
+
+| base | v5 frozen (old era) | same-era canonical (fused) | same-era legacy (slow) | same-era I′ |
+|---|---|---|---|---|
+| 7WHI2L_FDNg | +0.029 INVERTED | **+0.025 INVERTED** | −0.004 FLAT | **−0.020 WEAK** |
+| BrRLKMbBTYQ | +0.000 FLAT | −0.001 FLAT | −0.001 FLAT | −0.001 FLAT |
+| KZ8p6b1zJ9U | −0.030 WEAK | −0.025 WEAK | −0.027 WEAK | −0.007 FLAT |
+| hhszUXL1Cu8 | −0.053 PASS | −0.011 FLAT | −0.013 FLAT | **−0.023 WEAK** |
+| mJog8DlRk_4 | +0.013 FLAT | −0.016 FLAT | −0.008 FLAT | −0.009 FLAT |
+| **clean** | 2/5 | 1/5 | 1/5 | **2/5** |
 
 ### identity_drift
 
@@ -48,12 +52,16 @@ delta = lrvcc(0p40) − lrvcc(0p02); PASS ≤ −0.05, WEAK ≤ −0.02, FLAT < 
   directly by the corruption, a blurred anchor matches blurred faces — the
   documented anchor-contamination case. Planned handling is an anchor-quality
   reliability gate, not a measurement change.
-- **The era shift alone removes the flagship old-era inversion** on
-  7WHI2L_FDNg (+0.029 INVERTED → −0.004 FLAT before I′ is even involved).
-  The old-era reward-direction evidence conflates era and the fused (slow+
-  fast) branch; in the new-era slow-branch replay the legacy measure is flat
-  rather than inverted. The composite-level case for I′ is "flat → responding",
-  not "inverted → responding", and write-ups should state it that way.
+- **The inversion is era-robust; the earlier "era artefact" reading was a
+  branch conflation, corrected here.** With the canonical FUSED identity the
+  7WHI2L_FDNg inversion reproduces in the new era (+0.025 vs old-era +0.029;
+  fused raw values match across eras to ~0.001). What is flat is the
+  slow-only replay — the inversion enters through the fused slow+fast
+  branch. Since deployed v5 uses fused, the honest composite-level claim for
+  I′ (which replaces the whole identity slot) is against the canonical
+  column: **INVERTED → WEAK on 7WHI2L_FDNg**, plus FLAT → WEAK on
+  hhszUXL1Cu8, at the cost of KZ (anchor contamination). The
+  identity_drift canonical column is pending the identity-stage retry.
 
 Provenance: `_regen` metric stack + npz embedding dumps (new era, this
 server); composition via `scripts/lr_vcc/calibration/recompose.py` at
