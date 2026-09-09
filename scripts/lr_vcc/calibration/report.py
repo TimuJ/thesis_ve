@@ -193,6 +193,14 @@ def write_failure_attribution(rows, params, out=FIG / "failure_attribution_v5.md
     structural = sum(v for k, v in stage_counts.items()
                      if k in ("measurement", "reward_direction"))
     lines += ["", "## Totals by stage", "",
+              "Attribution runs under **DESIGNED_FOR map v2** (expectation "
+              "audit applied — see docs/notes/2026-08-18-expectation-audit.md). "
+              "Under the pre-audit map v1 the same cells attributed 34 "
+              "findings, 20 addressable / 14 structural; the audit removed "
+              "seven appearance declarations a per-frame quality measure "
+              "cannot physically satisfy, shrinking both classes "
+              "(structural share ~41% under either map). Conformance counts "
+              "are cell-level and unaffected.", "",
               "**{} of 55** constrained cells fail their expectation; the "
               "table above attributes **{} findings** across them (a cell "
               "names every one of its designed-for sub-metrics, so it can "

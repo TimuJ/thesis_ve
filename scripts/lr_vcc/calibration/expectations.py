@@ -40,17 +40,32 @@ SUB_METRICS = ("appearance", "temporal", "identity", "color_stability",
 
 # Which sub-metrics each family was constructed to excite. Used by failure
 # attribution to decide which sub-metric "should have fired" in a given cell.
+#
+# MAP v2 (audited). Four declarations were removed by the expectation audit
+# (docs/notes/2026-08-18-expectation-audit.md, approved 2026-09-10) on
+# physical grounds — a sub-metric that cannot respond to a family must not
+# have its non-response recorded as a failure:
+#   background_drift -> appearance      (frames stay individually plausible)
+#   flip_channel_shuffle -> appearance  (permuted channels, plausible frames)
+#   identity_degradation -> appearance  (face-local; global quality barely moves)
+#   color_drift -> color_stability      (D is consecutive-frame; slow drift is
+#                                        invisible to it by construction — the
+#                                        anchored D' exists for exactly this)
+# Attribution under map v1 (historical): 34 findings, 20 addressable /
+# 14 structural. Under this map: 27 findings, 16 addressable / 11 structural.
+# The audit shrinks BOTH classes (structural share 41% before and after) and
+# the color_drift edit changes no number at all; conformance counts are
+# cell-level and unaffected.
 DESIGNED_FOR = {
-    "color_drift": ("color_stability", "color_slope", "color_hist_anchor"),
-    "background_drift": ("color_hist_anchor", "clip_trajectory", "appearance"),
+    "color_drift": ("color_slope", "color_hist_anchor"),
+    "background_drift": ("color_hist_anchor", "clip_trajectory"),
     "chunk_boundary": ("temporal", "color_stability"),
     "flicker": ("temporal", "appearance"),
-    "identity_degradation": ("identity", "appearance"),
+    "identity_degradation": ("identity",),
     "identity_drift": ("identity", "clip_trajectory"),
     "flip_invert": ("color_stability", "color_hist_anchor", "clip_trajectory",
                     "appearance"),
-    "flip_channel_shuffle": ("color_hist_anchor", "clip_trajectory",
-                             "appearance"),
+    "flip_channel_shuffle": ("color_hist_anchor", "clip_trajectory"),
 }
 
 SEVERITIES = ("0p02", "0p05", "0p10", "0p20", "0p40")

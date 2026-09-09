@@ -6,13 +6,10 @@ For every non-conforming cell, the sub-metrics the family was built to excite, a
 |---|---|---|---|---|---|---|---|---|
 | background_drift | 7WHI2L_FDNg | FLAT | color_hist_anchor | composition | +54% | -0.088 | 0.202 |  |
 | background_drift | 7WHI2L_FDNg | FLAT | clip_trajectory | composition | +36% | -0.069 | 0.202 |  |
-| background_drift | 7WHI2L_FDNg | FLAT | appearance | measurement | +2% | -0.008 | 0.038 |  |
 | background_drift | BrRLKMbBTYQ | INVERTED | color_hist_anchor | reward_direction | +18% | +0.071 | 0.194 | yes |
 | background_drift | BrRLKMbBTYQ | INVERTED | clip_trajectory | composition | +87% | -0.322 | 0.194 | yes |
-| background_drift | BrRLKMbBTYQ | INVERTED | appearance | composition | +18% | -0.095 | 0.056 |  |
 | background_drift | mJog8DlRk_4 | FLAT | color_hist_anchor | composition | +80% | -0.265 | 0.214 |  |
 | background_drift | mJog8DlRk_4 | FLAT | clip_trajectory | reward_direction | +91% | +0.085 | 0.214 |  |
-| background_drift | mJog8DlRk_4 | FLAT | appearance | gate | +13% | -0.073 | 0.047 |  |
 | chunk_boundary | BrRLKMbBTYQ | INVERTED | temporal | composition | +44% | -0.038 | 0.111 |  |
 | chunk_boundary | BrRLKMbBTYQ | INVERTED | color_stability | composition | +44% | -0.208 | 0.233 |  |
 | flicker | 7WHI2L_FDNg | FLAT | temporal | composition | +41% | -0.051 | 0.129 |  |
@@ -25,13 +22,9 @@ For every non-conforming cell, the sub-metrics the family was built to excite, a
 | flicker | mJog8DlRk_4 | FLAT | appearance | measurement | +4% | -0.021 | 0.048 |  |
 | flip_channel_shuffle | hhszUXL1Cu8 | FLAT | color_hist_anchor | normalisation | +14% | -0.051 | 0.180 |  |
 | flip_channel_shuffle | hhszUXL1Cu8 | FLAT | clip_trajectory | normalisation | +41% | -0.139 | 0.180 |  |
-| flip_channel_shuffle | hhszUXL1Cu8 | FLAT | appearance | measurement | +1% | +0.003 | 0.047 |  |
 | identity_degradation | 7WHI2L_FDNg | INVERTED | identity | reward_direction | +23% | +0.115 | 0.206 |  |
-| identity_degradation | 7WHI2L_FDNg | INVERTED | appearance | gate | +13% | -0.064 | 0.039 |  |
 | identity_degradation | BrRLKMbBTYQ | FLAT | identity | measurement | +3% | +0.022 | 0.025 |  |
-| identity_degradation | BrRLKMbBTYQ | FLAT | appearance | measurement | +2% | -0.012 | 0.058 |  |
 | identity_degradation | mJog8DlRk_4 | FLAT | identity | reward_direction | +13% | +0.047 | 0.218 |  |
-| identity_degradation | mJog8DlRk_4 | FLAT | appearance | gate | +6% | -0.031 | 0.047 |  |
 | identity_drift | 7WHI2L_FDNg | FLAT | identity | measurement | +2% | -0.007 | 0.206 |  |
 | identity_drift | 7WHI2L_FDNg | FLAT | clip_trajectory | measurement | +1% | -0.001 | 0.207 |  |
 | identity_drift | BrRLKMbBTYQ | FLAT | identity | reward_direction | +8% | +0.049 | 0.022 |  |
@@ -41,18 +34,20 @@ For every non-conforming cell, the sub-metrics the family was built to excite, a
 
 ## Totals by stage
 
-**16 of 55** constrained cells fail their expectation; the table above attributes **34 findings** across them (a cell names every one of its designed-for sub-metrics, so it can contribute more than one row).
+Attribution runs under **DESIGNED_FOR map v2** (expectation audit applied — see docs/notes/2026-08-18-expectation-audit.md). Under the pre-audit map v1 the same cells attributed 34 findings, 20 addressable / 14 structural; the audit removed seven appearance declarations a per-frame quality measure cannot physically satisfy, shrinking both classes (structural share ~41% under either map). Conformance counts are cell-level and unaffected.
 
-- composition: 13
-- gate: 4
-- measurement: 9
+**16 of 55** constrained cells fail their expectation; the table above attributes **27 findings** across them (a cell names every one of its designed-for sub-metrics, so it can contribute more than one row).
+
+- composition: 12
+- gate: 1
+- measurement: 6
 - normalisation: 3
 - reward_direction: 5
 
-- **calibration-addressable** (normalisation / gate / composition): 20
-- **structural** (measurement / reward-direction — needs a different measurement, not a different constant): 14
+- **calibration-addressable** (normalisation / gate / composition): 16
+- **structural** (measurement / reward-direction — needs a different measurement, not a different constant): 11
 
-The structural count is the honest ceiling on what a re-parameterised v6 can recover: 14 of the 34 attributed findings cannot be fixed by refitting constants alone, no matter how the fit is run.
+The structural count is the honest ceiling on what a re-parameterised v6 can recover: 11 of the 27 attributed findings cannot be fixed by refitting constants alone, no matter how the fit is run.
 
 ## SILENT failures with no designed-for sub-metric
 

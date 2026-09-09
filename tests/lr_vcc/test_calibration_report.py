@@ -68,8 +68,9 @@ def test_expectation_matrix_states_its_sign_convention(tmp_path):
 def test_failure_report_separates_addressable_from_structural(tmp_path):
     """Pins the actual counts, not just the presence of the bullet labels.
 
-    calibration-addressable 20 (normalisation 3, gate 4, composition 13)
-    versus structural 14 (measurement 9, reward_direction 5); also covers
+    Under DESIGNED_FOR map v2 (audited, docs/notes/2026-08-18-expectation-audit.md):
+    calibration-addressable 16 (normalisation 3, gate 1, composition 12)
+    versus structural 11 (measurement 6, reward_direction 5); also covers
     the two subsections amendment 3 added: the 15 cells where weight drift
     is invisible to a per-sub-metric-only view, and the single SILENT cell
     (flip_elastic / mJog8DlRk_4) explained via silence_broken_by instead of
@@ -84,8 +85,8 @@ def test_failure_report_separates_addressable_from_structural(tmp_path):
 
     addressable = re.search(r"calibration-addressable\*\*[^:]*:\s*(\d+)", text)
     structural = re.search(r"\*\*structural\*\*[^:]*:\s*(\d+)", text)
-    assert addressable is not None and int(addressable.group(1)) == 20
-    assert structural is not None and int(structural.group(1)) == 14
+    assert addressable is not None and int(addressable.group(1)) == 16
+    assert structural is not None and int(structural.group(1)) == 11
 
     drift_cells = re.search(r"In these \*\*(\d+) cells\*\*", text)
     assert drift_cells is not None and int(drift_cells.group(1)) == 15

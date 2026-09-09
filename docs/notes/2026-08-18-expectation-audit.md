@@ -1,7 +1,12 @@
 # Expectation audit — proposed revision of the designed-for map
 
-**Status:** proposed, NOT applied. Must be reviewed and frozen before any new
-sub-metric is built (Phase C.2, workstream 0).
+**Status:** APPROVED and applied (map v2 in `expectations.DESIGNED_FOR`).
+Approved by the decision owner after the anchored-identity probes ran; the
+proposal itself predates every probe result in the commit history, so the
+pre-registration trail is intact. Post-application counts confirmed by
+measurement: 27 findings, 16 addressable / 11 structural — exactly as
+computed below at proposal time. The `identity_degradation -> appearance`
+judgement call was approved as proposed.
 
 ## What this audits and why it comes first
 
