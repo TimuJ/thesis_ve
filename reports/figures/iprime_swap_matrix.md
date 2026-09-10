@@ -27,14 +27,14 @@ baseline. The legacy-slow arm replays only the slow branch from the npz.
 
 ### identity_drift
 
-| base | v5 frozen (old era) | same-era legacy | same-era I′ |
-|---|---|---|---|
-| 7WHI2L_FDNg | −0.001 FLAT | −0.007 FLAT | −0.007 FLAT |
-| BrRLKMbBTYQ | −0.000 FLAT | −0.001 FLAT | −0.001 FLAT |
-| KZ8p6b1zJ9U | −0.025 WEAK | −0.021 WEAK | −0.034 WEAK |
-| hhszUXL1Cu8 | −0.069 PASS | −0.026 WEAK | −0.031 WEAK |
-| mJog8DlRk_4 | −0.003 FLAT | −0.010 FLAT | −0.005 FLAT |
-| **clean** | 2/5 | 2/5 | 2/5 |
+| base | v5 frozen (old era) | same-era canonical (fused) | same-era legacy (slow) | same-era I′ |
+|---|---|---|---|---|
+| 7WHI2L_FDNg | −0.001 FLAT | −0.006 FLAT | −0.007 FLAT | −0.007 FLAT |
+| BrRLKMbBTYQ | −0.000 FLAT | −0.001 FLAT | −0.001 FLAT | −0.001 FLAT |
+| KZ8p6b1zJ9U | −0.025 WEAK | −0.020 WEAK | −0.021 WEAK | **−0.034 WEAK** |
+| hhszUXL1Cu8 | −0.069 PASS | −0.023 WEAK | −0.026 WEAK | **−0.031 WEAK** |
+| mJog8DlRk_4 | −0.003 FLAT | −0.002 FLAT | −0.010 FLAT | −0.005 FLAT |
+| **clean** | 2/5 | 2/5 | 2/5 | 2/5 |
 
 ## Reading
 
@@ -60,8 +60,13 @@ baseline. The legacy-slow arm replays only the slow branch from the npz.
   branch. Since deployed v5 uses fused, the honest composite-level claim for
   I′ (which replaces the whole identity slot) is against the canonical
   column: **INVERTED → WEAK on 7WHI2L_FDNg**, plus FLAT → WEAK on
-  hhszUXL1Cu8, at the cost of KZ (anchor contamination). The
-  identity_drift canonical column is pending the identity-stage retry.
+  hhszUXL1Cu8, at the cost of KZ (anchor contamination). With the
+  identity_drift canonical column now complete: drift carries no inversion to
+  fix (canonical matches the frozen verdicts on 4/5 cells; hhsz softens
+  PASS → WEAK on the same-era baseline), and I′ holds parity at 2/5 with
+  mildly stronger responses than canonical on both responding bases
+  (KZ −0.034 vs −0.020; hhsz −0.031 vs −0.023). The `_regen` same-era
+  baseline is complete for both families.
 
 Provenance: `_regen` metric stack + npz embedding dumps (new era, this
 server); composition via `scripts/lr_vcc/calibration/recompose.py` at
