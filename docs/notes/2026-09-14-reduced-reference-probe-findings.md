@@ -68,11 +68,25 @@ This is precisely the "appears at frame 100, reappears at frame 1000" case, and
 it is exactly what two-second chunking forbids: clips 1 and 80 are never in the
 same window, so no within-clip measure can associate them.
 
+### Second base: the correspondence claim holds, anchor quality does not
+
+`mJog8DlRk_4` (104 clips, faces in only 33 of them) reproduces the
+cross-time linking: 118 identity clusters, **max span 102 of 104 clips**, 21
+clusters spanning more than half the video, 44 spanning 10+ clips. So
+correspondence across the full video is established on both bases tested.
+
+But separability is markedly worse (0.312 vs 0.472) from far fewer faces
+(1708 vs 4050), scattered across 118 clusters. **Anchor quality is
+content-dependent** — the same conclusion the anchored-identity work reached
+independently, and the same reason an anchor-quality gate is already on the
+design list. On sparse-face content the LQ still links identities, but less
+cleanly.
+
 ### The hypothesis that did not survive, and what it revealed
 
 The probe also tested whether identity degradation **collapses** whole-video
 clustering. It does not: separability across the degradation ladder is flat
-(0.434 → 0.449 → 0.461) and detections are unchanged (~4675). Reported as a
+(0.434 -> 0.449 -> 0.461) and detections are unchanged (~4675). Reported as a
 negative result.
 
 Measuring the other half explains why, and turns the negative into the probe's
@@ -96,10 +110,41 @@ the VBench finding that its consistency dimensions rank the degraded input above
 both super-resolutions, and it has the same root cause: self-similarity rewards
 the absence of detail.
 
+## Alignment: a concrete design constraint the probe uncovered
+
+The second base initially produced a clip-count mismatch — LQ 104 clips against
+the output's 83 — which would silently corrupt any reduced-reference
+comparison. The cause is not content but **metadata**:
+
+| base | LQ frames | LQ fps | output frames | output fps |
+|---|---:|---:|---:|---:|
+| 7WHI2L_FDNg | 5000 | 29.970 | 5000 | 30.000 |
+| BrRLKMbBTYQ | 5000 | 24.000 | 5000 | 30.000 |
+| KZ8p6b1zJ9U | 5000 | 29.970 | 5000 | 30.000 |
+| hhszUXL1Cu8 | 2412 | 29.970 | 2412 | 30.000 |
+| mJog8DlRk_4 | 5000 | 23.980 | 5000 | 30.000 |
+
+**Frame counts match exactly on every base; fps tags differ on every base.**
+The LQ carries the true frame rate, while the super-resolution pipeline re-tags
+its output at a uniform 30.000 fps. At two-second clips this is harmless where
+the true rate is ~29.97 (three bases round to the same 83 clips) and breaks on
+the 24 fps bases (104 clips against 83) — so it fails on two of five, silently,
+and only on some content.
+
+The consequence is a firm rule for the design: **align on frame index, never on
+timestamp or clip index.** Frame-index alignment is exact on every base here.
+This also retro-explains the per-video fps override list the identity stage
+already carries — that list exists for exactly this defect.
+
+Because the mJog output-side clip grid does not match its LQ, the severity-ladder
+comparison above remains single-base; the correspondence result, which needs only
+the LQ's own clustering, stands on both.
+
 ## Honest limitations
 
-- **Figure B is one base** (7WHI2L_FDNg). The second LQ dump was still running
-  at write-up; the analysis re-runs unchanged when it lands.
+- **The severity-ladder half of Figure B is one base** (7WHI2L_FDNg); the
+  cross-time correspondence result covers two. The ladder cannot be extended to
+  mJog until the clip grids are aligned by frame index (see above).
 - **The pan is synthetic** — a translating crop, not real camera motion. It
   isolates the mechanism; it does not prove behaviour on real pans.
 - **No ground truth on the true number of people.** The LQ yields 29 clusters
@@ -109,8 +154,8 @@ the absence of detail.
 - **Reduced-reference is a framing change.** The metric stops being purely
   no-reference. For method evaluation this costs nothing — the LQ always
   exists — but it is a deliberate scope decision, not a free upgrade.
-- Alignment between LQ and output (resolution, fps) must be exact or
-  differencing manufactures drift; this probe relied on identical frame counts.
+- Figure A relied on identical frame counts between LQ and output, which holds
+  on every base; had it keyed on timestamps it would have been wrong on two.
 
 ## Recommendation
 
