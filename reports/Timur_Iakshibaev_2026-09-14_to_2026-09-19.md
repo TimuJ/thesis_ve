@@ -46,6 +46,20 @@ output) and compared against a genuine colour corruption:
 The legitimate-pan false positive collapses 6–23× while a real corruption still
 registers. Applicability stops being a hand-set gate and becomes automatic.
 
+**How each column is computed.** All three share one statistic: for a video, the
+L1 distance between the mean Lab-colour histogram of its last quarter of frames
+and that of its first quarter — the anchor-drift the `color_hist_anchor`
+sub-metric is built on. *Pan, output-only* applies it to the output alone, with
+the pan synthesised as a crop window 72% of the frame width slid linearly across
+the frame (the first quarter sees the left of the scene, the last quarter the
+right); self-anchored, it reads a large drift. *Pan, input-differenced* applies
+the same pan to the input as well and subtracts (output drift minus input
+drift); the identical motion cancels. *Real colour drift, input-differenced*
+injects a colour corruption into the output only and subtracts the clean input's
+own natural drift; the part the input does not share survives. That contrast is
+the mechanism: a legitimate change is present in both input and output and
+cancels, a real corruption is present only in the output and remains.
+
 ## 3. Answer, half two — correspondence (which frames pair with which)
 
 Establish who-is-who once, across the whole video, from the input; then compare
