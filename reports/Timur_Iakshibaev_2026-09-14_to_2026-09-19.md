@@ -2,7 +2,7 @@
 
 ## Headline
 
-**The senior student's question — "how do we find the frames on which
+**The question raised the previous week — "how do we find the frames on which
 consistency should actually be measured?" — was answered this period with
 measurements, not argument.** It turns out to be one question with two halves,
 and both are answered by the same source of truth: the low-quality input we are
@@ -56,8 +56,7 @@ was embedded and clustered from the input alone, at its native low resolution:
   (within-cluster similarity 0.637 vs between-cluster 0.165).
 - The decisive case: one identity is present early, **absent for about two
   minutes, and reappears near the end** — linked as one person from the input
-  alone. This is exactly the "appears early, reappears much later" case the
-  senior student raised, and it is exactly what a two-second-window measure
+  alone. This is exactly the "appears early, reappears much later" case raised the previous week, and it is exactly what a two-second-window measure
   cannot do: the two moments never share a window.
 - Reproduced on a second base (correspondence spans 102 of 104 windows there),
   with the honest caveat that cluster quality is content-dependent — sparse-face
@@ -98,7 +97,7 @@ document). The frame-selection logic becomes three concrete components:
 3. **Correspondence** — the input-side whole-video clustering of §3, with an
    anchor-quality weight for sparse-face content.
 
-Distilled to a rule the senior student can apply directly: *measure against the
+Distilled to a rule that can be applied directly: *measure against the
 input, not the output's past; measure only where the input says the quantity is
 invariant; and compare only frames the input says correspond — aligned by frame
 index.*
@@ -109,7 +108,7 @@ index.*
   input-referenced (reduced-reference) framing. It costs the "uses no side
   information at all" line, but for method evaluation it costs nothing — the input
   always exists — and it removes a failure mode that is otherwise *invertible*.
-  This is the research owner's + senior student's call; the specification is
+  This is the research owner's and collaborators' call; the specification is
   written to be executed the moment it is made.
 
 ## Next week
