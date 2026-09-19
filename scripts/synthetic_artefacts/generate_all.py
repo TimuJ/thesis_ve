@@ -20,6 +20,7 @@ from scripts.synthetic_artefacts.color_drift import apply_color_drift
 from scripts.synthetic_artefacts.chunk_boundary import apply_chunk_boundary_jumps
 from scripts.synthetic_artefacts.flicker import apply_periodic_flicker
 from scripts.synthetic_artefacts.identity_degradation import apply_identity_degradation
+from scripts.synthetic_artefacts.global_blur import apply_global_blur
 from scripts.synthetic_artefacts.identity_drift import apply_identity_drift
 from scripts.synthetic_artefacts.background_drift import apply_background_drift, load_packed_masks
 from scripts.synthetic_artefacts.flip import apply_flip
@@ -143,6 +144,8 @@ def process_one(src_path: Path, out_path: Path, artefact: str, severity: float, 
             out = apply_periodic_flicker(fr, idx, FLICKER_PERIOD, severity)
         elif artefact == "identity_degradation":
             out = apply_identity_degradation(fr, idx, severity)
+        elif artefact == "global_blur":
+            out = apply_global_blur(fr, idx, severity)
         elif artefact == "identity_drift":
             out = apply_identity_drift(fr, idx, n_frames, ref_face, severity)
         elif artefact == "background_drift":
