@@ -14,7 +14,7 @@ VB=$H/repos/VBench
 PYB=$H/miniconda3/envs/vbench/bin/python
 OUT=$H/results/vbench_reward_audit
 GPU=1
-FAMILIES="color_drift background_drift"
+FAMILIES="${*:-color_drift background_drift}"
 # temporal_flickering first (cheap MAE), motion_smoothness second (AMT interp, heavy)
 DIMS="temporal_flickering motion_smoothness"
 
