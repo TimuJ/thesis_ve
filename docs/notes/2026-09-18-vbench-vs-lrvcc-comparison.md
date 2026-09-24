@@ -33,8 +33,7 @@ high-frequency-global (seen) vs low-frequency/local (missed), and the missed
 side **is where SR failures live**: SR models produce gradual drift and
 detail/identity loss, not flicker. On the same `color_drift` family where both
 VBench dimensions are flat, LR-VCC's anchored-colour sub-metric (D′) responds on
-4/5 bases. *(A global-blur family is running to test the reward-inversion case
-directly — whether the score rises as detail is destroyed; result forthcoming.)*
+4/5 bases. **And they actively reward detail loss.** On a global-blur family, both dimensions' scores *rise* on all five bases as blur destroys detail (temporal_flickering +0.0026, motion_smoothness +0.0021 mean Δ; 10/10 base×dim cells inverted) — VBench would rank a detail-destroying SR model as *more* temporally consistent and smoother, the temporal/motion analogue of the identity reductio.
 
 ## Half 2 — what LR-VCC adds (measured)
 
@@ -95,7 +94,6 @@ blind to gradual drift.
 
 ## Follow-ups (open)
 
-- Fill in the global-blur inversion result (Half 1) when the audit completes.
 - Pull Ring Forcing's exact A-D-R table numbers as targets.
 - Decide whether the reduced-reference framing is formally adopted (the standing
   scope decision) — it is the precondition for the A-D-R-for-SR experiment.
