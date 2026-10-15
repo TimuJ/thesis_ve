@@ -82,6 +82,57 @@ Demo clips are ready across datasets — **LVOS** (`XfbRshfV` 35 s gap, `hP6JJw8
 repeated gaps, `o6HCvWAH` 4.5 min — mask overlay + present/absent banner, real-time
 6 fps), **LaSOT** (opossum 35%/10%), **MOSE** (tigers / night-traffic).
 
+## 5. How far the thresholds can be pushed — LVOS eligibility tables
+
+Each cell = number of LVOS videos with a target ≥ (row) % that disappears within
+the stated gap range, in a video ≥ (col) s. Measured from masks over all 560
+train+valid. A video's gap at size S = the longest disappearance among its objects
+that are ≥ S% (so a video drops out when only its always-present large object clears
+a high size bar — e.g. `XfbRshfV` counts at ≤10% but not ≥20%).
+
+**Table 1 — gap < 1 s** (sizeable target, *no* real disappearance):
+
+| area≥% \ dur≥ | 30 s | 45 s | 60 s | 90 s | 120 s |
+|---|--:|--:|--:|--:|--:|
+| ≥1% | 354 | 173 | 123 | 50 | 28 |
+| ≥2% | 304 | 131 | 85 | 39 | 24 |
+| ≥3% | 272 | 105 | 68 | 29 | 19 |
+| ≥5% | 206 | 62 | 35 | 17 | 12 |
+| ≥10% | 132 | 22 | 9 | 5 | 3 |
+| ≥20% | 66 | 8 | 3 | 2 | 1 |
+
+**Table 2 — 1 s ≤ gap < 10 s** (moderate disappear-reappear):
+
+| area≥% \ dur≥ | 30 s | 45 s | 60 s | 90 s | 120 s |
+|---|--:|--:|--:|--:|--:|
+| ≥1% | 68 | 29 | 18 | 13 | 9 |
+| ≥2% | 57 | 22 | 13 | 10 | 7 |
+| ≥3% | 47 | 14 | 6 | 5 | 4 |
+| ≥5% | 30 | 9 | 2 | 2 | 2 |
+| ≥10% | 18 | 4 | 0 | 0 | 0 |
+| ≥20% | 5 | 0 | 0 | 0 | 0 |
+
+**Table 3 — gap ≥ 10 s** (long disappear-reappear — the scarce, valuable case):
+
+| area≥% \ dur≥ | 30 s | 45 s | 60 s | 90 s | 120 s |
+|---|--:|--:|--:|--:|--:|
+| ≥1% | 15 | 10 | 5 | 1 | 1 |
+| ≥2% | 11 | 7 | 4 | 1 | 1 |
+| ≥3% | 10 | 6 | 3 | 1 | 1 |
+| ≥5% | 9 | 5 | 2 | 1 | 1 |
+| ≥10% | 7 | 3 | 1 | 0 | 0 |
+| ≥20% | 2 | 1 | 0 | 0 | 0 |
+
+**Reading.** Size and duration are cheap; a *long* gap is the scarce resource.
+Table 3 shows the three "preferred" thresholds cannot all be maxed at once — ≥5% &
+≥10 s gap & ≥60 s leaves **2** videos, ≥10% & ≥60 s leaves **1**. But relaxing any
+one axis recovers a pool: ≥5% & ≥10 s gap at **≥30 s = 9**; ≥3% & ≥10 s at ≥30 s =
+**10**; drop to moderate gaps (Tables 2+3, gap ≥1 s) and ≥5% & ≥30 s = **39**, ≥1% &
+≥30 s = **83**. Recommendation: set the floor at **≥1% target, ≥30 s, gap ≥1 s**
+(~83 videos) and carve a **"premium" long-gap subset** at **≥3–5% & gap ≥10 s & ≥30 s
+(9–10 videos)** for the headline disappear-reappear results — rather than demanding
+every preferred value simultaneously.
+
 ## Key numbers
 
 - LaSOT-ext funnel **118 → 36 → 3**; longest natural gap **2.5 s**.
@@ -93,9 +144,10 @@ repeated gaps, `o6HCvWAH` 4.5 min — mask overlay + present/absent banner, real
 
 ## Decisions needed from the lab
 
-1. **How hard to push the "preferred" thresholds** — accept the 64-video LVOS pool
-   at >30 s / >1%, or demand 1 min+ and ≥5% (shrinks to a handful)? This sets the
-   benchmark size.
+1. **Where to set the thresholds** (see §5 tables). The three preferred values can't
+   all be maxed — ≥5% & ≥10 s gap & ≥60 s = 2 videos. Proposal: floor at ≥1% / ≥30 s /
+   gap ≥1 s (~83) + a premium ≥3–5% / ≥10 s-gap / ≥30 s subset (9–10) for headline
+   results. Accept this split, or set a different point?
 2. **VideoCube licence** — use movie-sourced footage for an internal benchmark (no
    redistribution), or rule it out?
 
