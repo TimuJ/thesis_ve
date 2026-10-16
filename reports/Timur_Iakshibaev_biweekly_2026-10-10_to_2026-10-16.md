@@ -133,6 +133,52 @@ one axis recovers a pool: ≥5% & ≥10 s gap at **≥30 s = 9**; ≥3% & ≥10 
 (9–10 videos)** for the headline disappear-reappear results — rather than demanding
 every preferred value simultaneously.
 
+## 6. The suitable videos, by dataset
+
+The actual qualifying videos (720p+, target ≥1%, ≥30 s, natural gap). Target % and
+gap are for the one object that is both sizeable and disappears.
+
+**LVOS — 64 suitable; the 18 that also reach 1 min+ (ranked by gap):**
+
+| split | video | dur (s) | target % | gap (s) | #gaps≥1 s | res |
+|---|---|--:|--:|--:|--:|---|
+| train | XfbRshfV | 69 | 10.9 | 34.7 | 1 | 1280×720 |
+| train | hP6JJw8p | 155 | 7.0 | 15.0 | 14 | 1280×720 |
+| valid | bl6VuRYE | 76 | 1.0 | 14.0 | 1 | 1280×720 |
+| valid | gAHn8WFw | 81 | 2.0 | 13.8 | 9 | 1280×720 |
+| train | Nzhv8jOX | 80 | 3.5 | 13.2 | 1 | 1280×720 |
+| valid | cUD1dwuP | 132 | 1.1 | 9.8 | 7 | 1280×720 |
+| valid | uXO4RUO3 | 357 | 2.0 | 9.7 | 15 | 1280×720 |
+| valid | nfcT3owb | 187 | 3.3 | 9.2 | 8 | 1280×720 |
+| train | mEe2jLfp | 139 | 3.2 | 5.0 | 1 | **1920×1440** |
+| valid | o6HCvWAH | 270 | 7.7 | 4.8 | 1 | 1280×720 |
+| train | KlhduiNN | 68 | 4.5 | 4.5 | 2 | 1280×720 |
+| train | wGYCoEz3 | 84 | 1.4 | 4.2 | 4 | 1280×720 |
+| train | UrKAenln | 277 | 2.0 | 4.0 | 2 | 1280×720 |
+| valid | UgZ759gD | 94 | 1.1 | 3.7 | 3 | 1280×720 |
+| valid | 49TNsJzk | 97 | 2.9 | 2.7 | 1 | 1280×720 |
+| valid | v3uNUctx | 138 | 2.0 | 2.5 | 2 | 1280×720 |
+| train | 2pMiy6eH | 70 | 1.4 | 2.2 | 1 | 1280×720 |
+| valid | N6CONZUW | 181 | 2.1 | 2.2 | 4 | 1280×720 |
+
+The other 46 are 30–60 s. Big-target headliners (30–50 s): `mSYwZwke` (46 s, 15.1%,
+27.8 s), `mQVrNiUG` (39 s, **33.2%**, 13.7 s, 1080p). Full 64: see the LVOS curated
+manifest note.
+
+**LaSOT-ext — 6 suitable (30 fps complement; gaps only 0.3–1.3 s):**
+
+| sequence | target % | gap (s) | dur (s) | res | fps |
+|---|--:|--:|--:|---|--:|
+| opossum-9 | 35.4 | 0.5 | 83 | 1280×720 | 30 |
+| opossum-1 | 10.1 | 0.4 | 83 | 1280×720 | 30 |
+| wingsuit-10 | 8.3 | 0.3 | 83 | 1280×720 | 30 |
+| misc-6 | 5.6 | 0.6 | 71 | 1280×720 | 30 |
+| atv-7 | 1.5 | 0.9 | 71 | 1280×720 | 30 |
+| rhino-8 | 1.1 | 1.3 | 83 | 1280×720 | 30 |
+
+**MOSE — 0 suitable** (longest 500 frames < 30 s; excluded). **VideoCube** — would
+qualify on every axis (~8 min, ~1080p) but pending a licence call, so not enumerated.
+
 ## Key numbers
 
 - LaSOT-ext funnel **118 → 36 → 3**; longest natural gap **2.5 s**.
