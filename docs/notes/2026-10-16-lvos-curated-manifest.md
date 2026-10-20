@@ -6,6 +6,36 @@ Measured from ground-truth masks over all 560 train+valid videos
 (method: docs/notes/2026-10-16-lvos-mask-curation.md). **64 videos**, ranked by gap.
 Target area / gap are for the single best qualifying object per video.
 
+> **⚠️ LVOS is 6 fps.** The release ships only every 5th original frame — *both*
+> masks and JPEGImages — and carries no higher-rate source. That makes these videos
+> usable for **cross-gap correspondence** (identity/structure across a multi-second
+> gap, which is fps-independent) but **not** as adjacent-frame SR input (flow
+> alignment / flicker need ≥24 fps). LVOS is therefore held as a **reference /
+> redownload-if-needed** source, not staged footage.
+
+**Local data purged 2026-10-20 to save disk.** Only `data/lvos/{train,valid}/meta.json`
+and the curation scripts (`data/lvos_work/`) are kept; the masks, the JPEGImages zips,
+and the demo clips were removed. This table is the record of what to re-fetch.
+
+**Re-download — LVOS v2** (non-commercial research only; annotations CC-BY-4.0; repo
+<https://github.com/LingyiHongfd/LVOS>):
+
+| set | Google Drive | Baidu (pwd) |
+|---|---|---|
+| Train (21 GB) | <https://drive.google.com/file/d/1-ehpl5s0Fd14WwtT-GmWtIWa_BxZl9D6/view> | `1zNmrDyEiAVhyw6aqrSjOmg` (u43g) |
+| Eval = valid (11 GB) | <https://drive.google.com/file/d/17Hwc__6i2rpF5e2s5OPqoywNxG5bzlcO/view> | `1QaPtVihs6bL5X_qn1Z6_7Q` (1hb3) |
+| Test | <https://drive.google.com/file/d/1Vp_y8dSUO4ktYmeBFkIQnmAxK6bl3Eyf/view> | `1KrQ_1DazHgEBtm12PCsWtA` (dxhb) |
+| meta jsons | <https://drive.google.com/drive/folders/1EtTW57QfSkUK3Jl1A_m9D120muA7NG4L> | `1AbmNJJUrLw0TDHwEv90cBw` (vi7n) |
+
+Restore disk-safely: extract only `Annotations/` (masks) to re-run the curation scan,
+then pull `JPEGImages/` for the chosen videos only (see
+`2026-10-16-lvos-mask-curation.md`).
+
+**Best picks if we re-adopt** (sizeable target × long gap × reaches ≥60 s — all still
+6 fps): `hP6JJw8p` (155 s, 7%, 15 s gap, 14 gaps), `XfbRshfV` (69 s, 10.9%, 34.7 s),
+`o6HCvWAH` (270 s, 7.7%), `mSYwZwke` (46 s, 15.1%, 27.8 s), `mQVrNiUG` (39 s, **33.2%**,
+1080p). Of the 64, **18** reach ≥60 s.
+
 | split | video | dur (s) | target area % | longest gap (s) | #gaps≥1s | WxH |
 |---|---|--:|--:|--:|--:|---|
 | train | XfbRshfV | 69 | 10.9 | 34.7 | 1 | 1280x720 |
