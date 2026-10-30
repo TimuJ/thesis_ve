@@ -1,12 +1,15 @@
 # Full LaSOT — sizeable-target disappear-reappear videos at 30 fps
 
-**Status:** complete. Scanned **all 1,400 LaSOT sequences** (70 categories, HF
-`l-lt/LaSOT`) from their per-frame absence annotations. Scan +
-build scripts and raw results in `data/lasot_work/` (`full_scan.py`,
-`full_lasot_scan.json`, `build_upload10.py`; local, gitignored). A first **10-video
-diverse set** is built and staged in `data/upload_10/` (mp4 + GT + `manifest.csv`).
-This supersedes the LaSOT-ext suitability check (`2026-10-14-lasot-ext-suitability.md`),
-which scanned only the 15-class extension.
+**Status:** complete; pool re-filtered to the SR model's context window. Scanned **all
+1,400 LaSOT sequences** (70 categories, HF `l-lt/LaSOT`) from their per-frame absence
+annotations; scan + build scripts and raw results in `data/lasot_work/`
+(`full_scan.py`, `full_lasot_scan.json`, `build_pool.py`; local, gitignored). The gap
+floor was raised from 2 s to **3 s** once the enhancer's context window was measured
+(see *Dataset demands* below): the built pool is now **46 videos** (`data/lasot_pool/`,
+4.5 GB) and an **18-video diverse starter** — one per class, all gap ≥ 5 s, ranked by
+scale variation — is staged in `data/starter/` (mp4 + GT + `manifest.csv`, 1.7 GB).
+Supersedes the LaSOT-ext suitability check (`2026-10-14-lasot-ext-suitability.md`,
+15-class extension only).
 
 ## What prompted this
 
@@ -28,54 +31,117 @@ both a sizeable target *and* a real disappear-reappear gap?
   in seconds (÷30 fps). **Target size** = median ground-truth bbox area / frame area;
   resolution from the first frame. Target size + resolution fetched only for gap ≥ 1.5 s
   candidates.
-- **Qualifying pool:** an object both **≥1 %** median bbox area AND a **≥2 s** gap AND
-  resolution **≥480p**.
+- **Qualifying pool:** an object with **≥1 %** median bbox area AND a disappear-reappear
+  gap that **exceeds the enhancer's context window** (floor **≥3 s**; see *Dataset
+  demands*) AND resolution **≥480p**.
+
+## Dataset demands (current acceptance criteria)
+
+Per video, benchmark footage must satisfy — thresholds given as *floor* / *preferred*:
+
+1. **Frame rate ≥ 24 fps** (prefer **30**). The adjacent-frame temporal measure needs a
+   real frame rate; this is what ruled out LVOS (6 fps).
+2. **Disappear-reappear gap > the SR model's temporal context window.** The enhancer the
+   lab runs, **FlashVSR** (arXiv 2510.12747), is a causal streaming model with a
+   sliding-window KV-cache; its context is bounded by ~**85–89 frames ≈ 3 s at 30 fps**
+   (its 85-frame full-attention baseline, 89-frame training clips, 8-frame lookahead).
+   The gap must **exceed ~3 s** or the subject never leaves the cache and we measure
+   carryover, not re-synthesis. **Floor: gap ≥ 3 s (90 fr); preferred: gap ≥ 5 s
+   (150 fr, ~1.7× the window)** so reappearance is unambiguously a reconstruction.
+3. **Sizeable target: median GT bbox ≥ 1 %** of frame area (prefer **≥ 5 %**) — the
+   subject must carry appearance worth preserving.
+4. **Resolution ≥ 480p** (prefer **≥ 720p**).
+5. **Duration > 30 s** (prefer **≥ 60 s**).
+6. **Natural disappear-reappear** — real occlusion or frame-exit; no synthetic cuts or
+   frame interpolation.
+
+Criterion (2) is the change this revision records: the earlier 2 s floor sat *inside*
+FlashVSR's context window, so it was raised to 3 s and the pool rebuilt. **If the lab
+later swaps in an enhancer with a longer context window, this floor must rise with it.**
+
+## Ranking — scale variation is the primary key
+
+Within the (demands-passing) pool, videos are **ranked by how much the subject changes
+scale**, because a subject that is large (zoomed-in, detail-rich LQ) at some points and
+small (zoomed-out, detail-poor LQ) at others cannot be restored consistently from local
+LQ alone — the zoomed-out appearance genuinely lacks the detail the zoomed-in one has,
+so the model must carry identity across the scale change. This is a second,
+degradation-side stressor that complements the gap.
+
+- **Primary: `area_change` = floored area ratio = `area_max_pct / max(area_min_pct, 1 %)`**,
+  where `area_min/max_pct` are the 5th/95th percentiles of the subject's bbox area (% of
+  frame) over *present* frames. The 1 % floor is deliberate: below ~1 % of a 720p frame
+  the object is <~24 px in ÷4 LQ — a second disappearance, not a usable zoomed-out
+  appearance — so going smaller is not rewarded. Higher = more dramatic zoom. Range in
+  the pool: **50.2** (`leopard-9`, 0.35 → 50 %) down to **1.7** (`electricfan-16`).
+- **Secondary (flag, not a sort key): `min_at`** — where in the timeline the subject is
+  smallest (0 = start … 1 = end). `0.15–0.85` marks the **interior-dip** big→small→big
+  shape (e.g. `bus-20`); **22 of 46** have it. Useful for selecting the cleanest
+  scale-mismatch examples, but it does not drive the ranking.
+- Both, plus `area_min_pct`/`area_max_pct`, are columns in each `manifest.csv`.
 
 ## Result
 
-1,400 sequences, 70 categories, **0 failures**. Funnel:
+1,400 sequences, 70 categories, **0 failures**. Funnel to the adopted pool (gap floor
+**3 s**, to clear FlashVSR's ~3 s context window):
 
 | criterion | count |
 |---|--:|
-| gap ≥2 s | 210 |
-| gap ≥2 s & target ≥1 % | 141 |
-| **gap ≥2 s & target ≥1 % & ≥480p (the pool)** | **88** |
+| gap ≥3 s | 128 |
+| gap ≥3 s & target ≥1 % | 83 |
+| **gap ≥3 s & target ≥1 % & ≥480p (the pool)** | **46** |
 
-Within the 88-video pool (**39 distinct categories**):
+*(At the earlier 2 s floor the funnel was 210 → 141 → 88; raising to 3 s drops the 42
+sub-window sequences, leaving 46.)*
+
+Within the 46-video pool (**25 distinct categories**):
 
 | band | count | | band | count |
 |---|--:|---|---|--:|
-| gap ≥3 s | 46 | | target ≥5 % | 45 |
-| gap ≥5 s | 27 | | target ≥10 % | 23 |
-| gap ≥10 s | 9 | | target ≥20 % | 6 |
-| duration ≥60 s | 68 | | duration ≥120 s | 22 |
+| gap ≥3 s | 46 | | target ≥5 % | 24 |
+| gap ≥5 s | 27 | | target ≥10 % | 12 |
+| gap ≥10 s | 9 | | duration ≥60 s | 34 |
+| duration ≥120 s | 13 | | | |
 
-Longest gap **23.6 s** (`lizard-17`); largest target **29.3 %** (`hippo-12`). About
-**12** videos are simultaneously **gap ≥5 s and target ≥5 %** (the premium subset:
-`electricfan-8`, `monkey-5`, `hippo-2`, `goldfish-10`, `giraffe-5`, `helmet-13`,
-`lion-12`, `electricfan-15`, `giraffe-15`, `fox-10`, `cattle-4`, `goldfish-20`).
+Longest gap **23.6 s** (`lizard-17`); largest in-pool target **24.7 %** (`giraffe-15`).
+**13** videos are simultaneously **gap ≥5 s and target ≥5 %** — the premium subset:
+`lizard-17`, `electricfan-8`, `monkey-5`, `hippo-2`, `goldfish-10`, `giraffe-5`,
+`helmet-13`, `lion-12`, `electricfan-15`, `giraffe-15`, `fox-10`, `cattle-4`,
+`goldfish-20`.
 
 Comparison (the point of the exercise):
 
 | | LaSOT-ext | **full LaSOT** | LVOS |
 |---|--:|--:|--:|
-| sizeable-target disappear-reappear videos | ~6 (gaps 0.3–1.3 s) | **88** (gaps 2–23.6 s) | 64 (gaps 2–34.7 s) |
+| sizeable-target disappear-reappear videos | ~6 (gaps 0.3–1.3 s) | **46** (gaps 3–23.6 s; 88 at a 2 s floor) | 64 (gaps 2–34.7 s) |
 | frame rate | 30 fps | **30 fps** | 6 fps |
 | longest gap on a sizeable target | 1.3 s | **23.6 s** | 34.7 s |
 
-**Finding: the full LaSOT clears the bar.** 88 videos, 30 fps, sizeable targets that
-genuinely leave and return for 2–23.6 s, in 1-minute-plus 720p sequences — the
-30 fps + real-gap + sizeable + long combination that neither LaSOT-ext (gaps too short)
-nor LVOS (6 fps) could give.
+**Finding: the full LaSOT clears the bar.** 46 videos (after the 3 s floor), 30 fps,
+sizeable targets that genuinely leave and return for 3–23.6 s — longer than FlashVSR's
+~3 s context window — in 720p sequences; the 30 fps + past-the-window-gap + sizeable
+combination that neither LaSOT-ext (gaps too short) nor LVOS (6 fps) could give.
 
-### First diverse set delivered (`data/upload_10/`)
+### Diverse starter delivered (`data/starter/`, 18 videos)
 
-10 distinct subjects, all 1280×720 @ 30 fps, raw mp4 (crf 18) + per-video GT
-(`groundtruth`/`full_occlusion`/`out_of_view`) + `manifest.csv`, 1.0 GB total:
-`lizard-17` (23.6 s gap, 8.1 %), `electricfan-8` (15.5 s, 6.5 %), `monkey-5`
-(12.5 s, 13.7 %), `hippo-2` (10.1 s, 16.8 %), `goldfish-10` (9.3 s, 6.4 %, 8 gaps),
-`giraffe-5` (7.1 s, 24.1 %), `lion-12` (6.2 s, 9.5 %), `tank-18` (6.4 s, 4.3 %),
-`airplane-2` (4.0 s, 6.9 %, 277 s), `spider-1` (2.6 s, 14.4 %).
+**One subject per class, all gap ≥ 5 s, ranked by `area_change`** (scale variation, the
+primary key). This is the full set of distinct classes that have a gap ≥ 5 s clip — the
+one-per-class rule caps at **18**, so "top 20 diverse" is 18 in practice. Raw mp4
+(crf 18) + per-video GT (`groundtruth`/`full_occlusion`/`out_of_view`) + `manifest.csv`,
+1.7 GB, listed by `area_change`:
+`leopard-9` (change 50, 0.35→50 %, gap 9.6 s), `hippo-2` (47, 1.7→78 %, 10.1 s),
+`helmet-13` (38, 0.02→38 %, 6.4 s), `lizard-17` (30, 0.8→30 %, 23.6 s),
+`tank-18` (28, 0.6→28 %, 6.4 s), `goldfish-10` (26, 0.9→26 %, 9.3 s),
+`kangaroo-16` (25, 0.9→25 %, 5.7 s), `licenseplate-15` (24, 0.9→24 %, 12.5 s),
+`fox-20` (22, 0.3→22 %, 5.9 s), `gecko-12` (16, 0.7→16 %, 17.6 s),
+`giraffe-5` (14, 3.5→51 %, 7.1 s), `electricfan-8` (14, 3.1→44 %, 15.5 s),
+`monkey-19` (11, 0.8→11 %, 10.5 s), `cattle-4` (9, 2.1→19 %, 5.3 s),
+`bus-20` (7, 0.6→7 %, 6.1 s — the interior big→small→big exemplar),
+`lion-12` (5, 6.5→33 %, 6.2 s), `elephant-17` (4, 0.4→3.6 %, 13.7 s),
+`mouse-2` (2, 0.3→1.8 %, 5.5 s).
+*(Expanded from the earlier gap-ranked 10 to include the scale-mismatch exemplars
+`bus-20` and `licenseplate-15`. `bus-20` ranks low on magnitude — the bus is never large
+— but carries the interior-dip pattern we want.)*
 
 ## Reading / interpretation
 
@@ -93,10 +159,10 @@ is an over-estimate of true object coverage for non-rectangular subjects — fin
 
 ## Honest limitations
 
-- **Gap length is modest.** Only 9 of 88 reach ≥10 s and 27 reach ≥5 s; the median
-  qualifying gap is ~3–4 s. If the benchmark later needs long gaps specifically, LVOS
-  (6 fps) or VideoCube (server-only) remain the only sources — this set does not provide
-  them.
+- **Gap length is modest.** In the 46-video pool, 9 reach ≥10 s and 27 reach ≥5 s; gaps
+  run 3.0–23.6 s. All clear FlashVSR's ~3 s window, but if a later enhancer has a longer
+  context window — or the benchmark needs tens-of-seconds gaps — LVOS (6 fps) or
+  VideoCube (server-only) remain the only sources; this set does not provide them.
 - **"Absent" conflates out-of-view and full-occlusion.** The scan unions both flags; a
   true frame-exit and a full occlusion are not distinguished (both are valid
   disappear-reappear for our purpose, but they differ physically).
@@ -112,17 +178,22 @@ is an over-estimate of true object coverage for non-rectangular subjects — fin
 
 ## What this establishes / next
 
-1. **Dataset readiness: yes, from full LaSOT at 30 fps.** An 88-video pool (68 at ≥60 s,
-   45 with ≥5 % targets, 39 categories) of measured sizeable-target disappear-reappear —
-   the 30 fps real-footage source the benchmark needed.
-2. 10-video diverse set staged (`data/upload_10/`) for the labmate's first experiment run;
-   uploads to Google Drive by hand.
-3. Next: decide how large to grow the set from the 88 (and whether to bias toward the
-   premium gap ≥5 s & target ≥5 % subset); extract the chosen shortlist via the
-   contiguous byte-range method (`build_upload10.py` — HF per-member reads are 2.4 s/frame
-   and unusable; one bulk Range request per sequence runs at ~6 MB/s).
+1. **Dataset readiness: yes, from full LaSOT at 30 fps.** A **46-video pool** (gap ≥ 3 s,
+   clear of FlashVSR's context window; 34 at ≥60 s, 24 with ≥5 % targets, 25 categories)
+   of measured sizeable-target disappear-reappear — the 30 fps real-footage source the
+   benchmark needed.
+2. 18-video diverse starter staged (`data/starter/`, one per class, all gap ≥ 5 s) for the labmate's
+   first experiment run; uploads to Google Drive by hand.
+3. Next: decide whether to lead with the full 46 or the premium **13** (gap ≥ 5 s &
+   target ≥ 5 %); extract any further sequences via the contiguous byte-range method
+   (`build_pool.py` — HF per-member reads are 2.4 s/frame and unusable; one bulk Range
+   request per sequence runs at ~6 MB/s).
 
-## Full qualifying pool (88 videos, ranked by gap)
+## Full scan — all 88 gap ≥2 s candidates (adopted pool = the 46 above the divider)
+
+Rows above the divider (gap ≥ 3 s) are the **adopted pool**, built in `data/lasot_pool/`.
+Rows below (gap < 3 s) are **excluded** — they fall within FlashVSR's ~3 s context
+window — and are kept here only as a record of what LaSOT contains.
 
 | video | class | gap (s) | target % | dur (s) | #gaps≥1s | WxH |
 |---|---|--:|--:|--:|--:|---|
@@ -172,6 +243,7 @@ is an over-estimate of true object coverage for non-rectangular subjects — fin
 | electricfan-1 | electricfan | 3.2 | 23.2 | 55 | 2 | 1280x720 |
 | hippo-3 | hippo | 3.0 | 20.6 | 141 | 2 | 1280x720 |
 | lizard-10 | lizard | 3.0 | 16.5 | 60 | 2 | 1280x720 |
+| **— gap < 3 s below: within context window, excluded —** | | | | | | |
 | frog-7 | frog | 2.9 | 6.4 | 50 | 2 | 1280x720 |
 | goldfish-9 | goldfish | 2.9 | 1.0 | 53 | 2 | 1280x720 |
 | hippo-12 | hippo | 2.9 | 29.3 | 117 | 1 | 1280x720 |
