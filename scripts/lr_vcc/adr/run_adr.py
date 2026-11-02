@@ -151,17 +151,44 @@ def evaluate_clip(
     }
 
 
+def _decode_frames(path):  # pragma: no cover - IO glue, validated at integration
+    """Decode a video to a list of RGB uint8 frames (PyAV, imported lazily)."""
+    import av
+
+    frames = []
+    with av.open(path) as container:
+        for frame in container.decode(video=0):
+            frames.append(frame.to_ndarray(format="rgb24"))
+    return frames
+
+
+def _build_scorers():  # pragma: no cover - IO glue, validated at integration
+    """SIFT (texture) + DINO (semantic), plus LoFTR (geometry) when kornia is
+    installed. Mirrors Ring Forcing's trio, degrading to the available axes."""
+    import importlib.util
+
+    from .scorers import SiftTextureScorer
+    from .scorers_gpu import DinoSemanticScorer
+
+    scorers = [SiftTextureScorer(), DinoSemanticScorer()]
+    if importlib.util.find_spec("kornia") is not None:
+        from .scorers_gpu import LoftrGeometryScorer
+        scorers.append(LoftrGeometryScorer())
+    return scorers
+
+
 def main(argv=None):  # pragma: no cover - thin IO glue, validated at integration
     """CLI: evaluate every clip in a manifest and write per-clip JSON records.
 
-    The GPU adapters (CLIP embedder, DINOv3/LoFTR/SIFT scorers, SAM crops) are
-    imported lazily here so the module stays torch-free at top level.
+    The GPU adapters (CLIP embedder, DINO/LoFTR/SIFT scorers) are imported
+    lazily here so the module stays torch-free at top level.
     """
     import argparse
     import csv
     import json
 
     from .annotations import load_annotations
+    from .embed_clip import ClipEmbedder
 
     p = argparse.ArgumentParser(description="ADR cross-gap consistency evaluation")
     p.add_argument("--manifest", required=True)
@@ -172,21 +199,16 @@ def main(argv=None):  # pragma: no cover - thin IO glue, validated at integratio
     p.add_argument("--no-lpips", action="store_true")
     args = p.parse_args(argv)
 
-    from .embed_clip import ClipEmbedder
-    from .scorers import SiftTextureScorer
-    from .scorers_gpu import DinoSemanticScorer, LoftrGeometryScorer
-    from .video_io import decode_frames  # provided at integration
-
     embedder = ClipEmbedder()
-    scorers = [SiftTextureScorer(), DinoSemanticScorer(), LoftrGeometryScorer()]
+    scorers = _build_scorers()
 
     records = []
     with open(args.manifest) as f:
         for row in csv.DictReader(f):
             name = row["video"]
             stem = name.rsplit(".", 1)[0]
-            gt = decode_frames(f"{args.gt_dir}/{name}")
-            sr = decode_frames(f"{args.sr_dir}/{name}")
+            gt = _decode_frames(f"{args.gt_dir}/{name}")
+            sr = _decode_frames(f"{args.sr_dir}/{name}")
             ann = load_annotations(f"{args.ann_dir}/{stem}")
             rec = evaluate_clip(gt, sr, ann, float(row["fps"]), int(row["frames"]),
                                 embedder, scorers, compute_lpips=not args.no_lpips)
