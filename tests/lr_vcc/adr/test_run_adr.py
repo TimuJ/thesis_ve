@@ -63,6 +63,17 @@ class FakeScorer:
         return float(max(0.0, ssim(a, b)))
 
 
+class ConstScorer:
+    """A scorer with a fixed name and a controllable constant value."""
+
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+    def __call__(self, a, b):
+        return self.value
+
+
 GT = _make_gt()
 ANN = _ann_with_gap()
 
@@ -110,3 +121,36 @@ def test_half_resolution_sr_is_handled():
     half = [f[::2, ::2].copy() for f in GT]
     out = _run(half)
     assert out["status"] in ("ok", "weak")
+
+
+def test_anchor_gate_uses_named_semantic_scorer_not_list_position():
+    # SIFT at list position 0 scores low; the gate must use the named semantic
+    # metric (dino), so the clip stays "ok" rather than being demoted to "weak".
+    scorers = [ConstScorer("sift", 0.1), ConstScorer("dino", 0.9)]
+    out = evaluate_clip(GT, GT, ANN, FPS, len(GT), FakeEmbedder(), scorers,
+                        c_gt_floor=0.5, compute_lpips=False)
+    assert out["status"] == "ok"
+
+
+def test_resolution_mismatch_is_flagged():
+    half = [f[::2, ::2].copy() for f in GT]
+    assert _run(half)["resolution_mismatch"] is True
+    assert _run(GT)["resolution_mismatch"] is False
+
+
+def test_offframe_box_candidate_is_not_selected_and_does_not_crash():
+    # Frame 0 is present but its box is entirely off-frame (nominal area >= A_MIN,
+    # yet uncroppable). It must never be selected into the pair nor reach a scorer.
+    frames = ([_frame("P1")]
+              + [np.full((H, W, 3), 40, np.uint8) for _ in range(5)]
+              + [_frame("P2") for _ in range(4)])
+    boxes = np.zeros((10, 4))
+    boxes[0] = (1000.0, 1000.0, 24.0, 24.0)       # fully off a 64x64 frame
+    for i in range(6, 10):
+        boxes[i] = BOX
+    oov = np.zeros(10, bool)
+    oov[1:6] = True
+    ann = Annotations(boxes=boxes, out_of_view=oov, full_occlusion=np.zeros(10, bool), n=10)
+    out = evaluate_clip(frames, frames, ann, FPS, 10, FakeEmbedder(), [FakeScorer("dino")],
+                        c_gt_floor=0.0, compute_lpips=False)
+    assert out["status"] == "no_pair"

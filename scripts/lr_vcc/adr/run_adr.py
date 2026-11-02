@@ -58,6 +58,7 @@ def evaluate_clip(
     embedder: FrameEmbedder,
     scorers,
     *,
+    anchor_metric: str = "dino",
     c_gt_floor: float = C_GT_FLOOR,
     min_gap_s: float = MIN_GAP_S,
     max_offset: int = MAX_WINDOW_OFFSET,
@@ -88,6 +89,7 @@ def evaluate_clip(
     sr_grid, reason = _norm_sr_to_gt_grid(gt_frames, sr_frames)
     if sr_grid is None:
         return {"status": "misaligned", "reasons": [reason]}
+    res_mismatch = sr_grid is not sr_frames  # SR was resampled onto the GT grid
 
     h, w = gt_frames[0].shape[:2]
 
@@ -106,15 +108,24 @@ def evaluate_clip(
     embeddings = np.zeros((ann.n, emb.shape[1]))
     for k, i in enumerate(present_idx):
         embeddings[i] = emb[k]
-    areas = np.array([box_area_frac(boxes[i], w, h) for i in range(ann.n)])
+    # area 0 for present-but-uncroppable frames (off-frame box) so they are never
+    # selected into a pair and never reach a scorer as a None crop
+    areas = np.array([
+        box_area_frac(boxes[i], w, h) if gt_crops[i] is not None else 0.0
+        for i in range(ann.n)
+    ])
     aspects = np.array([box_aspect(boxes[i]) for i in range(ann.n)])
 
     def choose_fn(gap):
         pre_idx, post_idx = bound_windows(present, gap, max_offset=max_offset)
         return choose_pair(pre_idx, post_idx, embeddings, areas, aspects)
 
+    # the admissibility anchor is a semantic metric (DINO) chosen by name, not by
+    # list position, so the c_gt floor is compared against a comparable quantity
+    anchor = next((M for M in scorers if M.name == anchor_metric), scorers[0])
+
     def c_gt_fn(gap, pair):
-        return float(scorers[0](gt_crops[pair.i], gt_crops[pair.j]))
+        return float(anchor(gt_crops[pair.i], gt_crops[pair.j]))
 
     fb = select_with_fallback(gaps, choose_fn, c_gt_fn, floor=c_gt_floor)
     if fb.status == "no_pair" or fb.pair is None:
@@ -147,6 +158,7 @@ def evaluate_clip(
         "s_M": s_M,
         "consistency": composite["score"],
         "reliability": rel,
+        "resolution_mismatch": res_mismatch,
         "fidelity": fid,
     }
 
