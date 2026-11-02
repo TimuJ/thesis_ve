@@ -1,4 +1,7 @@
 """Task 6: GT-anchored reduced-reference consistency and dual fidelity."""
+import math
+import warnings
+
 import numpy as np
 
 from scripts.lr_vcc.adr.consistency import rr_consistency, consistency_scores, fidelity
@@ -28,3 +31,11 @@ def test_fidelity_near_identical_is_high_and_reports_crop_and_full():
     sr[10, 10, 0] = (int(a[10, 10, 0]) + 2) % 256  # one pixel off, inside the crop → finite PSNR
     d = fidelity(sr, a, sr, a, box_a=(8, 8, 16, 16), box_b=(8, 8, 16, 16), compute_lpips=False)
     assert d["psnr_full"] > 40 and "psnr_crop" in d
+
+
+def test_fidelity_identical_frames_is_inf_without_warning():
+    a = np.random.default_rng(0).integers(0, 255, (64, 64, 3)).astype(np.uint8)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # perfect SR must not route through skimage's divide-by-zero
+        d = fidelity(a, a, a, a, box_a=(8, 8, 16, 16), box_b=(8, 8, 16, 16), compute_lpips=False)
+    assert math.isinf(d["psnr_full"]) and math.isinf(d["psnr_crop"])

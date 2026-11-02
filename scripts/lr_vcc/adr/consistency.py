@@ -8,9 +8,19 @@ footage does). Fidelity is a separate axis, reported full-frame and on the crop.
 """
 from __future__ import annotations
 
+import numpy as np
+
 from src.evaluation.metrics import HAS_LPIPS, psnr, ssim
 
 from .crops import bbox_crop
+
+
+def _psnr(a, b) -> float:
+    """PSNR, with perfect reconstruction (identical frames) reported as +inf
+    directly rather than through skimage's divide-by-zero on a zero MSE."""
+    if np.array_equal(a, b):
+        return float("inf")
+    return float(psnr(a, b))
 
 
 def rr_consistency(c_gt: float, c_sr: float) -> float:
@@ -24,7 +34,7 @@ def consistency_scores(c_gt: dict, c_sr: dict) -> dict:
 
 def _fid_pair(sr_a, gt_a, sr_b, gt_b, compute_lpips: bool) -> dict:
     d = {
-        "psnr": float((psnr(sr_a, gt_a) + psnr(sr_b, gt_b)) / 2.0),
+        "psnr": float((_psnr(sr_a, gt_a) + _psnr(sr_b, gt_b)) / 2.0),
         "ssim": float((ssim(sr_a, gt_a) + ssim(sr_b, gt_b)) / 2.0),
     }
     if compute_lpips and HAS_LPIPS:
