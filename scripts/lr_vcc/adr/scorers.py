@@ -1,0 +1,49 @@
+"""Pair scorers: the interface, and the CPU SIFT texture scorer.
+
+A PairScorer compares two object crops and returns a similarity in [0, 1]. The
+selection embedding (Task 7) is deliberately a different model from these scorers.
+GPU scorers (DINOv3 semantic, LoFTR geometry) live in scorers_gpu (Task 7); SIFT
+is pure CPU OpenCV and lives here.
+"""
+from __future__ import annotations
+
+from typing import Protocol
+
+import cv2
+import numpy as np
+
+
+class PairScorer(Protocol):
+    name: str
+
+    def __call__(self, crop_a: np.ndarray, crop_b: np.ndarray) -> float: ...
+
+
+def _gray(img: np.ndarray) -> np.ndarray:
+    return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY) if img.ndim == 3 else img
+
+
+class SiftTextureScorer:
+    """Texture consistency = Lowe-ratio good-match count / min(#keypoints)."""
+
+    name = "sift"
+
+    def __init__(self, ratio: float = 0.75):
+        self._sift = cv2.SIFT_create()
+        self._bf = cv2.BFMatcher()
+        self._ratio = ratio
+
+    def __call__(self, crop_a: np.ndarray, crop_b: np.ndarray) -> float:
+        ka, da = self._sift.detectAndCompute(_gray(crop_a), None)
+        kb, db = self._sift.detectAndCompute(_gray(crop_b), None)
+        if da is None or db is None or len(ka) < 2 or len(kb) < 2:
+            return 0.0
+        good = 0
+        for pair in self._bf.knnMatch(da, db, k=2):
+            if len(pair) < 2:
+                continue
+            m, n = pair
+            if m.distance < self._ratio * n.distance:
+                good += 1
+        denom = min(len(ka), len(kb))
+        return float(good / denom) if denom else 0.0
