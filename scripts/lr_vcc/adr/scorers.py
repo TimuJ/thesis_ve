@@ -45,5 +45,9 @@ class SiftTextureScorer:
             m, n = pair
             if m.distance < self._ratio * n.distance:
                 good += 1
+        # good counts query (da) descriptors with a confident match; several may map
+        # to the same kb keypoint, so good can exceed min(#kp) for repetitive texture.
+        # Clamp to [0, 1] -- values above 1 all mean "saturated texture match", and an
+        # unbounded score breaks the consistency formula s_M = max(0, 1 - |c_sr - c_gt|).
         denom = min(len(ka), len(kb))
-        return float(good / denom) if denom else 0.0
+        return float(min(1.0, good / denom)) if denom else 0.0

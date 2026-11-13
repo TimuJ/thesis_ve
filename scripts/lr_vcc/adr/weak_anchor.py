@@ -12,7 +12,7 @@ from typing import Callable
 
 from scripts.lr_vcc.reliability import below_threshold_penalty
 
-from .config import C_GT_FLOOR
+from .config import BIG_AREA_FRAC, C_GT_FLOOR
 
 
 @dataclass
@@ -27,6 +27,13 @@ class FallbackResult:
 def anchor_reliability(c_gt: float, floor: float = C_GT_FLOOR, sharpness: float = 10.0) -> float:
     """1 when the GT anchor is well above the floor, →0 as it falls below."""
     return 1.0 - below_threshold_penalty(c_gt, floor, sharpness)
+
+
+def size_reliability(min_area: float, big_area: float = BIG_AREA_FRAC) -> float:
+    """1 when the smaller crop is at least ``big_area`` of the frame, scaling linearly
+    to 0 for a vanishing object. Folds object size into reliability so tiny crops (a
+    distant bus, a 1%-area mouse) are kept as low-reliability examples, not trusted."""
+    return float(max(0.0, min(1.0, min_area / big_area)))
 
 
 def select_with_fallback(gaps_desc, choose_fn: Callable, c_gt_fn: Callable,
@@ -47,3 +54,21 @@ def select_with_fallback(gaps_desc, choose_fn: Callable, c_gt_fn: Callable,
     if best is None:
         return FallbackResult(None, None, 0.0, 0.0, "no_pair")
     return FallbackResult(best[0], best[1], best[2], anchor_reliability(best[2], floor), "weak")
+
+
+def select_all_gaps(gaps_desc, choose_fn: Callable, c_gt_fn: Callable,
+                    floor: float = C_GT_FLOOR):
+    """One FallbackResult per gap that yields an admissible pair, in gaps_desc
+    order (used for multi-pair review: "distinct pairs per video"). A gap with
+    c_gt >= floor is "ok" at full reliability; a lower one is "weak" at reduced
+    reliability; a gap with no admissible pair is skipped. Returns [] when no gap
+    yields a pair."""
+    results = []
+    for gap in gaps_desc:
+        pair = choose_fn(gap)
+        if pair is None or pair.i is None:
+            continue
+        c_gt = c_gt_fn(gap, pair)
+        rel = 1.0 if c_gt >= floor else anchor_reliability(c_gt, floor)
+        results.append(FallbackResult(gap, pair, c_gt, rel, "ok" if c_gt >= floor else "weak"))
+    return results

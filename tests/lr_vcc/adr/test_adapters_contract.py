@@ -28,6 +28,20 @@ def test_clip_embedder_shape_finite_and_deterministic():
     assert np.allclose(same[0], same[1], atol=1e-4)
 
 
+def test_clip_embedder_chunks_large_batches_without_changing_results():
+    # Long clips embed thousands of present-frame crops; a single forward pass
+    # can OOM a shared GPU, so embed() must chunk. Chunking must not change the
+    # result: a crop embedded within a multi-chunk batch equals it embedded alone.
+    from scripts.lr_vcc.adr.embed_clip import ClipEmbedder
+
+    emb = ClipEmbedder(device="cpu", batch_size=4)
+    crops = [_crop(i) for i in range(10)]          # 10 > batch_size 4 -> 3 chunks
+    out = emb.embed(crops)
+    assert out.shape[0] == 10
+    single = emb.embed([_crop(3)])
+    assert np.allclose(out[3], single[0], atol=1e-4)
+
+
 def test_clip_embedder_empty_is_well_shaped():
     from scripts.lr_vcc.adr.embed_clip import ClipEmbedder
 

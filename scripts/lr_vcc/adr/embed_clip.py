@@ -21,7 +21,8 @@ class ClipEmbedder:
 
     name = "clip"
 
-    def __init__(self, model_name: str = "ViT-B/32", device: "str | None" = None):
+    def __init__(self, model_name: str = "ViT-B/32", device: "str | None" = None,
+                 batch_size: int = 256):
         import warnings
 
         import torch
@@ -35,6 +36,7 @@ class ClipEmbedder:
         self._model, self._preprocess = clip.load(model_name, device=self.device)
         self._model.eval()
         self._dim = int(self._model.visual.output_dim)
+        self._batch_size = int(batch_size)
 
     def embed(self, crops: Sequence[np.ndarray]) -> np.ndarray:
         if len(crops) == 0:
@@ -42,11 +44,17 @@ class ClipEmbedder:
         from PIL import Image
 
         torch = self._torch
-        batch = torch.stack([
+        tensors = [
             self._preprocess(Image.fromarray(np.asarray(c).astype("uint8")))
             for c in crops
-        ]).to(self.device)
+        ]
+        # Encode in fixed-size chunks so a long clip's thousands of present-frame
+        # crops never form one oversized batch that could OOM a shared GPU.
+        outs = []
         with torch.no_grad():
-            feats = self._model.encode_image(batch)
-        feats = feats / feats.norm(dim=-1, keepdim=True).clamp_min(1e-12)
-        return feats.cpu().numpy().astype(float)
+            for k in range(0, len(tensors), self._batch_size):
+                batch = torch.stack(tensors[k:k + self._batch_size]).to(self.device)
+                feats = self._model.encode_image(batch)
+                feats = feats / feats.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+                outs.append(feats.cpu().numpy().astype(float))
+        return np.concatenate(outs, axis=0)
