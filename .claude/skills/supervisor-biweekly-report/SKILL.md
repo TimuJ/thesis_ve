@@ -26,7 +26,11 @@ for labmates.
   "this period", "since the last report", "next two weeks".
 - **Files:** `reports/Timur_Iakshibaev_biweekly_<start>_to_<end>.md` and the same
   name with a `_short.md` suffix. `<start>` is the day after the previous report's
-  end (or the day the previous one was sent). Commit and push when done.
+  end (or the day the previous one was sent).
+- **Always commit and push reports to `main`** — never a feature branch, even when
+  the active work is on one. Commit only the report files: `git checkout main`,
+  bring them over (`git checkout <branch> -- reports/<file>`), commit, push, then
+  return to your branch.
 
 ## Long version — structure (recipe, in order)
 

@@ -26,8 +26,13 @@ at a prior meeting** (this is the top differentiator from the supervisor report)
   `reports/` and omit the overlap; keep only a 1–2 line "where we left off" for
   orientation. If the period was build-up (no new results), say so up front so the
   room doesn't expect fresh numbers.
-- **File:** `reports/Timur_Iakshibaev_biweekly_<start>_to_<end>.md` (repo-root
-  `reports/`). Commit and push when done.
+- **File:** repo-root `reports/`. A ~2-week report is
+  `Timur_Iakshibaev_biweekly_<start>_to_<end>.md`; a ~1-week (single-meeting)
+  report **drops `biweekly_`** → `Timur_Iakshibaev_<start>_to_<end>.md`.
+- **Always commit and push the report to `main`** — never a feature branch, even
+  when the active work is on one. Commit only the report file: `git checkout main`,
+  bring the report over (`git checkout <branch> -- reports/<file>`), commit, push,
+  then return to your branch.
 
 ## Structure (recipe — the report IS these parts, in order)
 
