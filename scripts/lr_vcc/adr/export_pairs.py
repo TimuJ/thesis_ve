@@ -37,6 +37,26 @@ def consistency_band(cons: float, threshold: float = DIVERGE_BAND) -> str:
     return "diverges" if cons < threshold else "preserves"
 
 
+def video_summary(pairs: "list[dict]", fail_band: float = DIVERGE_BAND) -> dict:
+    """Per-video aggregate that SURFACES the worst pair, so one collapsed pair stays
+    visible rather than being averaged away over ~5 pairs. Returns ``n_pairs``,
+    ``min_consistency``, ``worst_pair`` (i, j of the min-consistency pair),
+    ``n_failures`` (pairs with consistency < ``fail_band``), and ``mean_consistency``
+    (reported alongside, never instead of, the worst case)."""
+    if not pairs:
+        return {"n_pairs": 0, "min_consistency": None, "worst_pair": None,
+                "n_failures": 0, "mean_consistency": None}
+    cons = [p["consistency"] for p in pairs]
+    worst = min(pairs, key=lambda p: p["consistency"])
+    return {
+        "n_pairs": len(pairs),
+        "min_consistency": min(cons),
+        "worst_pair": (worst["i"], worst["j"]),
+        "n_failures": sum(1 for c in cons if c < fail_band),
+        "mean_consistency": sum(cons) / len(cons),
+    }
+
+
 def pct_gain(c_gt: float, c_sr: float, min_cgt: float = PCT_GAIN_MIN_CGT):
     """Percentage change of the SR's cross-gap self-similarity relative to the GT's,
     per scorer: ``(c_sr - c_gt) / c_gt * 100``. Negative = SR less consistent than GT

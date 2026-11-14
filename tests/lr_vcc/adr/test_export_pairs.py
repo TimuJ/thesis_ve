@@ -7,7 +7,26 @@ from scripts.lr_vcc.adr.export_pairs import (
     exclusion_reasons,
     pct_gain,
     strip_indices,
+    video_summary,
 )
+
+
+def test_video_summary_surfaces_worst_pair():
+    # 5 pairs, one collapsed: the summary must surface the worst/min pair and the
+    # failure count, not let a mean hide the single failure.
+    pairs = [
+        {"i": 1, "j": 10, "consistency": 0.97},
+        {"i": 2, "j": 20, "consistency": 0.30},   # the one failure
+        {"i": 3, "j": 30, "consistency": 0.95},
+        {"i": 4, "j": 40, "consistency": 0.98},
+        {"i": 5, "j": 50, "consistency": 0.96},
+    ]
+    s = video_summary(pairs)
+    assert s["n_pairs"] == 5
+    assert s["min_consistency"] == approx(0.30)
+    assert s["worst_pair"] == (2, 20)
+    assert s["n_failures"] == 1                    # only the 0.30 pair < 0.90
+    assert s["mean_consistency"] > 0.30            # mean alone would hide the failure
 
 
 def test_pct_gain_negative_when_sr_drifts_below_gt():
