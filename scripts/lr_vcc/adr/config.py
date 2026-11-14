@@ -19,6 +19,11 @@ BIG_AREA_FRAC = 0.05     # object area fraction at/above which size-reliability 
 C_GT_FLOOR = 0.5         # weak-anchor floor on GT cross-gap similarity
 MAX_WINDOW_OFFSET = 150  # frames of present run adjacent to a gap edge (~5 s @30fps)
 
+# PROVISIONAL — multi-pair selection (richer pair set; tune on GT behaviour only).
+TOP_K_PER_VIDEO = 5          # target reviewable pairs per video (top-K across all gaps)
+MIN_PAIR_SEP_S = 1.0         # two pairs are distinct unless within this on BOTH endpoints
+ROMA_POSE_GATE_THRESH = 0.5  # RoMa pose-match score to admit a pair as reviewable (selection gate)
+
 # PROVISIONAL — frame-quality gates from reviewer feedback (pose / blur / edge).
 # The reviewer rejected pairs whose two frames show a different pose/angle, a
 # motion-blurred frame, or a small object sitting on the frame edge. These gate the

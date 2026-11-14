@@ -3,8 +3,10 @@ import numpy as np
 
 from scripts.lr_vcc.adr.annotations import Gap
 from scripts.lr_vcc.adr.selection import (
+    _pairs_too_close,
     bound_windows,
     choose_pair,
+    choose_pairs,
     global_big_windows,
     selection_cost,
 )
@@ -122,3 +124,59 @@ def test_choose_pair_blur_penalty_avoids_softer_frame():
                           lambda_area=0.0, lambda_aspect=0.0, lambda_size=0.5,
                           blur_pen=blur, lambda_blur=0.0)
     assert no_blur.j == 2                             # without the penalty, size wins idx2
+
+
+# --- Task 1: choose_pairs (top-K diverse selection) ---------------------------
+
+def test_pairs_too_close_requires_both_endpoints_within_min_sep():
+    # too-close iff BOTH endpoints differ by < min_sep.
+    assert _pairs_too_close(4, 14, 5, 15, min_sep=10) is True     # 1 and 1, both < 10
+    assert _pairs_too_close(0, 50, 10, 50, min_sep=10) is False   # pre differs by 10 (not < 10)
+    assert _pairs_too_close(0, 50, 0, 60, min_sep=10) is False    # post differs by 10
+    assert _pairs_too_close(0, 50, 9, 59, min_sep=10) is True     # 9 and 9, both < 10
+
+
+def test_choose_pairs_returns_topk_sorted():
+    emb = np.tile([1.0, 0.0], (7, 1))                     # identical appearance
+    areas = np.array([0.3, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05])  # idx0 pre; 1..6 posts
+    asp = np.ones(7)
+    res = choose_pairs([0], [1, 2, 3, 4, 5, 6], emb, areas, asp,
+                       top_k=3, min_pair_sep=0, a_min=0.01,
+                       lambda_area=1.0, lambda_aspect=0.0, lambda_appear=0.0)
+    assert len(res) == 3
+    assert [p.j for p in res] == [1, 2, 3]               # 3 lowest area-mismatch posts
+    costs = [p.cost for p in res]
+    assert costs == sorted(costs)                        # non-decreasing
+
+
+def test_choose_pairs_diversity_collapses_and_keeps_threshold_apart():
+    # Collapse: four near-duplicate pairs (all within < min_sep on both ends) -> 1 kept.
+    emb = np.tile([1.0, 0.0], (23, 1)); areas = np.full(23, 0.3); asp = np.ones(23)
+    collapsed = choose_pairs([0, 2], [20, 22], emb, areas, asp,
+                             top_k=5, min_pair_sep=10, a_min=0.01,
+                             lambda_area=0.0, lambda_aspect=0.0, lambda_appear=0.0)
+    assert len(collapsed) == 1
+
+    # Survive: pairs exactly min_sep apart on both ends are NOT too close -> all kept.
+    emb2 = np.tile([1.0, 0.0], (31, 1)); areas2 = np.full(31, 0.3); asp2 = np.ones(31)
+    kept = choose_pairs([0, 10], [20, 30], emb2, areas2, asp2,
+                        top_k=5, min_pair_sep=10, a_min=0.01,
+                        lambda_area=0.0, lambda_aspect=0.0, lambda_appear=0.0)
+    ij = {(p.i, p.j) for p in kept}
+    assert len(kept) == 4
+    assert (0, 20) in ij and (10, 30) in ij             # diagonal, 10 apart on both
+
+
+def test_choose_pairs_pose_gate_filters():
+    emb = np.tile([1.0, 0.0], (3, 1)); areas = np.full(3, 0.3); asp = np.ones(3)
+    gate = lambda i, j: not (i == 0 and j == 2)          # reject exactly (0, 2)
+    res = choose_pairs([0], [1, 2], emb, areas, asp, top_k=5, min_pair_sep=0,
+                       a_min=0.01, pose_gate_fn=gate)
+    ij = {(p.i, p.j) for p in res}
+    assert (0, 2) not in ij and (0, 1) in ij
+
+
+def test_choose_pairs_empty_when_none_admissible():
+    emb = np.tile([1.0, 0.0], (2, 1)); areas = np.array([0.3, 0.005]); asp = np.ones(2)
+    res = choose_pairs([0], [1], emb, areas, asp, top_k=5, min_pair_sep=0, a_min=0.01)
+    assert res == []

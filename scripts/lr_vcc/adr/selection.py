@@ -104,6 +104,58 @@ def choose_pair(pre_idx, post_idx, embeddings, areas, aspects,
     return PairChoice(best[0], best[1], best[2], n_admissible)
 
 
+def _pairs_too_close(ai: int, aj: int, bi: int, bj: int, min_sep: int) -> bool:
+    """Two pairs are "too close" (near-duplicates) iff BOTH endpoints differ by less
+    than ``min_sep`` frames. So pairs one window apart on either side stay distinct."""
+    return abs(ai - bi) < min_sep and abs(aj - bj) < min_sep
+
+
+def choose_pairs(pre_idx, post_idx, embeddings, areas, aspects, *,
+                 top_k: int, min_pair_sep: int, pose_gate_fn=None,
+                 a_min: float = A_MIN, lambda_area: float = LAMBDA_AREA,
+                 lambda_aspect: float = LAMBDA_ASPECT, lambda_size: float = LAMBDA_SIZE,
+                 blur_pen=None, edge_pen=None, lambda_blur: float = 0.0,
+                 lambda_border: float = 0.0, lambda_appear: float = 1.0,
+                 max_appearance_dist: "float | None" = None) -> "list[PairChoice]":
+    """Up to ``top_k`` admissible straddling pairs, lowest ``selection_cost`` first,
+    kept so no two are :func:`_pairs_too_close` (diverse frame offsets) and each passes
+    ``pose_gate_fn(i, j)`` when given. Same admissibility (area >= a_min, appearance
+    gate) and cost terms as :func:`choose_pair`; this is its top-K, diversity-aware,
+    pose-gated generalization. ``n_admissible`` on each returned pair is the total
+    admissible count. Empty list when nothing qualifies."""
+    embeddings = np.asarray(embeddings, float)
+    areas = np.asarray(areas, float)
+    aspects = np.asarray(aspects, float)
+    pre_adm = [a for a in pre_idx if areas[a] >= a_min]
+    post_adm = [b for b in post_idx if areas[b] >= a_min]
+    cands = []
+    n_admissible = 0
+    for a in pre_adm:
+        for b in post_adm:
+            if max_appearance_dist is not None and _cos_dist(embeddings[a], embeddings[b]) > max_appearance_dist:
+                continue
+            n_admissible += 1
+            c = selection_cost(embeddings[a], embeddings[b], areas[a], areas[b],
+                               aspects[a], aspects[b], lambda_area, lambda_aspect,
+                               lambda_size, lambda_appear)
+            if blur_pen is not None:
+                c += lambda_blur * (float(blur_pen[a]) + float(blur_pen[b]))
+            if edge_pen is not None:
+                c += lambda_border * (float(edge_pen[a]) + float(edge_pen[b]))
+            cands.append((c, a, b))
+    cands.sort(key=lambda t: t[0])
+    kept: "list[PairChoice]" = []
+    for c, a, b in cands:
+        if pose_gate_fn is not None and not pose_gate_fn(a, b):
+            continue
+        if any(_pairs_too_close(a, b, k.i, k.j, min_pair_sep) for k in kept):
+            continue
+        kept.append(PairChoice(a, b, c, n_admissible))
+        if len(kept) >= top_k:
+            break
+    return kept
+
+
 def global_big_windows(present, areas, topk: int = GLOBAL_TOPK):
     """Candidate index sets for a long-range (non-gap) pair: the ``topk`` largest
     present objects in each half of the clip. Pairing one from the early half with
