@@ -35,6 +35,7 @@ from .config import (
 from .consistency import consistency_scores, fidelity
 from .crops import bbox_crop
 from .quality import blur_penalties, edge_penalty, laplacian_var
+from .reliability_axes import axis_reliabilities
 from .selection import bound_windows, choose_pair, choose_pairs, global_big_windows
 from .weak_anchor import (
     anchor_reliability,
@@ -209,7 +210,12 @@ def _score_pair(scorers, gt_frames, ctx, i, j, *, gap_s, n_admissible, status,
         c_gt[M.name] = float(M(gci, gcj))
         c_sr[M.name] = float(M(sci, scj))
     s_M = consistency_scores(c_gt, c_sr)
-    composite = compose_score(list(s_M.values()), [reliability] * len(s_M))
+    # per-axis reliability: the pair's scalar reliability times each axis's own GT-side
+    # signal, so a no-signal axis (c_gt in the noise) no longer free-passes the composite
+    axis_rel = axis_reliabilities(scorers, gci, gcj)
+    names = list(s_M.keys())
+    composite = compose_score([s_M[n] for n in names],
+                              [reliability * axis_rel.get(n, 1.0) for n in names])
     fid = fidelity(sr_grid[i], gt_frames[i], sr_grid[j], gt_frames[j],
                    box_a=box_i, box_b=box_j, compute_lpips=compute_lpips)
     return {
@@ -225,6 +231,7 @@ def _score_pair(scorers, gt_frames, ctx, i, j, *, gap_s, n_admissible, status,
         "consistency": composite["score"],
         "reliability": reliability,
         "reliability_factors": reliability_factors,
+        "axis_reliability": axis_rel,
         "resolution_mismatch": ctx["res_mismatch"],
         "fidelity": fid,
     }

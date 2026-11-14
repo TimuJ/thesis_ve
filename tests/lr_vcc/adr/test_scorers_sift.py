@@ -33,3 +33,14 @@ def test_sift_bounded_to_unit_interval_when_keypoints_asymmetric():
     big = np.tile(tile, (2, 2, 1))        # ~4x keypoints, all matching `tile`
     val = s(big, tile)
     assert 0.0 <= val <= 1.0
+
+
+def test_sift_reliability_low_on_textureless_high_on_textured():
+    # The GT-side reliability signal is texture availability (keypoint count): a flat
+    # crop carries no SIFT signal (reliability 0), a textured crop carries signal.
+    s = SiftTextureScorer()
+    flat = np.full((128, 128, 3), 128, np.uint8)
+    textured = _texture(2)
+    assert s.reliability(flat, flat) == 0.0
+    assert 0.0 < s.reliability(textured, textured) <= 1.0
+    assert s.reliability(textured, textured) > s.reliability(flat, flat)

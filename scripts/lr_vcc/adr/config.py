@@ -15,6 +15,7 @@ LAMBDA_AREA = 1.0        # weight on |log(area_a/area_b)| in the selection cost
 LAMBDA_ASPECT = 1.0      # weight on |log(aspect_a/aspect_b)| in the selection cost
 LAMBDA_SIZE = 0.5        # reward on larger object: +LAMBDA_SIZE*(-log min-area) in cost
 A_MIN = 0.01             # min object area fraction per side (<1% ≈ <24 px in /4 LQ)
+SIFT_RELIABILITY_KP = 20  # GT keypoints at/above which the SIFT axis reaches full reliability
 BIG_AREA_FRAC = 0.05     # object area fraction at/above which size-reliability saturates to 1
 C_GT_FLOOR = 0.5         # weak-anchor floor on GT cross-gap similarity
 MAX_WINDOW_OFFSET = 150  # frames of present run adjacent to a gap edge (~5 s @30fps)

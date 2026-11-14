@@ -332,6 +332,26 @@ def test_reliability_record_includes_quality_factors():
     assert set(out["reliability_factors"]) >= {"size", "sharp", "edge", "anchor"}
 
 
+class _GtSourcedRelScorer:
+    name = "dino"
+
+    def __call__(self, a, b):
+        return 0.9
+
+    def reliability(self, a, b):
+        return 1.0 if np.asarray(a).max() > 200 else 0.0   # GT crop is bright; SR here is flat
+
+
+def test_reliability_is_gt_sourced():
+    # SR is flat gray (no bright pixels); GT has bright stripes. The recorded
+    # axis_reliability must reflect the GT crop (bright), proving reliability is
+    # computed on GT, not SR -- else an over-smoothed SR would hide its own failure.
+    gray = [np.full((H, W, 3), 40, np.uint8) for _ in range(20)]
+    out = evaluate_clip(GT, gray, ANN, FPS, 20, FakeEmbedder(), [_GtSourcedRelScorer()],
+                        c_gt_floor=0.0, compute_lpips=False)
+    assert out["axis_reliability"]["dino"] == 1.0
+
+
 def test_blurry_window_pair_gets_lower_reliability_than_sharp():
     fs, ann_s = _textured_gap_clip(soft_window=False)
     fb, ann_b = _textured_gap_clip(soft_window=True)

@@ -12,11 +12,18 @@ from typing import Protocol
 import cv2
 import numpy as np
 
+from .config import SIFT_RELIABILITY_KP
+
 
 class PairScorer(Protocol):
     name: str
 
     def __call__(self, crop_a: np.ndarray, crop_b: np.ndarray) -> float: ...
+
+    # Optional: GT-side signal in [0, 1] — how much this axis can measure on a crop
+    # pair (e.g. texture / keypoint count). Computed on GT crops to weight the axis in
+    # the composite (see reliability_axes.axis_reliabilities). Absent => treated as 1.0.
+    # def reliability(self, crop_a: np.ndarray, crop_b: np.ndarray) -> float: ...
 
 
 def _gray(img: np.ndarray) -> np.ndarray:
@@ -51,3 +58,11 @@ class SiftTextureScorer:
         # unbounded score breaks the consistency formula s_M = max(0, 1 - |c_sr - c_gt|).
         denom = min(len(ka), len(kb))
         return float(min(1.0, good / denom)) if denom else 0.0
+
+    def reliability(self, crop_a: np.ndarray, crop_b: np.ndarray) -> float:
+        """GT-side texture signal = min keypoint count / SIFT_RELIABILITY_KP, clamped to
+        [0, 1]. A low-texture crop (few keypoints) carries little SIFT signal, so the
+        SIFT axis is down-weighted there instead of free-passing on c_gt ~ 0."""
+        ka = self._sift.detect(_gray(crop_a), None)
+        kb = self._sift.detect(_gray(crop_b), None)
+        return float(min(1.0, min(len(ka), len(kb)) / SIFT_RELIABILITY_KP))
