@@ -162,15 +162,37 @@ def _ann_2gap():
     return Annotations(boxes=boxes, out_of_view=oov, full_occlusion=np.zeros(24, bool), n=24)
 
 
-def test_evaluate_clip_pairs_one_record_per_qualifying_gap():
+def test_evaluate_clip_pairs_covers_all_gaps():
+    # top-K across the video, round-robin: with 2 gaps and top_k=4 we get 4 pairs
+    # and BOTH gaps are represented (coverage-first), same record shape as evaluate_clip.
     gt, ann = _make_gt_2gap(), _ann_2gap()
     out = evaluate_clip_pairs(gt, gt, ann, FPS, len(gt), FakeEmbedder(),
-                              [FakeScorer("dino")], c_gt_floor=0.0, compute_lpips=False)
+                              [FakeScorer("dino")], c_gt_floor=0.0, compute_lpips=False, top_k=4)
     assert out["status"] == "ok"
-    assert len(out["pairs"]) == 2                       # one matched pair per gap
-    assert len({p["gap_s"] for p in out["pairs"]}) == 2  # the two gaps are distinct
-    for p in out["pairs"]:                              # same record shape as evaluate_clip
+    assert len(out["pairs"]) == 4
+    assert len({p["gap_s"] for p in out["pairs"]}) == 2  # both gaps covered
+    for p in out["pairs"]:
         assert set(p) >= {"i", "j", "c_gt", "c_sr", "s_M", "consistency", "fidelity"}
+
+
+def test_evaluate_clip_pairs_multi_per_gap():
+    # a single gap yields multiple DISTINCT pairs (sliding pre/post offsets)
+    out = evaluate_clip_pairs(GT, GT, ANN, FPS, len(GT), FakeEmbedder(),
+                              [FakeScorer("dino")], c_gt_floor=0.0, compute_lpips=False, top_k=3)
+    adr = [p for p in out["pairs"] if p["pair_type"] == "adr"]
+    assert len(adr) == 3
+    assert len({(p["i"], p["j"]) for p in adr}) == 3     # distinct pairs
+    assert len({p["gap_s"] for p in adr}) == 1           # all from the one gap
+
+
+def test_evaluate_clip_pairs_pose_gate_rejects_all_is_graceful():
+    # a pose gate scoring every pair below threshold admits no gap pair -> no adr
+    # pairs forced in (reviewability beats count), and no exception.
+    reject_all = lambda a, b: 0.0
+    out = evaluate_clip_pairs(GT, GT, ANN, FPS, len(GT), FakeEmbedder(),
+                              [FakeScorer("dino")], c_gt_floor=0.0, compute_lpips=False,
+                              pose_gate=reject_all)
+    assert [p for p in out["pairs"] if p["pair_type"] == "adr"] == []
 
 
 def test_evaluate_clip_pairs_quarantines_like_evaluate_clip():
@@ -180,12 +202,11 @@ def test_evaluate_clip_pairs_quarantines_like_evaluate_clip():
 
 
 def test_evaluate_clip_pairs_headline_matches_single_pair_eval():
-    # with one gap and an equal-area object, the per-gap path yields exactly the
-    # single-pair record and no (bigger) long-range pair is added.
+    # the best (lowest-cost) pair of the multi-pair path is the same pair the
+    # single-pair evaluator picks.
     single = _run(GT)
     multi = evaluate_clip_pairs(GT, GT, ANN, FPS, len(GT), FakeEmbedder(),
                                 [FakeScorer("dino")], c_gt_floor=0.0, compute_lpips=False)
-    assert len(multi["pairs"]) == 1
     assert multi["pairs"][0]["pair_type"] == "adr"
     assert (multi["pairs"][0]["i"], multi["pairs"][0]["j"]) == (single["i"], single["j"])
 

@@ -28,14 +28,17 @@ from .config import (
     MAX_APPEARANCE_DIST,
     MAX_WINDOW_OFFSET,
     MIN_GAP_S,
+    MIN_PAIR_SEP_S,
+    ROMA_POSE_GATE_THRESH,
+    TOP_K_PER_VIDEO,
 )
 from .consistency import consistency_scores, fidelity
 from .crops import bbox_crop
 from .quality import blur_penalties, edge_penalty, laplacian_var
-from .selection import bound_windows, choose_pair, global_big_windows
+from .selection import bound_windows, choose_pair, choose_pairs, global_big_windows
 from .weak_anchor import (
     anchor_reliability,
-    select_all_gaps,
+    select_all_pairs,
     select_with_fallback,
     size_reliability,
 )
@@ -67,7 +70,7 @@ def _norm_sr_to_gt_grid(gt_frames, sr_frames):
 
 def _prepare_clip(gt_frames, sr_frames, ann, fps, manifest_frames, embedder, scorers,
                   *, anchor_metric, min_gap_s, max_offset, r_frame_rate, avg_frame_rate,
-                  allow_no_gap=False):
+                  allow_no_gap=False, pose_gate=None, top_k=TOP_K_PER_VIDEO):
     """Shared setup for the single-pair and per-gap evaluations.
 
     Returns ``(error_dict, None)`` when the clip is quarantined or has no
@@ -150,10 +153,26 @@ def _prepare_clip(gt_frames, sr_frames, ann, fps, manifest_frames, embedder, sco
     def c_gt_fn(gap, pair):
         return float(anchor(gt_crops[pair.i], gt_crops[pair.j]))
 
+    # multi-pair selection: RoMa pose gate (decision (a) — gate only, CLIP still ranks)
+    min_pair_sep = max(1, round(MIN_PAIR_SEP_S * fps))
+    pose_gate_fn = None
+    if pose_gate is not None:
+        def pose_gate_fn(i, j):
+            return float(pose_gate(gt_crops[i], gt_crops[j])) >= ROMA_POSE_GATE_THRESH
+
+    def choose_pairs_fn(gap):
+        pre_idx, post_idx = bound_windows(present, gap, max_offset=max_offset)
+        return choose_pairs(pre_idx, post_idx, embeddings, areas, aspects,
+                            top_k=top_k, min_pair_sep=min_pair_sep, pose_gate_fn=pose_gate_fn,
+                            blur_pen=blur_pen, edge_pen=edge_pen,
+                            lambda_blur=LAMBDA_BLUR, lambda_border=LAMBDA_BORDER,
+                            lambda_appear=LAMBDA_APPEAR, max_appearance_dist=MAX_APPEARANCE_DIST)
+
     ctx = {
         "sr_grid": sr_grid, "res_mismatch": res_mismatch, "gaps": gaps,
         "gt_crops": gt_crops, "boxes": boxes,
-        "choose_fn": choose_fn, "c_gt_fn": c_gt_fn,
+        "choose_fn": choose_fn, "c_gt_fn": c_gt_fn, "choose_pairs_fn": choose_pairs_fn,
+        "min_pair_sep": min_pair_sep,
         "present": present, "embeddings": embeddings, "areas": areas,
         "aspects": aspects, "anchor": anchor, "fps": fps,
         "blur_pen": blur_pen, "edge_pen": edge_pen,
@@ -301,20 +320,26 @@ def evaluate_clip_pairs(
     compute_lpips: bool = True,
     r_frame_rate: str = "30/1",
     avg_frame_rate: str = "30/1",
+    pose_gate=None,
+    top_k: int = TOP_K_PER_VIDEO,
 ) -> dict:
-    """Score EVERY qualifying gap's GT-frozen matched pair ("distinct pairs per
-    video"). Returns ``{"status", "pairs": [record, ...]}`` where each record has
-    the same shape as :func:`evaluate_clip`'s. Quarantine / no-gap return the same
-    error dict with an empty ``pairs`` list; the per-clip headline is the
-    best-anchored pair, recoverable as the "ok" (else highest-reliability) entry.
+    """Score up to ``top_k`` GT-frozen matched pairs per video ("distinct pairs per
+    video" — multiple per gap allowed), selected round-robin across gaps so every
+    qualifying gap is covered. ``pose_gate`` (optional, GT crops → pose-match score)
+    gates reviewability; CLIP still ranks. Returns ``{"status", "pairs": [record, ...]}``
+    where each record has the same shape as :func:`evaluate_clip`'s. Quarantine / no-gap
+    return the same error dict with an empty ``pairs`` list; the per-clip headline is
+    the best-anchored pair (``pairs[0]``).
     """
     err, ctx = _prepare_clip(
         gt_frames, sr_frames, ann, fps, manifest_frames, embedder, scorers,
         anchor_metric=anchor_metric, min_gap_s=min_gap_s, max_offset=max_offset,
-        r_frame_rate=r_frame_rate, avg_frame_rate=avg_frame_rate, allow_no_gap=True)
+        r_frame_rate=r_frame_rate, avg_frame_rate=avg_frame_rate, allow_no_gap=True,
+        pose_gate=pose_gate, top_k=top_k)
     if err is not None:
         return {**err, "pairs": []}
-    fbs = select_all_gaps(ctx["gaps"], ctx["choose_fn"], ctx["c_gt_fn"], floor=c_gt_floor)
+    fbs = select_all_pairs(ctx["gaps"], ctx["choose_pairs_fn"], ctx["c_gt_fn"],
+                           floor=c_gt_floor, top_k=top_k, min_pair_sep=ctx["min_pair_sep"])
     pairs, best_gap_area = [], 0.0
     for fb in fbs:
         i, j = fb.pair.i, fb.pair.j

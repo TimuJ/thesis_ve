@@ -4,9 +4,14 @@ from scripts.lr_vcc.adr.selection import PairChoice
 from scripts.lr_vcc.adr.weak_anchor import (
     anchor_reliability,
     select_all_gaps,
+    select_all_pairs,
     select_with_fallback,
     size_reliability,
 )
+
+
+def _pc(i, j):
+    return PairChoice(i, j, 0.1, 5)
 
 PAIR = PairChoice(0, 2, 0.1, 1)
 
@@ -69,3 +74,30 @@ def test_select_all_gaps_empty_when_no_pairs():
     res = select_all_gaps([_gap(10.0)], lambda g: PairChoice(None, None, float("inf"), 0),
                           lambda g, p: 0.0, floor=0.6)
     assert res == []
+
+
+# --- Task 2: select_all_pairs (video-level top-K, round-robin coverage) --------
+
+def test_select_all_pairs_caps_at_top_k():
+    g1, g2 = _gap(10.0), _gap(4.0)
+    pairs = {10.0: [_pc(0, 20), _pc(2, 22), _pc(4, 24)], 4.0: [_pc(30, 50), _pc(32, 52)]}
+    res = select_all_pairs([g1, g2], lambda g: pairs[g.duration_s], lambda g, p: 0.9,
+                           floor=0.6, top_k=3, min_pair_sep=1)
+    assert len(res) == 3
+
+
+def test_select_all_pairs_covers_gaps_round_robin():
+    g1, g2 = _gap(10.0), _gap(4.0)
+    pairs = {10.0: [_pc(0, 20), _pc(2, 22)], 4.0: [_pc(30, 50), _pc(32, 52)]}
+    res = select_all_pairs([g1, g2], lambda g: pairs[g.duration_s], lambda g, p: 0.9,
+                           floor=0.6, top_k=3, min_pair_sep=1)
+    assert res[0].gap is g1 and res[1].gap is g2        # coverage-first (one from each gap)
+    assert {r.gap.duration_s for r in res} == {10.0, 4.0}
+
+
+def test_select_all_pairs_cross_gap_dedup():
+    g1, g2 = _gap(10.0), _gap(4.0)
+    pairs = {10.0: [_pc(0, 20)], 4.0: [_pc(1, 21)]}     # (1,21) within <10 of (0,20) on both
+    res = select_all_pairs([g1, g2], lambda g: pairs[g.duration_s], lambda g, p: 0.9,
+                           floor=0.6, top_k=5, min_pair_sep=10)
+    assert len(res) == 1

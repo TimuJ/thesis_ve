@@ -13,6 +13,7 @@ from typing import Callable
 from scripts.lr_vcc.reliability import below_threshold_penalty
 
 from .config import BIG_AREA_FRAC, C_GT_FLOOR
+from .selection import _pairs_too_close
 
 
 @dataclass
@@ -72,3 +73,37 @@ def select_all_gaps(gaps_desc, choose_fn: Callable, c_gt_fn: Callable,
         rel = 1.0 if c_gt >= floor else anchor_reliability(c_gt, floor)
         results.append(FallbackResult(gap, pair, c_gt, rel, "ok" if c_gt >= floor else "weak"))
     return results
+
+
+def select_all_pairs(gaps_desc, choose_pairs_fn: Callable, c_gt_fn: Callable,
+                     *, floor: float = C_GT_FLOOR, top_k: int, min_pair_sep: int):
+    """Up to ``top_k`` distinct pairs per video for the richer review set. Each gap's
+    ``choose_pairs_fn`` returns its cost-sorted, diversity-filtered candidate pairs;
+    we fill **round-robin across gaps** (best pair from each gap first, then the next
+    from each, ...) so a multi-gap video gets coverage rather than one gap monopolising
+    every slot — multiple pairs from one gap are still allowed. A candidate within
+    ``min_pair_sep`` of an already-kept pair on BOTH endpoints is skipped (video-level
+    dedup across gaps). Returns a list of ``FallbackResult`` (status "ok"/"weak" by the
+    c_gt floor), ``[]`` when no gap yields a pair."""
+    per_gap = []
+    for gap in gaps_desc:
+        pairs = list(choose_pairs_fn(gap))
+        if pairs:
+            per_gap.append((gap, pairs))
+    kept = []
+    round_idx = 0
+    while len(kept) < top_k and any(round_idx < len(pairs) for _, pairs in per_gap):
+        for gap, pairs in per_gap:
+            if round_idx >= len(pairs):
+                continue
+            pair = pairs[round_idx]
+            if any(_pairs_too_close(pair.i, pair.j, k.pair.i, k.pair.j, min_pair_sep)
+                   for k in kept):
+                continue
+            c_gt = c_gt_fn(gap, pair)
+            rel = 1.0 if c_gt >= floor else anchor_reliability(c_gt, floor)
+            kept.append(FallbackResult(gap, pair, c_gt, rel, "ok" if c_gt >= floor else "weak"))
+            if len(kept) >= top_k:
+                break
+        round_idx += 1
+    return kept
