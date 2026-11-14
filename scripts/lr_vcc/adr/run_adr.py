@@ -405,18 +405,27 @@ def _decode_frames(path):  # pragma: no cover - IO glue, validated at integratio
 
 
 def _build_scorers():  # pragma: no cover - IO glue, validated at integration
-    """SIFT (texture) + DINO (semantic), plus LoFTR (geometry) when kornia is
-    installed. Mirrors Ring Forcing's trio, degrading to the available axes."""
+    """Ring Forcing's trio -- SIFT (texture) + DINO/DINOv2 (semantic) + RoMa (geometry) --
+    with the RoMa pose gate for selection. Geometry prefers RoMa (``romatch``), falling
+    back to LoFTR (``kornia``); with neither, the trio degrades to texture + semantic.
+    Returns ``(scorers, pose_gate)``; ``pose_gate`` is None unless RoMa is available, and
+    shares the single loaded RoMa backend with the geometry scorer (weights load once)."""
     import importlib.util
 
     from .scorers import SiftTextureScorer
     from .scorers_gpu import DinoSemanticScorer
 
     scorers = [SiftTextureScorer(), DinoSemanticScorer()]
-    if importlib.util.find_spec("kornia") is not None:
+    pose_gate = None
+    if importlib.util.find_spec("romatch") is not None:
+        from .scorers_gpu import RomaGeometryScorer, RomaMatcher, RomaPoseGate
+        roma = RomaMatcher()
+        scorers.append(RomaGeometryScorer(matcher=roma))
+        pose_gate = RomaPoseGate(matcher=roma)
+    elif importlib.util.find_spec("kornia") is not None:
         from .scorers_gpu import LoftrGeometryScorer
         scorers.append(LoftrGeometryScorer())
-    return scorers
+    return scorers, pose_gate
 
 
 def main(argv=None):  # pragma: no cover - thin IO glue, validated at integration
@@ -446,7 +455,7 @@ def main(argv=None):  # pragma: no cover - thin IO glue, validated at integratio
     args = p.parse_args(argv)
 
     embedder = ClipEmbedder(batch_size=args.clip_batch)
-    scorers = _build_scorers()
+    scorers, pose_gate = _build_scorers()
 
     records = []
     with open(args.manifest) as f:
@@ -460,7 +469,7 @@ def main(argv=None):  # pragma: no cover - thin IO glue, validated at integratio
             fps, frames = float(row["fps"]), int(row["frames"])
             if args.per_gap:
                 res = evaluate_clip_pairs(gt, sr, ann, fps, frames, embedder, scorers,
-                                          compute_lpips=not args.no_lpips)
+                                          compute_lpips=not args.no_lpips, pose_gate=pose_gate)
                 pairs = res.get("pairs", [])
                 for k, pr in enumerate(pairs):
                     pr["video"], pr["pair_id"] = name, k

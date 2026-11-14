@@ -24,6 +24,7 @@ MAX_WINDOW_OFFSET = 150  # frames of present run adjacent to a gap edge (~5 s @3
 TOP_K_PER_VIDEO = 5          # target reviewable pairs per video (top-K across all gaps)
 MIN_PAIR_SEP_S = 1.0         # two pairs are distinct unless within this on BOTH endpoints
 ROMA_POSE_GATE_THRESH = 0.5  # RoMa pose-match score to admit a pair as reviewable (selection gate)
+ROMA_MATCH_FLOOR = 0.2       # per-pixel RoMa certainty at/above which a pixel counts matched (GT-side geometry-axis reliability)
 
 # PROVISIONAL — frame-quality gates from reviewer feedback (pose / blur / edge).
 # The reviewer rejected pairs whose two frames show a different pose/angle, a

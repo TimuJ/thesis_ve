@@ -71,6 +71,41 @@ def test_loftr_scorer_contract():
     assert 0.0 <= v <= 1.0
 
 
+def test_roma_geometry_scorer_contract():
+    # RoMa v1 (romatch, DINOv2 backbone) -- the mirror-available geometry axis after the
+    # gated DINOv3 / RoMa-v2 weights proved unreachable from the lab server.
+    pytest.importorskip("romatch")
+    from scripts.lr_vcc.adr.scorers_gpu import RomaGeometryScorer
+
+    s = RomaGeometryScorer(device="cpu")
+    assert s.name == "roma"
+    v = s(_crop(0), _crop(0))
+    assert 0.0 <= v <= 1.0
+    r = s.reliability(_crop(0), _crop(1))
+    assert 0.0 <= r <= 1.0
+
+
+def test_roma_pose_gate_contract():
+    pytest.importorskip("romatch")
+    from scripts.lr_vcc.adr.scorers_gpu import RomaPoseGate
+
+    gate = RomaPoseGate(device="cpu")
+    v = gate(_crop(0), _crop(0))
+    assert 0.0 <= v <= 1.0
+
+
+def test_roma_scorer_and_gate_share_one_matcher():
+    # "one model, both jobs": the geometry axis and the selection pose gate must be able
+    # to share a single loaded RoMa backend so the ~450 MB weights load once per run.
+    pytest.importorskip("romatch")
+    from scripts.lr_vcc.adr.scorers_gpu import RomaGeometryScorer, RomaMatcher, RomaPoseGate
+
+    m = RomaMatcher(device="cpu")
+    scorer = RomaGeometryScorer(matcher=m)
+    gate = RomaPoseGate(matcher=m)
+    assert scorer._m is m and gate._m is m
+
+
 def test_sam_mask_on_white_contract():
     pytest.importorskip("segment_anything")
     from scripts.lr_vcc.adr.scorers_gpu import sam_mask_on_white
