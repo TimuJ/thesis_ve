@@ -14,7 +14,7 @@ FLASHVSR_WINDOW_S = 3.0  # the SR model's temporal context the gap must exceed
 LAMBDA_AREA = 1.0        # weight on |log(area_a/area_b)| in the selection cost
 LAMBDA_ASPECT = 1.0      # weight on |log(aspect_a/aspect_b)| in the selection cost
 LAMBDA_SIZE = 0.5        # reward on larger object: +LAMBDA_SIZE*(-log min-area) in cost
-A_MIN = 0.01             # min object area fraction per side (<1% ≈ <24 px in /4 LQ)
+A_MIN = 0.002            # min object area fraction per side; relaxed from 0.01 for candidate RECALL (objects shrink <1% before a gap, zeroing the pre-gap side). Cost ranking prefers the largest frames and manual review filters the rest; see BACKFILL_TO_TOPK
 SIFT_RELIABILITY_KP = 20  # GT keypoints at/above which the SIFT axis reaches full reliability
 BIG_AREA_FRAC = 0.05     # object area fraction at/above which size-reliability saturates to 1
 C_GT_FLOOR = 0.5         # weak-anchor floor on GT cross-gap similarity
@@ -22,8 +22,10 @@ MAX_WINDOW_OFFSET = 150  # frames of present run adjacent to a gap edge (~5 s @3
 
 # PROVISIONAL — multi-pair selection (richer pair set; tune on GT behaviour only).
 TOP_K_PER_VIDEO = 5          # target reviewable pairs per video (top-K across all gaps)
-MIN_PAIR_SEP_S = 1.0         # two pairs are distinct unless within this on BOTH endpoints
+MIN_PAIR_SEP_S = 0.5         # two pairs are distinct unless within this on BOTH endpoints
 ROMA_POSE_GATE_THRESH = 0.5  # RoMa pose-match score to admit a pair as reviewable (selection gate)
+POSE_BUDGET = 50             # max cost-ranked candidates pose-verified per gap (one RoMa fwd each); caps the gate so a large admissible set can't grind. top_k early-stop means easy gaps spend far fewer
+BACKFILL_TO_TOPK = True      # recall over precision: hand back TOP_K_PER_VIDEO candidates even when the pose gate passes fewer (manual filtering happens after first selection); pose-verified pairs still rank first
 ROMA_MATCH_FLOOR = 0.2       # per-pixel RoMa certainty at/above which a pixel counts matched (GT-side geometry-axis reliability)
 
 # PROVISIONAL — frame-quality gates from reviewer feedback (pose / blur / edge).

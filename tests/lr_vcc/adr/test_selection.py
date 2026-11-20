@@ -180,3 +180,71 @@ def test_choose_pairs_empty_when_none_admissible():
     emb = np.tile([1.0, 0.0], (2, 1)); areas = np.array([0.3, 0.005]); asp = np.ones(2)
     res = choose_pairs([0], [1], emb, areas, asp, top_k=5, min_pair_sep=0, a_min=0.01)
     assert res == []
+
+
+# --- pose-gate budget (cap the expensive RoMa verification) -------------------
+
+def test_choose_pairs_pose_budget_caps_gate_calls():
+    # Many admissible candidates, gate rejects every one. Without a budget the gate
+    # (RoMa, one forward pass each) runs on all of them -- the grind we observed.
+    # pose_budget must cap how many candidates are geometry-verified.
+    n = 30
+    emb = np.tile([1.0, 0.0], (n, 1)); areas = np.full(n, 0.3); asp = np.ones(n)
+    posts = list(range(1, n))                       # 29 admissible candidate posts
+    calls = []
+    gate = lambda i, j: calls.append((i, j)) or False   # reject all, count the calls
+    res = choose_pairs([0], posts, emb, areas, asp, top_k=5, min_pair_sep=0,
+                       a_min=0.01, pose_gate_fn=gate, pose_budget=10)
+    assert len(calls) == 10        # verified at most the budget, not all 29
+    assert res == []               # nothing passed the gate
+
+
+def test_choose_pairs_pose_budget_stops_early_at_topk():
+    # When the gate passes, the top_k early-stop still wins and the budget is not
+    # spent down -- we verify only as many candidates as we need to fill top_k.
+    n = 30
+    emb = np.tile([1.0, 0.0], (n, 1)); areas = np.full(n, 0.3); asp = np.ones(n)
+    posts = list(range(1, n))
+    calls = []
+    gate = lambda i, j: (calls.append((i, j)) or True)  # accept all, count the calls
+    res = choose_pairs([0], posts, emb, areas, asp, top_k=5, min_pair_sep=0,
+                       a_min=0.01, pose_gate_fn=gate, pose_budget=20)
+    assert len(res) == 5           # top_k reached
+    assert len(calls) == 5         # stopped at top_k, budget barely touched
+
+
+# --- backfill: always hand back top_k candidates for manual review ------------
+
+def test_choose_pairs_backfills_to_topk_when_pose_gate_rejects_all():
+    # Manual-filter workflow: even if nothing passes the (strict) pose gate, we
+    # still want top_k best-by-cost diverse candidates to review, not an empty set.
+    n = 20
+    emb = np.tile([1.0, 0.0], (n, 1)); areas = np.full(n, 0.3); asp = np.ones(n)
+    posts = list(range(1, n))
+    gate = lambda i, j: False                    # pose gate rejects everything
+    res = choose_pairs([0], posts, emb, areas, asp, top_k=5, min_pair_sep=0,
+                       a_min=0.01, pose_gate_fn=gate, pose_budget=50, backfill=True)
+    assert len(res) == 5
+
+
+def test_choose_pairs_no_backfill_still_returns_empty_when_all_rejected():
+    # Default (backfill=False) keeps the strict hard-gate behaviour.
+    n = 20
+    emb = np.tile([1.0, 0.0], (n, 1)); areas = np.full(n, 0.3); asp = np.ones(n)
+    posts = list(range(1, n))
+    gate = lambda i, j: False
+    res = choose_pairs([0], posts, emb, areas, asp, top_k=5, min_pair_sep=0,
+                       a_min=0.01, pose_gate_fn=gate, backfill=False)
+    assert res == []
+
+
+def test_choose_pairs_backfill_ranks_pose_passers_first():
+    # A pair that passes the gate must rank ahead of backfilled (unverified) ones.
+    n = 20
+    emb = np.tile([1.0, 0.0], (n, 1)); areas = np.full(n, 0.3); asp = np.ones(n)
+    posts = list(range(1, n))
+    gate = lambda i, j: (i == 0 and j == 7)      # only (0, 7) passes
+    res = choose_pairs([0], posts, emb, areas, asp, top_k=5, min_pair_sep=0,
+                       a_min=0.01, pose_gate_fn=gate, pose_budget=50, backfill=True)
+    assert (res[0].i, res[0].j) == (0, 7)        # the passer is first
+    assert len(res) == 5                          # the rest are backfilled

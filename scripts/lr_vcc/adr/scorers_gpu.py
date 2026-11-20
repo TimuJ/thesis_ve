@@ -144,6 +144,12 @@ class RomaMatcher:
         loader = roma_indoor if weights == "indoor" else roma_outdoor
         self._model = loader(device=self.device)
         self._model.eval()
+        # roma_outdoor enables an optional compiled `local_corr` CUDA kernel by default; it
+        # is not installed on the lab server, so route every refiner onto romatch's pure-torch
+        # local-correlation fallback (correct, just slightly slower; our crops are small).
+        for module in self._model.modules():
+            if hasattr(module, "use_custom_corr"):
+                module.use_custom_corr = False
 
     def certainty(self, crop_a: np.ndarray, crop_b: np.ndarray) -> np.ndarray:
         """Dense match-certainty map in [0, 1] between two RGB crops, as a numpy array.

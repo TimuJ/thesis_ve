@@ -19,6 +19,7 @@ from scripts.lr_vcc.composite import compose_score
 from .alignment import check_alignment
 from .annotations import box_area_frac, box_aspect, find_gaps, present_mask
 from .config import (
+    BACKFILL_TO_TOPK,
     C_GT_FLOOR,
     GLOBAL_MIN_SEP_S,
     LAMBDA_APPEAR,
@@ -29,6 +30,7 @@ from .config import (
     MAX_WINDOW_OFFSET,
     MIN_GAP_S,
     MIN_PAIR_SEP_S,
+    POSE_BUDGET,
     ROMA_POSE_GATE_THRESH,
     TOP_K_PER_VIDEO,
 )
@@ -167,7 +169,8 @@ def _prepare_clip(gt_frames, sr_frames, ann, fps, manifest_frames, embedder, sco
                             top_k=top_k, min_pair_sep=min_pair_sep, pose_gate_fn=pose_gate_fn,
                             blur_pen=blur_pen, edge_pen=edge_pen,
                             lambda_blur=LAMBDA_BLUR, lambda_border=LAMBDA_BORDER,
-                            lambda_appear=LAMBDA_APPEAR, max_appearance_dist=MAX_APPEARANCE_DIST)
+                            lambda_appear=LAMBDA_APPEAR, max_appearance_dist=MAX_APPEARANCE_DIST,
+                            pose_budget=POSE_BUDGET, backfill=BACKFILL_TO_TOPK)
 
     ctx = {
         "sr_grid": sr_grid, "res_mismatch": res_mismatch, "gaps": gaps,

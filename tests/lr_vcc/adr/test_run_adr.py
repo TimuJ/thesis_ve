@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 
 from scripts.lr_vcc.adr.annotations import Annotations
+from scripts.lr_vcc.adr.config import TOP_K_PER_VIDEO
 from scripts.lr_vcc.adr.run_adr import _clip_paths, evaluate_clip, evaluate_clip_pairs
 from src.evaluation.metrics import ssim
 
@@ -185,14 +186,16 @@ def test_evaluate_clip_pairs_multi_per_gap():
     assert len({p["gap_s"] for p in adr}) == 1           # all from the one gap
 
 
-def test_evaluate_clip_pairs_pose_gate_rejects_all_is_graceful():
-    # a pose gate scoring every pair below threshold admits no gap pair -> no adr
-    # pairs forced in (reviewability beats count), and no exception.
+def test_evaluate_clip_pairs_pose_gate_rejects_all_backfills_for_review():
+    # Recall over precision (BACKFILL_TO_TOPK): a pose gate scoring every pair below
+    # threshold no longer zeroes the output -- backfill still hands back up to
+    # TOP_K_PER_VIDEO adr candidates for manual review, and no exception.
     reject_all = lambda a, b: 0.0
     out = evaluate_clip_pairs(GT, GT, ANN, FPS, len(GT), FakeEmbedder(),
                               [FakeScorer("dino")], c_gt_floor=0.0, compute_lpips=False,
                               pose_gate=reject_all)
-    assert [p for p in out["pairs"] if p["pair_type"] == "adr"] == []
+    adr = [p for p in out["pairs"] if p["pair_type"] == "adr"]
+    assert 1 <= len(adr) <= TOP_K_PER_VIDEO
 
 
 def test_evaluate_clip_pairs_quarantines_like_evaluate_clip():

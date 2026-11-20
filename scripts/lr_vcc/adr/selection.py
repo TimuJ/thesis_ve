@@ -116,13 +116,27 @@ def choose_pairs(pre_idx, post_idx, embeddings, areas, aspects, *,
                  lambda_aspect: float = LAMBDA_ASPECT, lambda_size: float = LAMBDA_SIZE,
                  blur_pen=None, edge_pen=None, lambda_blur: float = 0.0,
                  lambda_border: float = 0.0, lambda_appear: float = 1.0,
-                 max_appearance_dist: "float | None" = None) -> "list[PairChoice]":
+                 max_appearance_dist: "float | None" = None,
+                 pose_budget: "int | None" = None,
+                 backfill: bool = False) -> "list[PairChoice]":
     """Up to ``top_k`` admissible straddling pairs, lowest ``selection_cost`` first,
     kept so no two are :func:`_pairs_too_close` (diverse frame offsets) and each passes
     ``pose_gate_fn(i, j)`` when given. Same admissibility (area >= a_min, appearance
     gate) and cost terms as :func:`choose_pair`; this is its top-K, diversity-aware,
     pose-gated generalization. ``n_admissible`` on each returned pair is the total
-    admissible count. Empty list when nothing qualifies."""
+    admissible count. Empty list when nothing qualifies.
+
+    ``pose_gate_fn`` is a RoMa verification -- one GPU forward pass per call -- so on a
+    large admissible set verifying every candidate is prohibitive. ``pose_budget`` caps
+    how many candidates are pose-verified: the cost-sorted candidates are gated until
+    ``top_k`` pass or the budget is spent, whichever comes first (``None`` = no cap).
+
+    ``backfill`` turns the pose gate from a hard filter into a preference: pose-verified
+    pairs still rank first, but when fewer than ``top_k`` pass, the remainder is filled
+    with the best-by-cost diverse candidates that were rejected or left unverified. This
+    guarantees up to ``top_k`` candidates per call for manual review (recall over
+    precision); with ``backfill=False`` the gate stays a hard filter (may return < top_k,
+    or empty)."""
     embeddings = np.asarray(embeddings, float)
     areas = np.asarray(areas, float)
     aspects = np.asarray(aspects, float)
@@ -145,14 +159,33 @@ def choose_pairs(pre_idx, post_idx, embeddings, areas, aspects, *,
             cands.append((c, a, b))
     cands.sort(key=lambda t: t[0])
     kept: "list[PairChoice]" = []
+    spare: "list[PairChoice]" = []   # cost-ranked diverse unverified pairs, for backfill
+    n_pose_calls = 0
     for c, a, b in cands:
-        if pose_gate_fn is not None and not pose_gate_fn(a, b):
+        if any(_pairs_too_close(a, b, k.i, k.j, min_pair_sep) for k in kept + spare):
             continue
-        if any(_pairs_too_close(a, b, k.i, k.j, min_pair_sep) for k in kept):
-            continue
-        kept.append(PairChoice(a, b, c, n_admissible))
-        if len(kept) >= top_k:
-            break
+        passed = True
+        if pose_gate_fn is not None:
+            if pose_budget is not None and n_pose_calls >= pose_budget:
+                if not backfill:
+                    break                   # hard gate, budget spent: no more passers
+                passed = False              # backfill: leave remaining candidates unverified
+            else:
+                n_pose_calls += 1
+                passed = pose_gate_fn(a, b)
+        pc = PairChoice(a, b, c, n_admissible)
+        if passed:
+            kept.append(pc)
+            if len(kept) >= top_k:
+                break
+        elif backfill and len(spare) < top_k:
+            spare.append(pc)
+        if backfill and len(kept) + len(spare) >= top_k and (
+            pose_gate_fn is None or pose_budget is None or n_pose_calls >= pose_budget
+        ):
+            break                           # have enough and no more verification can help
+    if backfill and len(kept) < top_k:
+        kept.extend(spare[: top_k - len(kept)])
     return kept
 
 
