@@ -109,11 +109,11 @@ rate texture low on average, but they disagree pair to pair.
 - **Next:** run local **Qwen3-VL-32B** with the digit-logit readout (downloaded; waiting
   on free GPUs). That gives the fair, open, same-readout comparison.
 
-## 4. Pair selection: from precision to recall (in progress, not committed)
+## 4. Pair selection: from precision to recall (run done, code not yet committed)
 
-The pose gate filtered too hard: some videos returned no pairs. And on large candidate
-sets, running one RoMa forward per candidate made selection grind. Current working-tree
-changes:
+The hard RoMa pose gate rejected every cross-gap candidate. On the 18-video run, every
+video fell back to a single long-range pair. On large candidate sets, running one RoMa
+forward per candidate also made selection grind. The changes:
 
 - **Pose budget = 50** RoMa verifications per gap, with an early stop once top-K is met.
 - **Backfill to top-K = 5.** Pose-verified pairs still rank first, and the rest are filled
@@ -127,6 +127,11 @@ changes:
 
 Unit tests cover the budget, the early stop and the backfill ordering.
 
+**Result.** The rerun produced **93 candidate pairs (80 cross-gap + 13 long-range)**, and
+**16/18 videos have at least 5 pairs**. hippo-2 and lion-12 still yield one each. That is
+a property of the data, not the gate: neither has a gap of 3 s or more with the object at
+0.2 % area or larger on both sides. The candidates now go to manual review before scoring.
+
 ## Key numbers
 
 - Curated run: **54 reviewable / 66 scored pairs, 13 clips**; composite **mean 0.891 /
@@ -139,6 +144,8 @@ Unit tests cover the budget, the early stop and the backfill ordering.
   (p=0.004), geometry **0.64**; best blind judge Gemini-4-argon PLCC **0.71** / SRCC
   **0.70**; non-blind Claude **0.87** (optimistic, upper bound only).
 - Blind API sweep cost **≈ $0.40** for 2 models × 42 pairs.
+- Recall-mode selection: **93 candidates** (80 cross-gap + 13 long-range); **16/18 videos
+  have at least 5**.
 
 ## Next period (plan)
 
@@ -146,7 +153,7 @@ Unit tests cover the budget, the early stop and the backfill ordering.
    readout as the 8B.
 2. **Check the RoMa geometry axis:** is cross-gap certainty genuinely near zero, and should
    its reliability gate it out?
-3. **Rerun selection with the recall changes**, then manual review, then rescore.
+3. **Manually review the 93 recall-mode candidates**, then rescore the kept set.
 4. **2–3 more raters**, for inter-rater agreement and tighter CIs.
 5. **A second SR model** (the collaborator's), so the judge and the axes can show
    *model-level* discrimination.

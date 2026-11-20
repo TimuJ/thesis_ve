@@ -43,7 +43,7 @@ the next steps.
 1. Run a larger open judge with the same continuous readout, to get a reportable open
    number.
 2. Verify the geometry axis on cross-gap pairs and gate it if it carries no signal.
-3. Rerun pair selection with the recall-oriented changes, then review and rescore.
+3. Manually review the enlarged candidate pair set and rescore it.
 4. Add two to three raters for inter-rater agreement.
 5. Add the collaborator's model as a second comparison row.
 6. Prototype a drift-aware judge and validate it against the drift labels.

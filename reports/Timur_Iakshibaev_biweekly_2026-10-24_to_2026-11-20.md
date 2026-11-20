@@ -62,7 +62,8 @@
   earlier drift labels. Reporting it as a fidelity judge is valid now; measuring drift
   needs a re-framed judge. *Open decision.*
 - **Pair selection now favours recall.** Selection over-filtered. It now hands back the
-  top candidates for manual review instead of dropping them (in progress).
+  top candidates for manual review instead of dropping them, which gave 93 candidates
+  with at least 5 pairs for 16 of 18 videos.
 - **Still open:** confirm the GT-anchored matched-pair score as the benchmark's headline
   metric, and decide the open vs closed judge for reporting.
 
@@ -87,7 +88,7 @@
    reportable open number comparable to the 8B.
 2. Check whether the geometry axis is saturated on cross-gap pairs, and gate it if it
    carries no signal.
-3. Rerun pair selection with the recall changes, review the pairs manually, and rescore.
+3. Manually review the 93 recall-mode candidate pairs and rescore the kept set.
 4. Recruit 2–3 more raters for inter-rater agreement and tighter confidence intervals.
 5. Add the collaborator's model as a second SR row, so the benchmark ranks models rather
    than describing one.
