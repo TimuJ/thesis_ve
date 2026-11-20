@@ -115,12 +115,3 @@ Claude's ceiling an openly reportable model recovers.*
   with each other moderately (overall r=0.74); this is secondary — the quantity
   of interest is agreement with the human, not between the two judges.
 
-## What this establishes / next
-
-A high-capacity judge recovers human-perceived reconstruction fidelity far better
-than Qwen-8B (overall SRCC 0.88 vs 0.69; texture 0.72 vs 0.21 PLCC), on identical
-pairs and rubric — evidence that **judge capacity, not task design, is the
-limiting factor**, subject to the closed-model and non-blind caveats above. Next:
-(1) the open Qwen3-VL-32B run, to measure how much of this ceiling a reportable
-open judge recovers; (2) a context-isolated blind re-score to remove the
-optimistic bias; (3) additional raters for inter-rater agreement and tighter CIs.

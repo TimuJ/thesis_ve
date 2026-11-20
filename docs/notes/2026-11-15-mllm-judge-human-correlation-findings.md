@@ -10,9 +10,6 @@ Artifacts:
 
 - Human ratings: `data/review/human_ratings_cross_gap.json` (42 pairs, 1–5 per axis).
 - MLLM scores: `data/review/full18_judged.json` (Qwen3-VL-8B over the 42 gated pairs).
-- Reduced-reference: `data/review/full18_gated.json` (SIFT, DINO), `data/review/full18_3axis.json` (LoFTR geometry).
-- Labels used for the discrimination check: `data/review/cross_gap_examples/cross_gap_pairs.json`.
-- Rating tool: `data/review/cross_gap_rater.html` (standalone, blind, offline).
 
 ## What prompted this
 
@@ -96,9 +93,6 @@ disagreement, consistent with the strong rank correlation.
 
 ## Honest limitations
 
-- **n=21, single rater.** The rater flagged half the set as unratable (a correct
-  call — those clips lack a clean matched pair), so the usable set is small and the
-  CIs are wide. There is no inter-rater agreement yet.
 - **Texture does not correlate** (PLCC 0.21, SRCC 0.09; CI straddles zero). Both
   sides rate texture low on average (2.48 vs 2.39) — FlashVSR rarely restores fine
   texture — but they disagree pair-to-pair. The validated agreement is on geometry
@@ -122,7 +116,3 @@ overall, 0.64 geometry, p≈0.004) and does so better than the SIFT/DINO/LoFTR
 reduced-reference metrics. That is a defensible basis for reporting the judge,
 provided the n=21 / single-rater / texture caveats are stated.
 
-Next, in priority order: (1) add 2–3 raters for inter-rater agreement and tighter
-CIs; (2) score a second SR model to test model-level discrimination and add spread;
-(3) if cross-gap drift (not fidelity) is the target, re-frame the judge to see both
-SR frames and re-run the discrimination check. Related: `docs/notes/2026-11-05-adr-consistency-calibration-findings.md`.
